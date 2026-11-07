@@ -1,0 +1,10 @@
+body { margin: 0; background: #fbfaf6; color: #1f2f6b; font: 17px/30px Georgia, "Times New Roman", serif;
+       background-image: linear-gradient(#fbfaf6 29px, #c9d3ea 30px); background-size: 100% 30px; }
+main { max-width: 680px; margin: 0 auto; padding: 60px 24px 60px 84px; position: relative; }
+main::before { content: ""; position: absolute; top: 0; bottom: 0; left: 58px; width: 2px; background: #e3a0a0; }
+h1 { font-size: 34px; line-height: 60px; margin: 0 0 30px; color: #b8322a; }
+h2 { font-size: 20px; line-height: 30px; margin: 30px 0 0; color: #b8322a; }
+p, li { margin: 0 0 30px; }
+ul { padding-left: 20px; margin: 0 0 30px; } li { margin: 0; }
+a { color: #b8322a; }
+.small { color: #666; font-size: 15px; }
