@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guess my word – Last Page</title>
+<meta name="description" content="Someone sent you a hangman or film challenge. Can you guess it?">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Last Page">
+<meta property="og:title" content="Can you guess it?">
+<meta property="og:description" content="A hangman / Bollywood / Hollywood challenge from the back of the notebook. Open it and play.">
+<meta property="og:image" content="https://akahkhanna.github.io/lastpage-site/hangman/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fbfaf6">
+<link rel="stylesheet" href="hangman.css">
+</head>
+<body>
+<main>
+  <!-- Make a challenge -->
+  <section id="make" hidden>
+    <h1>Guess my word</h1>
+    <p class="pencil">write a secret word or film, send the link, and see who gets it</p>
+    <div class="modes" role="radiogroup" aria-label="Game">
+      <button class="mode on" data-mode="h" role="radio" aria-checked="true">hangman</button>
+      <button class="mode" data-mode="b" role="radio" aria-checked="false">Bollywood</button>
+      <button class="mode" data-mode="y" role="radio" aria-checked="false">Hollywood</button>
+    </div>
+    <label><span class="pencil" id="secretLabel">secret word (they won't see it)</span>
+      <input id="secret" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"></label>
+    <button id="peek" class="small">show</button>
+    <label id="hintRow"><span class="pencil">hint (optional), e.g. food, animal</span>
+      <input id="hint" autocomplete="off" maxlength="20"></label>
+    <label><span class="pencil">your name</span>
+      <input id="from" autocomplete="off" autocapitalize="characters" maxlength="20"></label>
+    <p class="slots" id="preview" aria-hidden="true"></p>
+    <button id="makeLink" class="red" disabled>send the challenge →</button>
+    <p class="pencil" id="copied" hidden>link copied!! paste it in the chat</p>
+  </section>
+
+  <!-- Play a challenge -->
+  <section id="play" hidden>
+    <h1 id="playTitle">hangman</h1>
+    <p class="pencil" id="from-line"></p>
+    <div id="picture"></div>
+    <p class="hint" id="hintLine" hidden></p>
+    <p class="slots" id="slots" aria-live="polite"></p>
+    <p class="pencil" id="left"></p>
+    <div class="keys" id="keys"></div>
+    <div id="end" hidden>
+      <p class="result" id="result"></p>
+      <button id="sendBack" class="red">tell them how you did →</button>
+      <p class="pencil" id="copied2" hidden>copied!! paste it in the chat</p>
+      <button id="own" class="ink small">make your own challenge</button>
+    </div>
+  </section>
+
+  <footer>
+    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
+    <p class="small">Last Page: the back page of your school notebook. FLAMES, book cricket, hangman… just don't let Ma'am catch you.</p>
+    <p class="small">The word stays in the link; it's never sent to us. <a href="../privacy.html">Privacy</a></p>
+  </footer>
+</main>
+<script src="rules.js"></script>
+<script src="hangman.js"></script>
+</body>
+</html>

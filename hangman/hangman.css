@@ -1,0 +1,59 @@
+@font-face { font-family: "Kalam"; src: url("../flames/fonts/Kalam-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Kalam"; src: url("../flames/fonts/Kalam-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Caveat"; src: url("../flames/fonts/Caveat-Variable.ttf") format("truetype"); font-weight: 400 700; font-display: swap; }
+
+:root { --ink: #24377e; --red: #b8322a; --pencil: #5f5f5f; --paper: #fbfaf6; --rule: #c9d3ea; --margin: #e3a0a0; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100vh; color: var(--ink); font: 22px/34px "Kalam", "Comic Sans MS", cursive;
+       background: var(--paper) linear-gradient(var(--paper) 33px, var(--rule) 34px) 0 6px / 100% 34px; }
+main { max-width: 560px; margin: 0 auto; padding: 24px 16px 40px 60px; position: relative; min-height: 100vh; }
+main::before { content: ""; position: fixed; top: 0; bottom: 0; left: max(44px, calc(50% - 280px + 44px)); width: 2px; background: var(--margin); }
+h1 { margin: 0; font-size: 40px; line-height: 60px; font-weight: 700; color: var(--red); transform: rotate(-2deg); transform-origin: left; }
+.pencil { font-family: "Caveat", cursive; color: var(--pencil); font-size: 23px; line-height: 34px; margin: 0; }
+.small { font-size: 17px; line-height: 30px; margin: 0; }
+label { display: block; margin-top: 10px; }
+input { display: block; width: 100%; border: 0; border-bottom: 2px dashed var(--rule); background: transparent; color: var(--ink);
+        font: 700 26px/38px "Kalam", cursive; text-transform: uppercase; padding: 0; outline: none; border-radius: 0; letter-spacing: .06em; }
+#hint { text-transform: none; }
+input:focus { border-bottom-color: var(--ink); }
+button { font: 700 24px/34px "Kalam", cursive; background: none; border: 0; padding: 6px 0; min-height: 44px; cursor: pointer; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+button.red { color: var(--red); font-size: 27px; margin-top: 10px; }
+button.small { font: 400 20px/30px "Caveat", cursive; color: var(--pencil); }
+button:disabled { color: var(--pencil); opacity: .5; cursor: default; }
+.modes { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 6px; }
+.mode { font-weight: 400; color: var(--pencil); border-radius: 50%; padding: 4px 12px; }
+.mode.on { color: var(--ink); font-weight: 700; outline: 2px solid var(--red); outline-offset: -2px; border-radius: 50% / 60%; }
+#peek { display: block; margin-top: -4px; }
+
+.slots { display: flex; flex-wrap: wrap; gap: 6px 4px; font: 700 30px/44px "Kalam", cursive; margin: 14px 0 6px; min-height: 44px; }
+.slot { display: inline-block; width: 26px; text-align: center; border-bottom: 3px solid var(--ink); line-height: 40px; height: 44px; }
+.slot.space { border: 0; width: 16px; }
+.slot.given { color: var(--pencil); }
+.slot.missed { color: var(--red); border-bottom-color: var(--red); }
+.slots.wrap { row-gap: 10px; }
+.hint { margin: 4px 0 0; font: 400 20px/30px "Caveat", cursive; color: var(--pencil); }
+
+#picture { height: 170px; margin-top: 8px; }
+#picture.films { height: auto; }
+#picture svg { height: 100%; overflow: visible; }
+.frame { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.part { fill: none; stroke: var(--red); stroke-width: 3; stroke-linecap: round; opacity: 0; transition: opacity .3s ease-out; }
+.part.on { opacity: 1; }
+.banner { display: flex; gap: 4px; font: 700 34px/60px "Kalam", cursive; margin-top: 4px; }
+.banner span { display: inline-block; padding: 0 2px; }
+.banner span.x { color: rgba(95,95,95,.5);
+  background: linear-gradient(to top right, transparent calc(50% - 2px), var(--red) calc(50% - 2px), var(--red) calc(50% + 1px), transparent calc(50% + 1px)) no-repeat center / 100% 60%; }
+
+.keys { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 8px; max-width: 420px; }
+.key { font: 700 24px/1 "Kalam", cursive; min-height: 46px; padding: 0; border-radius: 8px; color: var(--ink); background: rgba(36,55,126,.05); position: relative; }
+.key:disabled { opacity: 1; cursor: default; background: transparent; }
+.key.hit { color: var(--ink); opacity: .35; }
+.key.miss { color: var(--pencil); opacity: .55; }
+.key.miss::after { content: ""; position: absolute; left: 22%; right: 22%; top: 50%; height: 3px; background: var(--red); transform: rotate(-30deg); border-radius: 2px; }
+.result { font: 700 30px/44px "Kalam", cursive; color: var(--red); transform: rotate(-3deg); transform-origin: left; margin: 10px 0 0; }
+#end button { display: block; }
+footer { margin-top: 36px; }
+footer a.app { display: inline-block; font-weight: 700; color: var(--red); font-size: 20px; line-height: 34px; text-decoration: none; border-bottom: 2px solid var(--red); }
+footer a { color: var(--red); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
