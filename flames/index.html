@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FLAMES – Last Page</title>
+<meta name="description" content="Someone did FLAMES with your name. Open it to see what you got, then try your own.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Last Page">
+<meta property="og:title" content="Someone did FLAMES with your name…">
+<meta property="og:description" content="Open it to see what you got. Then try your own.">
+<meta property="og:image" content="https://akahkhanna.github.io/lastpage-site/flames/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fbfaf6">
+<link rel="preload" href="fonts/Kalam-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="flames.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>FLAMES</h1>
+    <p class="pencil" id="intro"></p>
+  </header>
+
+  <section id="form" hidden>
+    <label><span class="pencil">your name</span><input id="first" autocomplete="off" autocapitalize="characters" maxlength="24" enterkeyhint="next"></label>
+    <label><span class="pencil">their name</span><input id="second" autocomplete="off" autocapitalize="characters" maxlength="24" enterkeyhint="go"></label>
+    <button id="go" class="ink" disabled>work it out →</button>
+  </section>
+
+  <section id="working" hidden aria-live="polite">
+    <div class="name" id="nameA"></div>
+    <div class="name" id="nameB"></div>
+    <div class="count" id="count"></div>
+    <div class="flames" id="flames"></div>
+    <div class="answer" id="answer"></div>
+    <div class="reaction pencil" id="reaction"></div>
+    <p class="pencil skip" id="skip">tap to skip</p>
+  </section>
+
+  <section id="after" hidden>
+    <button id="send" class="red">send it to them →</button>
+    <p class="pencil" id="copied" hidden>link copied!! paste it in the chat</p>
+    <button id="again" class="ink small">try your own</button>
+  </section>
+
+  <footer>
+    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
+    <p class="small">Last Page: the back page of your school notebook. FLAMES, book cricket, noughts &amp; crosses… just don't let Ma'am catch you.</p>
+    <p class="small">Names stay in the link and on your phone; they're never sent to us. <a href="../privacy.html">Privacy</a></p>
+  </footer>
+</main>
+<script src="rules.js"></script>
+<script src="flames.js"></script>
+</body>
+</html>
