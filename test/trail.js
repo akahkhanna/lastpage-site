@@ -9,13 +9,13 @@
                  "FROG", "DUCK", "WOLF", "CRAB", "TIGER", "HORSE", "CAMEL", "ZEBRA", "SNAKE", "EAGLE", "SHEEP",
                  "MOUSE", "MONKEY", "RABBIT", "PARROT", "DONKEY", "TURTLE", "BEAVER"]],
     ["in class", ["PEN", "INK", "MAP", "BAG", "BUS", "DESK", "BOOK", "BELL", "QUIZ", "CHALK", "RULER", "BOARD",
-                  "MARKS", "CLASS", "PAPER", "PENCIL", "ERASER", "SCHOOL", "LESSON", "DUSTER", "RECESS"]],
+                  "MARKS", "CLASS", "PAPER", "PENCIL", "ERASER", "SCHOOL", "LESSON", "LOCKER", "RECESS"]],
     ["colours", ["RED", "TAN", "BLUE", "PINK", "GOLD", "GREY", "GREEN", "BLACK", "WHITE", "BROWN", "CORAL",
                  "YELLOW", "ORANGE", "PURPLE", "SILVER", "MAROON"]],
-    ["food", ["PIE", "JAM", "TEA", "BUN", "EGG", "RICE", "CAKE", "SOUP", "MILK", "DOSA", "NAAN", "BREAD", "PIZZA",
-              "SALAD", "CANDY", "HONEY", "PASTA", "SAMOSA", "BUTTER", "CHEESE", "BURGER", "NOODLE", "COOKIE"]],
+    ["food", ["PIE", "JAM", "TEA", "BUN", "EGG", "RICE", "CAKE", "SOUP", "MILK", "TACO", "PEAS", "BREAD", "PIZZA",
+              "SALAD", "CANDY", "HONEY", "PASTA", "MUFFIN", "BUTTER", "CHEESE", "BURGER", "NOODLE", "COOKIE"]],
     ["sport", ["BAT", "NET", "RUN", "BALL", "GOAL", "KICK", "TEAM", "SWIM", "CHESS", "MATCH", "SCORE", "RUGBY",
-               "PITCH", "TENNIS", "HOCKEY", "SOCCER", "WICKET", "BOWLER"]],
+               "PITCH", "TENNIS", "HOCKEY", "SOCCER", "RACKET", "BOWLER"]],
   ];
   function mulberry32(seed) {
     let a = seed >>> 0;

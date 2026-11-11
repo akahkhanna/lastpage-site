@@ -15,7 +15,7 @@
   const SCRAMBLES = [
     ["animal", ["TIGER", "HORSE", "CAMEL", "ZEBRA", "MONKEY", "RABBIT", "PARROT", "DONKEY", "SNAKE", "EAGLE"]],
     ["fruit", ["MANGO", "APPLE", "GRAPE", "LEMON", "GUAVA", "PAPAYA", "BANANA", "CHERRY", "ORANGE", "MELON"]],
-    ["in class", ["CHALK", "PENCIL", "ERASER", "RULER", "SCHOOL", "LESSON", "TEACHER", "BOARD", "MARKS", "DUSTER"]],
+    ["in class", ["CHALK", "PENCIL", "ERASER", "RULER", "SCHOOL", "LESSON", "TEACHER", "BOARD", "MARKS", "LOCKER"]],
   ];
   const MARKS_EACH = 2, MAX = 10;
 
