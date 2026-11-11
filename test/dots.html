@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dot to dot – That Last Page</title>
+<meta name="description" content="Today's dot to dot: one line through every square, passing the numbers in order. Same puzzle for everyone today.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="That Last Page">
+<meta property="og:title" content="Today's dot to dot — can you beat my time?">
+<meta property="og:description" content="One line through every square, passing the numbers in order. No app needed.">
+<meta name="theme-color" content="#fbfaf6">
+<link rel="stylesheet" href="test.css">
+<style>
+  #grid { width: 100%; max-width: 420px; aspect-ratio: 1; touch-action: none; display: block; margin: 10px 0; }
+  .done { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">DOT TO DOT</h1>
+  <p>One line through every square, passing 1 to 8 in order.</p>
+  <canvas id="grid" aria-label="Dot to dot grid"></canvas>
+  <p class="pencil" id="status">start on 1</p>
+  <button class="small" id="rub" hidden>rub out</button>
+  <div id="after" hidden>
+    <p class="done" id="done"></p>
+    <button class="go" id="share">send my time →</button>
+    <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
+    <p><a href="index.html" style="color:var(--ink);font-weight:700">today's surprise test →</a></p>
+  </div>
+  <footer>
+    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
+    <p class="small">Nothing you draw here is sent anywhere. <a href="../privacy.html">Privacy</a></p>
+  </footer>
+</main>
+<script src="dots.js"></script>
+<script>
+(function () {
+  const D = window.DotToDot, N = D.SIZE;
+  const dayFor = (d) => Math.max(0, Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 10, 1)) / 86400000));
+  const today = dayFor(new Date());
+  const fromLink = parseInt(location.hash.slice(1), 10);
+  const day = fromLink >= 1 && fromLink - 1 <= today ? fromLink - 1 : today;
+  const p = D.make(day);
+  document.getElementById("title").textContent = "DOT TO DOT #" + p.number;
+  const canvas = document.getElementById("grid"), ctx = canvas.getContext("2d");
+  let line = [], started = null, doneSecs = null;
+  const key = "lp.dots." + day;
+  try { const s = JSON.parse(localStorage.getItem(key) || "null"); if (s) { line = p.solution.slice(); doneSecs = s; } } catch {}
+
+  function size() { const r = canvas.getBoundingClientRect(); const dpr = devicePixelRatio || 1; canvas.width = r.width * dpr; canvas.height = r.width * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return r.width; }
+  let side = size();
+  addEventListener("resize", () => { side = size(); draw(); });
+  const cellOf = (x, y) => { const c = side / N; if (x < 0 || y < 0 || x >= side || y >= side) return -1; return Math.floor(y / c) * N + Math.floor(x / c); };
+  const centre = (c) => { const s = side / N; return [((c % N) + 0.5) * s, (Math.floor(c / N) + 0.5) * s]; };
+  const nextDot = () => Math.max(0, ...line.filter((c) => p.dots[c]).map((c) => p.dots[c])) + 1;
+
+  function draw() {
+    const s = side / N;
+    ctx.clearRect(0, 0, side, side);
+    ctx.fillStyle = "#fbfaf6"; ctx.fillRect(0, 0, side, side);
+    ctx.fillStyle = "rgba(36,55,126,.07)"; line.forEach((c) => ctx.fillRect((c % N) * s + 2, Math.floor(c / N) * s + 2, s - 4, s - 4));
+    ctx.strokeStyle = "rgba(95,95,95,.35)"; ctx.lineWidth = 1.2; ctx.beginPath();
+    for (let i = 0; i <= N; i++) { ctx.moveTo(i * s, 0); ctx.lineTo(i * s, side); ctx.moveTo(0, i * s); ctx.lineTo(side, i * s); }
+    ctx.stroke();
+    if (line.length > 1) {
+      ctx.strokeStyle = "#24377e"; ctx.lineWidth = s * 0.22; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
+      line.forEach((c, i) => { const [x, y] = centre(c); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    }
+    Object.keys(p.dots).forEach((k) => {
+      const c = +k, [x, y] = centre(c), reached = line.includes(c);
+      ctx.beginPath(); ctx.arc(x, y, s * 0.31, 0, Math.PI * 2);
+      ctx.fillStyle = reached ? "#b8322a" : "#fbfaf6"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#b8322a"; ctx.stroke();
+      ctx.fillStyle = reached ? "#fff" : "#24377e"; ctx.font = `700 ${Math.round(s * 0.42)}px Kalam, cursive`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(p.dots[c]), x, y + 1);
+    });
+    const left = N * N - line.length;
+    document.getElementById("status").textContent = doneSecs ? "" : line.length ? `${left} squares to go` : "start on 1";
+    document.getElementById("rub").hidden = !line.length || !!doneSecs;
+  }
+
+  function down(c) {
+    const i = line.indexOf(c);
+    if (i >= 0) line.splice(i + 1);
+    else if (!line.length && p.dots[c] === 1) { line = [c]; if (!started) started = Date.now(); }
+  }
+  function reach(c) {
+    const last = line[line.length - 1];
+    if (last === undefined || c === last || c < 0) return;
+    const i = line.indexOf(c);
+    if (i >= 0) { line.splice(i + 1); return; }
+    const lr = Math.floor(last / N), lc = last % N, r = Math.floor(c / N), col = c % N;
+    let steps = [];
+    if (lr === r) { const d = col > lc ? 1 : -1; for (let x = lc + d; x !== col + d; x += d) steps.push(r * N + x); }
+    else if (lc === col) { const d = r > lr ? 1 : -1; for (let y = lr + d; y !== r + d; y += d) steps.push(y * N + col); }
+    for (const s of steps) {
+      const end = line[line.length - 1];
+      if (!D.adjacent(end, s) || line.includes(s)) return;
+      if (p.dots[s] && p.dots[s] !== nextDot()) return;
+      line.push(s);
+    }
+    if (D.isSolved(p, line)) finish();
+  }
+  function finish() {
+    doneSecs = Math.max(1, Math.round((Date.now() - (started || Date.now())) / 1000));
+    try { localStorage.setItem(key, JSON.stringify(doneSecs)); } catch {}
+    showDone();
+  }
+  const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  function showDone() {
+    document.getElementById("done").textContent = `done in ${clock(doneSecs)} ✓`;
+    document.getElementById("after").hidden = false;
+  }
+  let dragging = false;
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return cellOf(e.clientX - r.left, e.clientY - r.top); };
+  canvas.addEventListener("pointerdown", (e) => { if (doneSecs) return; dragging = true; canvas.setPointerCapture(e.pointerId); down(pos(e)); draw(); });
+  canvas.addEventListener("pointermove", (e) => { if (!dragging || doneSecs) return; reach(pos(e)); draw(); });
+  canvas.addEventListener("pointerup", () => (dragging = false));
+  document.getElementById("rub").addEventListener("click", () => { line = []; draw(); });
+  document.getElementById("share").addEventListener("click", async () => {
+    const text = `Dot to dot #${p.number} ✓ in ${clock(doneSecs)}. Can you beat me?`;
+    const url = location.origin + location.pathname + "#" + p.number;
+    if (navigator.share) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(text + " " + url); } catch { prompt("Copy this:", text + " " + url); return; }
+    const c = document.getElementById("copied"); c.hidden = false; setTimeout(() => (c.hidden = true), 2500);
+  });
+  draw(); if (doneSecs) showDone();
+})();
+</script>
+</body>
+</html>

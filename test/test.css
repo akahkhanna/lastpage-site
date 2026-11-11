@@ -1,0 +1,33 @@
+@font-face { font-family: "Kalam"; src: url("../flames/fonts/Kalam-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Kalam"; src: url("../flames/fonts/Kalam-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Caveat"; src: url("../flames/fonts/Caveat-Variable.ttf") format("truetype"); font-weight: 400 700; font-display: swap; }
+:root { --ink: #24377e; --red: #b8322a; --pencil: #5f5f5f; --paper: #fbfaf6; --rule: #c9d3ea; --margin: #e3a0a0; --print: #455a8a; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100vh; color: var(--ink); font: 21px/34px "Kalam", "Comic Sans MS", cursive;
+       background: var(--paper) linear-gradient(var(--paper) 33px, var(--rule) 34px) 0 6px / 100% 34px; }
+main { max-width: 560px; margin: 0 auto; padding: 22px 16px 40px 60px; position: relative; min-height: 100vh; }
+main::before { content: ""; position: fixed; top: 0; bottom: 0; left: max(44px, calc(50% - 280px + 44px)); width: 2px; background: var(--margin); }
+h1 { margin: 0; font-size: 32px; line-height: 56px; font-weight: 700; color: var(--red); display: flex; justify-content: space-between; align-items: center; }
+.score { border: 2.5px solid var(--red); border-radius: 50%; padding: 0 12px; transform: rotate(-6deg); font-size: 28px; }
+.printed { font: 13px/24px Georgia, serif; color: var(--print); margin: 0 0 8px; }
+.pencil { font-family: "Caveat", cursive; color: var(--pencil); font-size: 22px; margin: 0; }
+.q { margin: 14px 0; }
+.q .row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.q b { font-weight: 700; }
+.mark { margin-left: auto; color: var(--red); font-weight: 700; font-size: 30px; }
+.fix { color: var(--red); font: 700 22px/30px "Caveat", cursive; padding-left: 26px; }
+input { font: 700 22px/34px "Kalam", cursive; color: var(--ink); background: transparent; border: 0; border-bottom: 1.5px solid rgba(95,95,95,.5);
+        width: 90px; padding: 0 4px; outline: none; border-radius: 0; text-transform: uppercase; }
+input.wide { width: 140px; }
+.ans { padding-left: 26px; display: flex; gap: 8px; align-items: baseline; }
+.words { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-left: 22px; }
+.word { justify-self: start; font: 20px/34px "Kalam", cursive; color: var(--ink); background: none; border: 2px solid transparent; border-radius: 50%; padding: 2px 10px; text-align: left; cursor: pointer; min-height: 44px; }
+.word.on { border-color: var(--ink); }
+button.go { font: 700 24px/34px "Kalam", cursive; color: var(--red); background: none; border: 0; padding: 8px 0; min-height: 44px; cursor: pointer; }
+button.small { font: 400 20px/30px "Caveat", cursive; color: var(--pencil); background: none; border: 0; min-height: 44px; cursor: pointer; }
+.remark { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-4deg); transform-origin: left; margin: 10px 0 0; }
+footer { margin-top: 36px; }
+footer a.app { display: inline-block; font-weight: 700; color: var(--red); font-size: 20px; line-height: 34px; text-decoration: none; border-bottom: 2px solid var(--red); }
+footer a { color: var(--red); }
+.small { font-size: 17px; line-height: 30px; margin: 0; }
