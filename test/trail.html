@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word trail – That Last Page</title>
+<meta name="description" content="Today's word trail: find 4 hidden words through touching letters, using every letter once.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="That Last Page">
+<meta property="og:title" content="Today's word trail — can you beat my time?">
+<meta property="og:description" content="Find 4 hidden words through touching letters, using every letter once. No app needed.">
+<meta name="theme-color" content="#fbfaf6">
+<link rel="stylesheet" href="test.css">
+<style>
+  #grid { width: 100%; max-width: 380px; aspect-ratio: 1; touch-action: none; display: block; margin: 10px 0; }
+  .rows { font: 700 22px/34px "Kalam", cursive; letter-spacing: .35em; }
+  .done { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 6px 0; }
+  .shake { animation: shake .25s; } @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">WORD TRAIL</h1>
+  <p id="intro"></p>
+  <canvas id="grid" aria-label="Word trail grid"></canvas>
+  <div class="rows" id="rows"></div>
+  <p class="pencil" id="status">tap a found word to rub it out</p>
+  <div id="after" hidden>
+    <p class="done" id="done"></p>
+    <button class="go" id="share">send my time →</button>
+    <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
+    <p><a href="index.html" style="color:var(--ink);font-weight:700">today's surprise test →</a> &nbsp; <a href="dots.html" style="color:var(--ink);font-weight:700">dot to dot →</a></p>
+  </div>
+  <footer>
+    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
+    <p class="small">Nothing you do here is sent anywhere. <a href="../privacy.html">Privacy</a></p>
+  </footer>
+</main>
+<script src="trail.js"></script>
+<script>
+(function () {
+  const W = window.WordTrail, N = W.SIZE;
+  const dayFor = (d) => Math.max(0, Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 10, 1)) / 86400000));
+  const today = dayFor(new Date());
+  const fromLink = parseInt(location.hash.slice(1), 10);
+  const day = fromLink >= 1 && fromLink - 1 <= today ? fromLink - 1 : today;
+  const p = W.make(day);
+  const INKS = ["#24377e", "#b8322a", "#1a734d", "#734099"];
+  document.getElementById("title").textContent = "WORD TRAIL #" + p.number;
+  document.getElementById("intro").innerHTML = `Find 4 words about <b>${p.theme}</b>. Trace each through touching letters; use every letter once.`;
+  const canvas = document.getElementById("grid"), ctx = canvas.getContext("2d");
+  let trace = [], found = {}, started = null, doneSecs = null;
+  const key = "lp.trail." + day;
+  try { const s = JSON.parse(localStorage.getItem(key) || "null"); if (s) { p.paths.forEach((path, w) => (found[w] = path)); doneSecs = s; } } catch {}
+  function size() { const r = canvas.getBoundingClientRect(), dpr = devicePixelRatio || 1; canvas.width = r.width * dpr; canvas.height = r.width * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return r.width; }
+  let side = size(); addEventListener("resize", () => { side = size(); draw(); });
+  const used = () => new Set(Object.values(found).flat());
+  const centre = (c) => { const s = side / N; return [((c % N) + 0.5) * s, (Math.floor(c / N) + 0.5) * s]; };
+  const cellOf = (x, y) => { if (x < 0 || y < 0 || x >= side || y >= side) return -1; const s = side / N; return Math.floor(y / s) * N + Math.floor(x / s); };
+  function stroke(cells, color, w) { if (cells.length < 2) return; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath(); cells.forEach((c, i) => { const [x, y] = centre(c); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); }
+  function draw() {
+    const s = side / N;
+    ctx.fillStyle = "#fbfaf6"; ctx.fillRect(0, 0, side, side);
+    p.letters.forEach((l, c) => { if (l !== null) return; const x = (c % N) * s, y = Math.floor(c / N) * s;
+      ctx.fillStyle = "rgba(95,95,95,.16)"; ctx.fillRect(x, y, s, s);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip(); ctx.strokeStyle = "rgba(95,95,95,.35)"; ctx.lineWidth = 1;
+      for (let k = -s; k < s; k += 7) { ctx.beginPath(); ctx.moveTo(x + k, y + s); ctx.lineTo(x + k + s, y); ctx.stroke(); } ctx.restore(); });
+    ctx.strokeStyle = "rgba(95,95,95,.35)"; ctx.lineWidth = 1.2; ctx.beginPath();
+    for (let i = 0; i <= N; i++) { ctx.moveTo(i * s, 0); ctx.lineTo(i * s, side); ctx.moveTo(0, i * s); ctx.lineTo(side, i * s); } ctx.stroke();
+    Object.entries(found).forEach(([w, cells]) => { ctx.globalAlpha = .1; ctx.fillStyle = INKS[w]; cells.forEach((c) => ctx.fillRect((c % N) * s + 3, Math.floor(c / N) * s + 3, s - 6, s - 6)); ctx.globalAlpha = .55; stroke(cells, INKS[w], s * 0.12); ctx.globalAlpha = 1; });
+    ctx.globalAlpha = .15; ctx.fillStyle = "#5f5f5f"; trace.forEach((c) => ctx.fillRect((c % N) * s + 3, Math.floor(c / N) * s + 3, s - 6, s - 6)); ctx.globalAlpha = .6; stroke(trace, "#5f5f5f", s * 0.1); ctx.globalAlpha = 1;
+    ctx.fillStyle = "#24377e"; ctx.font = `700 ${Math.round(s * 0.5)}px Kalam, cursive`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    p.letters.forEach((l, c) => { if (l) { const [x, y] = centre(c); ctx.fillText(l, x, y + 2); } });
+    document.getElementById("rows").innerHTML = p.words.map((wd, w) => `<div style="color:${INKS[w]}">${found[w] ? wd : wd.replace(/./g, "_")}</div>`).join("");
+  }
+  const open = (c) => c >= 0 && p.letters[c] !== null && !used().has(c);
+  let dragging = false, moved = false;
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return cellOf(e.clientX - r.left, e.clientY - r.top); };
+  canvas.addEventListener("pointerdown", (e) => { if (doneSecs) return; dragging = true; moved = false; canvas.setPointerCapture(e.pointerId); const c = pos(e); trace = used().has(c) ? [c] : open(c) ? [c] : []; if (!started && trace.length) started = Date.now(); draw(); });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!dragging || doneSecs || !trace.length || used().has(trace[0])) return;
+    const c = pos(e), last = trace[trace.length - 1];
+    if (c === last || c < 0) return;
+    moved = true;
+    if (trace.length >= 2 && trace[trace.length - 2] === c) { trace.pop(); draw(); return; }
+    if (open(c) && !trace.includes(c) && W.neighbours(last).includes(c)) { trace.push(c); draw(); }
+  });
+  canvas.addEventListener("pointerup", () => {
+    dragging = false;
+    if (!moved && trace.length === 1) { const c = trace[0]; const w = Object.keys(found).find((k) => found[k].includes(c)); if (w !== undefined) { delete found[w]; trace = []; draw(); return; } }
+    if (trace.length >= 3 && !used().has(trace[0])) {
+      const word = trace.map((c) => p.letters[c]).join("");
+      const w = p.words.findIndex((wd, i) => !found[i] && wd === word);
+      if (w >= 0) { found[w] = trace.slice(); if (Object.keys(found).length === p.words.length) finish(); }
+      else { canvas.classList.remove("shake"); void canvas.offsetWidth; canvas.classList.add("shake"); }
+    }
+    trace = []; draw();
+  });
+  const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  function finish() { doneSecs = Math.max(1, Math.round((Date.now() - (started || Date.now())) / 1000)); try { localStorage.setItem(key, JSON.stringify(doneSecs)); } catch {} showDone(); }
+  function showDone() { document.getElementById("done").textContent = `done in ${clock(doneSecs)} ✓`; document.getElementById("after").hidden = false; document.getElementById("status").hidden = true; }
+  document.getElementById("share").addEventListener("click", async () => {
+    const text = `Word trail #${p.number} ✓ in ${clock(doneSecs)}. Can you beat me?`;
+    const url = location.origin + location.pathname + "#" + p.number;
+    if (navigator.share) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(text + " " + url); } catch { prompt("Copy this:", text + " " + url); return; }
+    const c = document.getElementById("copied"); c.hidden = false; setTimeout(() => (c.hidden = true), 2500);
+  });
+  draw(); if (doneSecs) showDone();
+})();
+</script>
+</body>
+</html>
