@@ -98,6 +98,7 @@
     for (const s of steps) {
       const end = line[line.length - 1];
       if (!D.adjacent(end, s) || line.includes(s)) return;
+      if (p.dots[end] === D.DOTS) return;   // the last number ends the line
       if (p.dots[s] && p.dots[s] !== nextDot()) return;
       line.push(s);
     }

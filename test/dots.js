@@ -47,7 +47,8 @@
     if (line.length !== SIZE * SIZE || new Set(line).size !== line.length) return false;
     for (let i = 1; i < line.length; i++) if (!adjacent(line[i - 1], line[i])) return false;
     const seen = line.filter((c) => p.dots[c]).map((c) => p.dots[c]);
-    return seen.length === DOTS && seen.every((v, i) => v === i + 1);
+    // ...and it ends on the last number.
+    return seen.length === DOTS && seen.every((v, i) => v === i + 1) && p.dots[line[line.length - 1]] === DOTS;
   }
   root.DotToDot = { SIZE, DOTS, make, neighbours, adjacent, isSolved };
   if (typeof module !== "undefined") module.exports = root.DotToDot;
