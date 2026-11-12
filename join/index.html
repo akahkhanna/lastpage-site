@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join a game – That Last Page</title><link rel="stylesheet" href="../style.css">
+<style>
+  .word { font-size: 2.6rem; font-weight: 700; color: #c0392b; letter-spacing: .06em; margin: .2em 0; }
+  .open { display: inline-block; margin: 1em 0; padding: .7em 1.2em; border-radius: 10px;
+          background: #1f3a93; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
+</style></head>
+<body><main>
+<h1>Your friend wants to play</h1>
+<p id="what">Open That Last Page to join their game.</p>
+<p class="word" id="word"></p>
+<a class="open" id="open" href="#">open in That Last Page →</a>
+<p>Sit next to your friend with Wi-Fi on (you don't need the same network). Their phone needs to be showing the word.</p>
+<p class="small">The app opens the same game and joins. If nothing happens, open the game yourself, tap <b>each on own phone</b>, and type the word above.</p>
+<p class="small">Don't have it? <a href="https://apps.apple.com/app/id6831963769">Get That Last Page on the App Store</a> (iPhone).</p>
+<p class="small"><a href="../">That Last Page</a> · <a href="../privacy.html">Privacy</a></p>
+</main>
+<script>
+  // "#<game>-<WORD>", e.g. "#bollywood-MANGO". Nothing is sent anywhere: it stays in this page.
+  const games = { noughtsCrosses: "noughts & crosses", dotsBoxes: "dots & boxes", hangman: "hangman",
+                  bollywood: "Bollywood", hollywood: "Hollywood", bookCricket: "book cricket" };
+  const raw = decodeURIComponent(location.hash.slice(1));
+  const i = raw.lastIndexOf("-");
+  const game = i > 0 ? raw.slice(0, i) : "", word = i > 0 ? raw.slice(i + 1).toUpperCase().replace(/[^A-Z]/g, "") : "";
+  if (games[game] && word) {
+    document.getElementById("what").textContent = `Join their ${games[game]} game. The word is:`;
+    document.getElementById("word").textContent = word;
+    document.getElementById("open").href = `thatlastpage://join?g=${encodeURIComponent(game)}&c=${word}`;
+  } else {
+    document.getElementById("open").hidden = true;
+  }
+</script>
+</body></html>
