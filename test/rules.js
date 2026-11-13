@@ -68,7 +68,11 @@
   function isRight(q, given) {
     const g = String(given).trim().toUpperCase();
     if (q.kind === "misspelt") return g === String(q.wrong);
-    return g !== "" && g === q.answer.toUpperCase();
+    if (g === q.answer.toUpperCase()) return g !== "";
+    // Unscramble: any real word with exactly the same letters counts (LEOMN: LEMON or MELON).
+    const sorted = (w) => [...w].sort().join("");
+    return q.kind === "unscramble" && sorted(g) === sorted(q.answer.toUpperCase())
+      && SCRAMBLES.some((grp) => grp[1].some((w) => w.toUpperCase() === g));
   }
 
   function remark(marks) {
