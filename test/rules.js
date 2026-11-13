@@ -55,7 +55,8 @@
     if (minus && y > x) [x, y] = [y, x];
     const q = [
       { kind: "times", prompt: `${a} × ${b} =`, answer: String(a * b), number: true },
-      { kind: "sequence", prompt: "Fill the gap: " + terms.map((t, k) => (k === missing ? "___" : t)).join(", "),
+      // The numbers are drawn with the answer box in the gap (test.js), as in the app.
+      { kind: "sequence", prompt: "Fill in the missing number:", terms, missing,
         answer: String(terms[missing]), number: true },
       { kind: "misspelt", prompt: "Circle the word that's spelt wrong:", words, wrong, answer: words[wrong] },
       { kind: "unscramble", prompt: `Unscramble: ${letters.join("")} (${group[0]})`, answer: word },

@@ -20,10 +20,15 @@
     let html = `<div class="row"><b>${i + 1}.</b> <span>${q.prompt}</span>`;
     if (inline) html += ` <input data-i="${i}" inputmode="numeric" autocomplete="off" aria-label="Answer ${i + 1}">`;
     html += `<span class="mark" data-m="${i}"></span></div>`;
-    if (q.kind === "misspelt") {
+    if (q.kind === "sequence") {
+      // The numbers in a row with the answer box in the gap itself.
+      html += `<div class="ans seq">${q.terms.map((t, k) => (k === q.missing
+        ? `<input data-i="${i}" class="gap" inputmode="numeric" autocomplete="off" aria-label="Missing number">`
+        : `<span>${t}</span>`)).join("<span>,</span>")}</div>`;
+    } else if (q.kind === "misspelt") {
       html += `<div class="words">${q.words.map((w, k) => `<button class="word" data-i="${i}" data-k="${k}">${w}</button>`).join("")}</div>`;
     } else if (!inline) {
-      html += `<div class="ans"><span class="pencil">ans:</span><input data-i="${i}" class="${q.number ? "" : "wide"}"
+      html += `<div class="ans"><span class="pencil">your answer:</span><input data-i="${i}" class="${q.number ? "" : "wide"}"
         ${q.number ? 'inputmode="numeric"' : 'autocapitalize="characters"'} autocomplete="off" aria-label="Answer ${i + 1}"></div>`;
     }
     html += `<div class="fix" data-f="${i}"></div>`;

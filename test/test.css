@@ -31,3 +31,5 @@ footer { margin-top: 36px; }
 footer a.app { display: inline-block; font-weight: 700; color: var(--red); font-size: 20px; line-height: 34px; text-decoration: none; border-bottom: 2px solid var(--red); }
 footer a { color: var(--red); }
 .small { font-size: 17px; line-height: 30px; margin: 0; }
+.ans.seq { gap: 4px; font: 400 22px/34px "Kalam", cursive; color: var(--ink); }
+input.gap { width: 52px; text-align: center; border: 1.5px solid rgba(95,95,95,.7); border-radius: 4px; }
