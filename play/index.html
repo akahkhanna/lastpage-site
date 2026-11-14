@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your turn – That Last Page</title>
+<meta name="description" content="A game from the back of the notebook, played a turn at a time by sending links. No app needed.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="That Last Page">
+<meta property="og:title" content="Your turn! 🏏 ✓✗">
+<meta property="og:description" content="Noughts & crosses or book cricket, a turn at a time. Tap to play, no app needed.">
+<meta name="theme-color" content="#fbfaf6">
+<link rel="stylesheet" href="../test/test.css">
+<style>
+  #board { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 300px; aspect-ratio: 1; margin: 10px 0; position: relative; }
+  #board button { all: unset; display: flex; align-items: center; justify-content: center; font: 700 56px Kalam, cursive; cursor: pointer; aspect-ratio: 1; }
+  #board button:nth-child(-n+6) { border-bottom: 3px solid var(--ink); }
+  #board button:not(:nth-child(3n)) { border-right: 3px solid var(--ink); }
+  #board button.t { color: var(--ink); } #board button.x { color: var(--pencil); }
+  #board button.win { color: var(--red); }
+  .status { font-size: 22px; margin: 6px 0; }
+  .scoreline { font: 400 24px/34px "Caveat", cursive; color: var(--ink); }
+  .page { margin-top: 10px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 92px; height: 84px; background: var(--paper);
+          box-shadow: 0 2px 4px rgba(0,0,0,.15); transform: rotate(-2deg); cursor: pointer; margin-right: 16px; vertical-align: middle; }
+  .page small { font: 11px Georgia, serif; color: var(--print); }
+  .page b { font-size: 30px; line-height: 40px; }
+  .call { color: var(--red); font-weight: 700; font-size: 32px; }
+  table.card { border-collapse: collapse; margin: 8px 0; font-size: 18px; }
+  table.card td { padding: 0 10px 0 0; vertical-align: top; }
+  table.card td.balls { font-size: 16px; }
+  .big { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 8px 0; }
+  .note { font: 400 19px/28px "Caveat", cursive; color: var(--pencil); margin: 0; }
+  input.name { width: 200px; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Your turn</h1>
+  <div id="app"></div>
+  <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
+  <footer>
+    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
+    <p class="small">The game travels inside the link you send; nothing is stored anywhere. <a href="../privacy.html">Privacy</a></p>
+  </footer>
+</main>
+<script src="play.js"></script>
+<script>
+(function () {
+  const P = window.Play, app = document.getElementById("app");
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const NAME_KEY = "lp.name";
+  let myName = (localStorage.getItem(NAME_KEY) || "").toUpperCase();
+  let post = location.hash.length > 1 ? P.decode(location.hash.slice(1)) : null;
+  let me = 0, opened = null, sentNote = "";
+
+  async function send(text) {
+    const url = location.origin + location.pathname + "#" + P.encode(post);
+    if (navigator.share) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === "AbortError") return; } }
+    try { await navigator.clipboard.writeText(text + " " + url); } catch { prompt("Copy this:", text + " " + url); return; }
+    const c = document.getElementById("copied"); c.hidden = false; setTimeout(() => (c.hidden = true), 2500);
+  }
+  const them = () => post.n[1 - me] || "your friend";
+
+  // No game in the link: start one (or the link was damaged).
+  function start(broken) {
+    document.getElementById("title").textContent = "Play a friend";
+    app.innerHTML = `${broken ? '<p class="status" style="color:var(--red)">That link looks broken. Ask for it again, or start a new game:</p>' : ""}
+      <p>Take turns by sending links in a chat. No app needed.</p>
+      <p>your name: <input class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></p>
+      <button class="go" data-g="nc">noughts & crosses →</button><br>
+      <button class="go" data-g="bc">book cricket →</button>`;
+    app.querySelectorAll("button[data-g]").forEach((b) => b.addEventListener("click", () => {
+      const nm = document.getElementById("nm").value.trim().toUpperCase().slice(0, 20) || "ME";
+      myName = nm; localStorage.setItem(NAME_KEY, nm);
+      post = b.dataset.g === "nc" ? { g: "nc", n: [nm, ""], b: ".........", s: "t", k: [0, 0, 0] } : { g: "bc", n: [nm, ""], p: [] };
+      me = 0; opened = JSON.parse(JSON.stringify(post)); render();
+    }));
+  }
+
+  // First time on this page and it's your turn: your name, for the scorecard.
+  function askName() {
+    app.innerHTML = `<p>${esc(post.n[1 - P.whoseTurn(post)] || "Your friend")} sent you a game of ${post.g === "nc" ? "noughts & crosses" : "book cricket"}!</p>
+      <p>your name: <input class="name" id="nm" maxlength="20" placeholder="your name" autofocus></p>
+      <button class="go" id="ok">play →</button>`;
+    const go = () => {
+      myName = (document.getElementById("nm").value.trim() || "FRIEND").toUpperCase().slice(0, 20);
+      localStorage.setItem(NAME_KEY, myName); begin();
+    };
+    document.getElementById("ok").addEventListener("click", go);
+    document.getElementById("nm").addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+  }
+
+  function begin() {
+    me = P.whoAmI(post, myName);
+    if (!post.n[me]) post.n[me] = myName;
+    opened = JSON.parse(JSON.stringify(post));
+    render();
+  }
+
+  function render() { post.g === "nc" ? renderNC() : renderBC(); }
+
+  // ---------- noughts & crosses ----------
+  function renderNC() {
+    document.getElementById("title").textContent = "Noughts & crosses";
+    const mine = me === 0 ? "t" : "x", sym = (m) => (m === "t" ? "✓" : "✗");
+    const turn = P.toMove(post.b, post.s), line = P.winLine(post.b), over = P.ncOver(post.b);
+    const moved = post.b !== opened.b && (turn !== mine || over);
+    let status;
+    if (line) status = post.b[line[0]] === mine ? "you won!!" : `${esc(them())} won`;
+    else if (over) status = "draw!";
+    else if (turn === mine) status = `your turn: tap a square for ${sym(mine)}`;
+    else status = moved ? "now send it, then wait for theirs" : `waiting for ${esc(them())}'s move…`;
+    const tickName = post.n[0] || "your friend", crossName = post.n[1] || "your friend";
+    app.innerHTML = `<p class="status">${status}</p><div id="board"></div>
+      <p class="scoreline">${esc(tickName)} ✓ ${post.k[0]} · ${esc(crossName)} ✗ ${post.k[1]}${post.k[2] ? " · draws " + post.k[2] : ""}</p>
+      <div id="acts"></div>`;
+    const board = document.getElementById("board");
+    [...post.b].forEach((c, i) => {
+      const b = document.createElement("button");
+      b.textContent = c === "." ? "" : sym(c); if (c !== ".") b.classList.add(c);
+      if (line && line.includes(i)) b.classList.add("win");
+      b.setAttribute("aria-label", `row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}${c === "." ? "" : ", " + (c === "t" ? "tick" : "cross")}`);
+      b.addEventListener("click", () => {
+        if (over || turn !== mine || post.b[i] !== ".") return;
+        post.b = post.b.slice(0, i) + mine + post.b.slice(i + 1);
+        const w = P.winLine(post.b);
+        if (w) post.k[post.b[w[0]] === "t" ? 0 : 1]++; else if (!post.b.includes(".")) post.k[2]++;
+        render();
+      });
+      board.appendChild(b);
+    });
+    const acts = document.getElementById("acts");
+    if (moved) {
+      acts.innerHTML += `<button class="go" id="send">send to ${esc(them())} →</button>`;
+      const changed = [...post.b].map((c, i) => (c !== opened.b[i] ? i : -1)).filter((i) => i >= 0);
+      if (changed.length === 1 && opened.b[changed[0]] === "." && post.s === opened.s) acts.innerHTML += ` <button class="small" id="undo">rub out</button>`;
+    }
+    if (over) acts.innerHTML += `<button class="go" id="again">again →</button>`;
+    const on = (id, f) => { const el = document.getElementById(id); if (el) el.addEventListener("click", f); };
+    on("send", () => send(over ? "Noughts & crosses: see how our game ended ✓✗" : `Your move! Noughts & crosses with ${myName} ✓✗`));
+    on("undo", () => { post.b = opened.b; post.k = opened.k.slice(); render(); });
+    on("again", () => { post.s = post.s === "t" ? "x" : "t"; post.b = "........."; render(); });
+  }
+
+  // ---------- book cricket ----------
+  let lastPage = null, flipping = false;
+  function renderBC() {
+    document.getElementById("title").textContent = "Book cricket";
+    const t0 = (post.n[0] || "FRIEND") + " XI", t1 = (post.n[1] || "FRIEND") + " XI";
+    const first = P.innings(post.p || []), target = first.runs + 1;
+    const chase = post.q ? P.innings(post.q, target) : null;
+    const myInnings = (chase === null) === (me === 0);
+    const cur = chase || first, curTeam = chase ? t1 : t0;
+    const card = (inn, chasing) => {
+      const names = chasing ? ["Dada", "Viru", "Chintu"] : ["Sachin", "Ajay", "Me"];
+      const rows = inn.batters.map((bs, i) => {
+        if (!bs.length && i > inn.wickets) return "";
+        const name = names[i] === "Me" && !myInnings ? them() : names[i];
+        const runs = bs.reduce((a, b) => a + (b === "W" ? 0 : b === "nb" ? 1 : b), 0);
+        const out = bs[bs.length - 1] === "W";
+        return `<tr><td><b>${esc(name)}</b></td><td class="balls">${bs.map((b) => b === "W" ? '<span style="color:var(--red)">W</span>' : b === "nb" ? "1nb" : b).join(" ")}</td><td>${bs.length ? runs + (out ? "" : "*") : "–"}</td></tr>`;
+      }).join("");
+      return `<table class="card">${rows}<tr><td><b>Total</b></td><td><b>${inn.runs}/${inn.wickets}</b></td><td class="note">${Math.floor(inn.legal / 6)}.${inn.legal % 6} ov</td></tr></table>`;
+    };
+    let html = `<p class="status"><b>${esc(t0)} vs ${esc(t1)}</b></p>`;
+    if (chase) html += `<p class="note">${esc(t0)} ${first.runs}/${first.wickets} (${Math.floor(first.legal / 6)}.${first.legal % 6})</p>`;
+    if (!cur.over) {
+      html += `<p class="note">${chase ? `${esc(t1)} need ${Math.max(target - chase.runs, 0)} off ${18 - chase.legal}` : `${esc(t0)} batting`}</p>`;
+      if (myInnings) {
+        const call = lastPage == null ? "" : { W: "OUT!!", nb: "no ball! +1", 6: "6!! SIXER", 4: "4!! FOUR" }[P.ball(lastPage)] ?? P.ball(lastPage);
+        html += `<div><span class="page" id="flip" role="button" aria-label="flip the book"><small>Page No.</small><b id="pg">${lastPage ?? "?"}</b></span>
+          <span class="call">${call}</span><p class="note">tap the book to flip ↻</p></div>`;
+      } else {
+        html += `<p class="note">${esc(curTeam)} bats on their phone…</p>`;
+      }
+    }
+    html += card(cur, !!chase);
+    if (first.over && !chase) {
+      html += `<p class="big" style="font-size:22px">innings over!! target ${target}</p>`;
+      if (me === 0) html += `<button class="go" id="send">send it to ${esc(them())} to chase →</button><p class="note">they bat their innings (in the app, or here), then send the result back.</p>`;
+      else html += `<button class="go" id="bat">our turn to bat →</button>`;
+    }
+    let result = "";
+    if (chase && chase.over) {
+      const iFirst = me === 0;
+      if (chase.runs > first.runs) { const w = 3 - chase.wickets; result = `${t1} won by ${w} wkt${w === 1 ? "" : "s"}`; html += `<p class="big">${iFirst ? esc(result) : "WON!! by " + w + " wkt" + (w === 1 ? "" : "s")}</p>`; }
+      else if (chase.runs === first.runs) { result = "tie!!"; html += `<p class="big">TIE!!</p>`; }
+      else { const r = first.runs - chase.runs; result = `${t0} won by ${r} run${r === 1 ? "" : "s"}`; html += `<p class="big">${iFirst ? "WON!! by " + r + " run" + (r === 1 ? "" : "s") : esc(result)}</p>`; }
+      if (me === 1) html += `<button class="go" id="send">send the result to ${esc(them())} →</button>`;
+      else html += `<button class="go" id="new">play again →</button>`;
+    }
+    app.innerHTML = html;
+    const on = (id, f) => { const el = document.getElementById(id); if (el) el.addEventListener("click", f); };
+    on("flip", flip);
+    on("bat", () => { post.q = []; lastPage = null; render(); });
+    on("new", () => { post = { g: "bc", n: [myName, post.n[1 - me]], p: [] }; me = 0; opened = JSON.parse(JSON.stringify(post)); lastPage = null; render(); });
+    on("send", () => send(chase && chase.over ? `Book cricket: ${result} 🏏` : `Book cricket: ${t0} made ${first.runs}/${first.wickets}. Can you chase ${target}? 🏏`));
+  }
+  async function flip() {
+    if (flipping) return; flipping = true;
+    const page = (Math.floor(Math.random() * 100) + 1) * 2;
+    const pg = document.getElementById("pg");
+    for (let i = 0; i < 7 && pg; i++) { pg.textContent = (Math.floor(Math.random() * 100) + 1) * 2; await new Promise((r) => setTimeout(r, 60)); }
+    if (post.q) post.q.push(page); else post.p.push(page);
+    lastPage = page; flipping = false; render();
+  }
+
+  if (!post) start(location.hash.length > 1);
+  else if (!post.n[P.whoseTurn(post)] && !myName) askName();
+  else begin();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["JLXF7642XY.com.akashkhanna.thelastpage"],
+        "components": [
+          { "/": "/play/*", "#": "?*", "comment": "your-turn links (noughts & crosses, book cricket)" },
+          { "/": "/hangman/*", "#": "?*", "comment": "a friend's word or film to guess" },
+          { "/": "/join/*", "#": "?*", "comment": "join a friend's phone nearby" },
+          { "/": "/test/sudoku.html", "#": "?*", "comment": "today's sudoku" },
+          { "/": "/test/dots.html", "#": "?*", "comment": "today's dot to dot" },
+          { "/": "/test/trail.html", "#": "?*", "comment": "today's word trail" }
+        ]
+      }
+    ]
+  }
+}
