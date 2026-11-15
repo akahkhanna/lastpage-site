@@ -29,9 +29,9 @@
     };
   }
 
-  // Days since 1 Nov 2026 on this phone's own calendar (changes at local midnight).
+  // Days since 1 Nov 2026 in UTC, like the app: the same puzzles for everyone at the same moment.
   function dayFor(date) {
-    const today = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    const today = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
     return Math.max(0, Math.round((today - Date.UTC(2026, 10, 1)) / 86400000));
   }
 

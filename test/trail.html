@@ -41,7 +41,7 @@
 <script>
 (function () {
   const W = window.WordTrail, N = W.SIZE;
-  const dayFor = (d) => Math.max(0, Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 10, 1)) / 86400000));
+  const dayFor = (d) => Math.max(0, Math.round((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(2026, 10, 1)) / 86400000));
   const today = dayFor(new Date());
   const fromLink = parseInt(location.hash.slice(1), 10);
   const day = fromLink >= 1 && fromLink - 1 <= today ? fromLink - 1 : today;
