@@ -32,7 +32,11 @@
   .clock.low { color: var(--red); }
   #by { width: 160px; }
   [hidden] { display: none !important; }
-</style></head>
+</style><link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+</head>
 <body><main>
 
 <section id="hub" hidden>

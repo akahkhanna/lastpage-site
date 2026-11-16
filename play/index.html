@@ -10,7 +10,6 @@
 <meta property="og:site_name" content="That Last Page">
 <meta property="og:title" content="Your turn! 🏏 ✓✗">
 <meta property="og:description" content="Noughts & crosses or book cricket, a turn at a time. Tap to play, no app needed.">
-<meta name="theme-color" content="#fbfaf6">
 <link rel="stylesheet" href="../test/test.css">
 <style>
   #board { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 300px; aspect-ratio: 1; margin: 10px 0; position: relative; }
@@ -33,6 +32,10 @@
   .note { font: 400 19px/28px "Caveat", cursive; color: var(--pencil); margin: 0; }
   input.name { width: 200px; }
 </style>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
 </head>
 <body>
 <main>

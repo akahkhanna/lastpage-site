@@ -1,0 +1,14 @@
+{
+  "name": "That Last Page",
+  "short_name": "Last Page",
+  "description": "The games from the back of a school notebook: play the family live, today's puzzles, tests from Dadi.",
+  "start_url": "/games/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf6",
+  "theme_color": "#fbfaf6",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

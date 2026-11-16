@@ -1,5 +1,9 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
+<script>
+  // A room code in the link: play in the browser straight away (the app opens such links itself).
+  if (/^#[A-HJ-NP-Z2-9]{6}$/i.test(location.hash)) location.replace("../play/#r-" + location.hash.slice(1).toUpperCase());
+</script>
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Join a game – That Last Page</title><link rel="stylesheet" href="../style.css">
@@ -8,14 +12,18 @@
 <style>
   .open { display: inline-block; margin: 1em 0; padding: .7em 1.2em; border-radius: 10px;
           background: #1f3a93; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
-</style></head>
+</style><link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+</head>
 <body><main>
 <h1>Your friend wants to play</h1>
 <p id="what">Join their game in That Last Page.</p>
 <a class="open" href="https://apps.apple.com/app/id6831963769">get That Last Page (iPhone) →</a>
 <p>Once it's installed, go back to the message and <b>tap the link again</b>: the app opens and joins your friend's game. Their phone needs to still be on the game.</p>
 <p class="small">Already have the app and still seeing this page? Press and hold the link and choose <b>Open in “That Last Page”</b>.</p>
-<p class="small">Games between phones go through Apple's Game Center: both phones need to be signed in (Settings › Game Center).</p>
+<p class="small">No iPhone? <a id="web" href="../play/#live">play right here in the browser →</a></p>
 <p class="small"><a href="../">That Last Page</a> · <a href="../privacy.html">Privacy</a></p>
 </main>
 <script>

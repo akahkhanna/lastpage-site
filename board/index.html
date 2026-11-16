@@ -12,7 +12,11 @@
   table.board td.best { color: var(--red); font-weight: 700; }
   table.board td.none { color: rgba(95,95,95,.5); }
   .fams button.on { color: var(--red); font-weight: 700; }
-</style></head>
+</style><link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+</head>
 <body><main>
   <h1>FAMILY BOARD</h1>
   <p class="pencil" id="intro">today's puzzle times, by name. Fastest on a puzzle = 1 win; a new race every Monday.</p>

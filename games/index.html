@@ -10,7 +10,11 @@
   .game { display: block; padding: .7em 0; border-bottom: 1px solid rgba(0,0,0,.08); text-decoration: none; }
   .game b { font-size: 1.15rem; }
   .game span { display: block; color: #666; font-size: .95rem; margin-top: .15em; }
-</style></head>
+</style><link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+</head>
 <body><main>
 <h1>Games you can play here</h1>
 <p>No app needed: these work in any browser, on any phone.</p>

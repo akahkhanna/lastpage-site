@@ -10,12 +10,15 @@
 <meta property="og:site_name" content="That Last Page">
 <meta property="og:title" content="Today's dot to dot — can you beat my time?">
 <meta property="og:description" content="One line through every square, passing the numbers in order. No app needed.">
-<meta name="theme-color" content="#fbfaf6">
 <link rel="stylesheet" href="test.css">
 <style>
   #grid { width: 100%; max-width: 420px; aspect-ratio: 1; touch-action: none; display: block; margin: 10px 0; }
   .done { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 6px 0; }
 </style>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
 </head>
 <body>
 <main>

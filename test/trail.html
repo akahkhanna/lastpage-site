@@ -10,7 +10,6 @@
 <meta property="og:site_name" content="That Last Page">
 <meta property="og:title" content="Today's word trail — can you beat my time?">
 <meta property="og:description" content="Find 4 hidden words through touching letters, using every letter once. No app needed.">
-<meta name="theme-color" content="#fbfaf6">
 <link rel="stylesheet" href="test.css">
 <style>
   #grid { width: 100%; max-width: 380px; aspect-ratio: 1; touch-action: none; display: block; margin: 10px 0; }
@@ -18,6 +17,10 @@
   .done { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 6px 0; }
   .shake { animation: shake .25s; } @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 </style>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<meta name="theme-color" content="#fbfaf6">
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
 </head>
 <body>
 <main>
