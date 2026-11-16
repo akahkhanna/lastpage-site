@@ -12,3 +12,9 @@ class_name = "Box"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Box"]
+
+[vars]
+APNS_TEAM_ID = "JLXF7642XY"
+APNS_KEY_ID = "M2PZN5H6DN"
+APNS_TOPIC = "com.akashkhanna.thelastpage"
+# APNS_KEY (the .p8 contents) is a secret: `wrangler secret put APNS_KEY < AuthKey_M2PZN5H6DN.p8`

@@ -8,6 +8,10 @@
 //   PUT  /h/CODE       body: homework JSON, same id, a later stage → { ok }
 //   GET  /a/ADDRESS    → [{ code, stage, from, at }]  newest first
 //
+// Notifications: a phone registers its push token against its address; every delivery to
+// that address also sends a push through Apple (APNs), so homework arrives with a knock.
+//   POST /a/ADDRESS/token   body: { token, env: "prod"|"sandbox" }  → { ok }
+//
 // Families: a named group of notebooks, joined once by link, so homework can be sent to
 // "Vihaan" rather than to an address. Expire 180 days after the last change.
 //   POST /f                 body: { name, member: { name, addr } }   → { code }
@@ -47,10 +51,18 @@ export default {
         if (request.method === "GET") return await box(env, "h:" + code).fetch("https://box/get");
         if (request.method === "PUT") return await updateHomework(request, env, code);
       }
-      if (parts[0] === "a" && parts.length === 2 && request.method === "GET") {
+      if (parts[0] === "a" && parts.length >= 2) {
         const addr = parts[1].toUpperCase();
         if (!ADDRESS.test(addr)) return fail(400, "not an address");
-        return await box(env, "a:" + addr).fetch("https://box/inbox-get");
+        if (parts.length === 2 && request.method === "GET") return await box(env, "a:" + addr).fetch("https://box/inbox-get");
+        if (parts.length === 3 && parts[2] === "token" && request.method === "POST") {
+          const body = await request.text();
+          if (body.length > 1024) return fail(400, "too big");
+          let t; try { t = JSON.parse(body); } catch { return fail(400, "not JSON"); }
+          if (!/^[0-9a-f]{32,200}$/i.test(t.token || "")) return fail(400, "bad token");
+          const envName = t.env === "sandbox" ? "sandbox" : "prod";
+          return await box(env, "a:" + addr).fetch("https://box/token-add", { method: "POST", body: JSON.stringify({ token: t.token.toLowerCase(), env: envName }) });
+        }
       }
       if (parts[0] === "f" && parts.length === 1 && request.method === "POST") return await createFamily(request, env);
       if (parts[0] === "f" && parts.length >= 2) {
@@ -159,8 +171,60 @@ async function createFamily(request, env) {
 }
 
 async function deliver(env, address, hw) {
-  const entry = { code: hw.code, stage: stageOf(hw), from: stageOf(hw) === "answered" ? (hw.by || "") : hw.from, at: hw.at };
-  await box(env, "a:" + address).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
+  const stage = stageOf(hw);
+  const entry = { code: hw.code, stage, from: stage === "answered" ? (hw.by || "") : hw.from, at: hw.at };
+  const r = await box(env, "a:" + address).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
+  const { tokens = [] } = await r.json();
+  if (!tokens.length || !env.APNS_KEY) return;
+  const n = hw.qs.length;
+  const text = stage === "set" ? { title: `Homework from ${hw.from} ✏️`, body: `${n} question${n === 1 ? "" : "s"}${hw.mins ? ", " + hw.mins + " min" : ""}${hw.note ? ". \"" + hw.note + "\"" : ""}` }
+    : stage === "answered" ? { title: `${hw.by || "Someone"} has handed in their homework`, body: `${n} answer${n === 1 ? "" : "s"} to mark` }
+    : { title: `${hw.from} has marked your homework`, body: `${(hw.m || []).filter(Boolean).length}/${n}${hw.remark ? " — " + hw.remark : ""}` };
+  const dead = [];
+  for (const t of tokens) {
+    const status = await pushAPNs(env, t, { aps: { alert: text, sound: "default" }, code: hw.code, stage });
+    if (status === 410 || status === 400) dead.push(t.token);
+  }
+  if (dead.length) await box(env, "a:" + address).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify(dead) });
+}
+
+// ---------- Apple push (APNs over HTTP/2, signed with the team's .p8 key) ----------
+let apnsJWT = { value: null, at: 0 };
+const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+async function apnsToken(env) {
+  // Apple wants a fresh token at least hourly, and not more often than every 20 minutes.
+  if (apnsJWT.value && Date.now() - apnsJWT.at < 50 * 60e3) return apnsJWT.value;
+  const pem = env.APNS_KEY.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const enc = new TextEncoder();
+  const header = b64url(enc.encode(JSON.stringify({ alg: "ES256", kid: env.APNS_KEY_ID })));
+  const claims = b64url(enc.encode(JSON.stringify({ iss: env.APNS_TEAM_ID, iat: Math.floor(Date.now() / 1000) })));
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc.encode(header + "." + claims));
+  apnsJWT = { value: header + "." + claims + "." + b64url(sig), at: Date.now() };
+  return apnsJWT.value;
+}
+async function pushAPNs(env, t, payload) {
+  const host = t.env === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
+  try {
+    const r = await fetch(`${host}/3/device/${t.token}`, {
+      method: "POST",
+      headers: {
+        authorization: "bearer " + (await apnsToken(env)),
+        "apns-topic": env.APNS_TOPIC || "com.akashkhanna.thelastpage",
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "apns-expiration": String(Math.floor(Date.now() / 1000) + 86400),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (r.status !== 200) console.log("apns", r.status, await r.text());
+    return r.status;
+  } catch (e) {
+    console.log("apns failed", String(e));
+    return 0;
+  }
 }
 
 export class Box {
@@ -184,6 +248,20 @@ export class Box {
       list.unshift(entry);
       await this.storage.put("inbox", list.slice(0, 50));
       await this.storage.setAlarm(Date.now() + INBOX_DAYS * 86400e3);
+      return json({ ok: true, tokens: (await this.storage.get("tokens")) || [] });
+    }
+    if (op === "/token-add") {
+      const t = await request.json();
+      let tokens = ((await this.storage.get("tokens")) || []).filter((x) => x.token !== t.token);
+      tokens.unshift({ token: t.token, env: t.env, at: Date.now() });
+      await this.storage.put("tokens", tokens.slice(0, 5));   // a few phones per address at most
+      await this.storage.setAlarm(Date.now() + INBOX_DAYS * 86400e3);
+      return json({ ok: true });
+    }
+    if (op === "/token-drop") {
+      const dead = new Set(await request.json());
+      const tokens = ((await this.storage.get("tokens")) || []).filter((x) => !dead.has(x.token));
+      await this.storage.put("tokens", tokens);
       return json({ ok: true });
     }
     if (op === "/inbox-get") return json((await this.storage.get("inbox")) || []);
