@@ -45,6 +45,7 @@
   </footer>
 </main>
 <script src="play.js"></script>
+<script src="room.js"></script>
 <script>
 (function () {
   const P = window.Play, app = document.getElementById("app");
@@ -66,7 +67,8 @@
   function start(broken) {
     document.getElementById("title").textContent = "Play a friend";
     app.innerHTML = `${broken ? '<p class="status" style="color:var(--red)">That link looks broken. Ask for it again, or start a new game:</p>' : ""}
-      <p>Take turns by sending links in a chat. No app needed.</p>
+      <p><a class="go" style="text-decoration:none" href="#live">play live, right now →</a> <span class="note">(against the app or another browser)</span></p>
+      <p>Or take turns by sending links in a chat. No app needed.</p>
       <p>your name: <input class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></p>
       <button class="go" data-g="nc">noughts & crosses →</button><br>
       <button class="go" data-g="bc">book cricket →</button>`;
@@ -206,9 +208,32 @@
     lastPage = page; flipping = false; render();
   }
 
+  // ---------- live rooms (against the app, or another browser) ----------
+  function live(roomCode) {
+    const go = (name) => {
+      myName = name; localStorage.setItem(NAME_KEY, name);
+      document.getElementById("title").textContent = "Play live";
+      if (roomCode) window.Room.run(app, roomCode, name);
+      else {
+        app.innerHTML = `<p class="status">start a live game:</p>
+          <p><button class="go" data-live="noughtsCrosses">noughts & crosses →</button><br><button class="go" data-live="bookCricket">book cricket →</button></p>
+          <p class="note">they join in the app or in any browser, by link or by name (if you're in a family together).</p>`;
+        app.querySelectorAll("[data-live]").forEach((b) => b.addEventListener("click", () => window.Room.start(app, b.dataset.live, name)));
+      }
+    };
+    if (myName) return go(myName);
+    app.innerHTML = `<p class="status">your name: <input class="name" id="nm" maxlength="20" placeholder="your name" autofocus></p><button class="go" id="ok">play →</button>`;
+    const ok = () => { const n = document.getElementById("nm").value.trim().toUpperCase().slice(0, 20); if (n) go(n); };
+    document.getElementById("ok").addEventListener("click", ok);
+    document.getElementById("nm").addEventListener("keydown", (e) => { if (e.key === "Enter") ok(); });
+  }
+
   // Another link opened in the same tab: start again with that game.
   addEventListener("hashchange", () => location.reload());
-  if (!post) start(location.hash.length > 1);
+  const h = location.hash.slice(1);
+  if (/^r-[A-HJ-NP-Z2-9]{6}$/i.test(h)) live(h.slice(2));
+  else if (h === "live") live(null);
+  else if (!post) start(location.hash.length > 1);
   else if (!post.n[P.whoseTurn(post)] && !myName) askName();
   else begin();
 })();

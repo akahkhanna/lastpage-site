@@ -12,6 +12,15 @@
 // that address also sends a push through Apple (APNs), so homework arrives with a knock.
 //   POST /a/ADDRESS/token   body: { token, env: "prod"|"sandbox" }  → { ok }
 //
+// Rooms: a live game between phones and browsers. One Durable Object per room keeps the
+// ordered log of game messages and relays them over WebSockets; anyone who drops out
+// reconnects with the same id and replays what they missed. Rooms expire a day after the
+// last message. The messages themselves are the app's NearbyMessage JSON, untouched.
+//   POST /r                 body: { game, players, host: { id, name } }  → { code }
+//   GET  /r/CODE            → { code, game, players, members: [{ id, name, label }] }
+//   WS   /r/CODE?id=…&name=…&since=N   (a WebSocket; see Room below for the frames)
+//   POST /r/CODE/invite     body: { addr, from }  → delivers "come and play" to an address (+ push)
+//
 // Families: a named group of notebooks, joined once by link, so homework can be sent to
 // "Vihaan" rather than to an address. Expire 180 days after the last change.
 //   POST /f                 body: { name, member: { name, addr } }   → { code }
@@ -27,6 +36,8 @@ const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const MAX_BODY = 16 * 1024;
 const STAGES = ["set", "answered", "marked"];
 const HOMEWORK_DAYS = 30, INBOX_DAYS = 60, FAMILY_DAYS = 180, MAX_MEMBERS = 30;
+const ROOM_HOURS = 24, ROOM_LOG_MAX = 3000, ROOM_MSG_MAX = 8 * 1024;
+const GAMES = new Set(["bookCricket", "noughtsCrosses", "dotsBoxes", "hangman", "bollywood", "hollywood", "namePlace"]);
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -63,6 +74,14 @@ export default {
           const envName = t.env === "sandbox" ? "sandbox" : "prod";
           return await box(env, "a:" + addr).fetch("https://box/token-add", { method: "POST", body: JSON.stringify({ token: t.token.toLowerCase(), env: envName }) });
         }
+      }
+      if (parts[0] === "r" && parts.length === 1 && request.method === "POST") return await createRoom(request, env);
+      if (parts[0] === "r" && parts.length >= 2) {
+        const code = parts[1].toUpperCase();
+        if (!CODE.test(code)) return fail(400, "not a code");
+        const room = env.ROOM.get(env.ROOM.idFromName(code));
+        if (parts.length === 2) return await room.fetch(request);   // GET info, or the WebSocket upgrade
+        if (parts.length === 3 && parts[2] === "invite" && request.method === "POST") return await inviteToRoom(request, env, code, room);
       }
       if (parts[0] === "f" && parts.length === 1 && request.method === "POST") return await createFamily(request, env);
       if (parts[0] === "f" && parts.length >= 2) {
@@ -145,6 +164,49 @@ async function updateHomework(request, env, code) {
 }
 
 const cleanName = (n) => String(n || "").trim().slice(0, 20);
+
+// ---------- rooms ----------
+async function createRoom(request, env) {
+  const text = await request.text();
+  if (text.length > 2048) return fail(400, "too big");
+  let body; try { body = JSON.parse(text); } catch { return fail(400, "not JSON"); }
+  if (!GAMES.has(body.game)) return fail(400, "which game?");
+  const players = Math.min(Math.max(parseInt(body.players, 10) || 2, 2), 8);
+  const host = body.host && typeof body.host.id === "string" && body.host.id ? { id: String(body.host.id).slice(0, 40), name: cleanName(body.host.name) || "Someone" } : null;
+  if (!host) return fail(400, "who's hosting?");
+  let code;
+  for (let i = 0; i < 5; i++) {
+    const c = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => ALPHABET[b % ALPHABET.length]).join("");
+    const r = await env.ROOM.get(env.ROOM.idFromName(c)).fetch("https://room/");
+    if (r.status === 404) { code = c; break; }
+  }
+  if (!code) return fail(503, "try again");
+  const room = env.ROOM.get(env.ROOM.idFromName(code));
+  await room.fetch("https://room/create", { method: "POST", body: JSON.stringify({ code, game: body.game, players, host }) });
+  return json({ code });
+}
+
+async function inviteToRoom(request, env, code, room) {
+  const text = await request.text();
+  if (text.length > 1024) return fail(400, "too big");
+  let body; try { body = JSON.parse(text); } catch { return fail(400, "not JSON"); }
+  const addr = String(body.addr || "").toUpperCase();
+  if (!ADDRESS.test(addr)) return fail(400, "bad address");
+  const r = await room.fetch("https://room/");
+  if (r.status !== 200) return fail(404, "no such room");
+  const info = await r.json();
+  const from = cleanName(body.from) || "Someone";
+  const entry = { kind: "room", code, stage: "set", from, game: info.game, at: Date.now() };
+  const ir = await box(env, "a:" + addr).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
+  const { tokens = [] } = await ir.json();
+  const title = `${from} wants to play ${GAME_NAMES[info.game] || "a game"} ✏️`;
+  for (const t of tokens) {
+    const status = await pushAPNs(env, t, { aps: { alert: { title, body: "tap to join them" }, sound: "default" }, room: code, game: info.game });
+    if (status === 410 || status === 400) await box(env, "a:" + addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+  }
+  return json({ ok: true });
+}
+const GAME_NAMES = { bookCricket: "book cricket", noughtsCrosses: "noughts & crosses", dotsBoxes: "dots & boxes", hangman: "hangman", bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "name place animal thing" };
 function cleanMember(m) {
   if (!m) return null;
   const name = cleanName(m.name), addr = String(m.addr || "").toUpperCase();
@@ -301,4 +363,129 @@ export class Box {
 
   /// Nothing's touched it for a long while: gone.
   async alarm() { await this.storage.deleteAll(); }
+}
+
+
+/// One live game. Members are known by an id the phone/browser keeps (its homework address,
+/// or a random one), so a dropped connection comes back to the same seat. Frames (JSON text):
+///   client → room: { t: "msg", m: <NearbyMessage> }   |   { t: "since", n }   |   { t: "ping" }
+///   room → client: { t: "welcome", code, game, players, you, host, members: [labels], seq }
+///                  { t: "members", members, host }      (someone joined or went)
+///                  { t: "msg", seq, from: label, m }    (everyone but the sender)
+///                  { t: "log", msgs: [{ seq, from, m }] }   (replay after "since")
+///                  { t: "gone", label }
+export class Room {
+  constructor(state) { this.state = state; this.storage = state.storage; }
+
+  async meta() { return this.storage.get("meta"); }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (url.pathname === "/create" && request.method === "POST") {
+      const body = await request.json();
+      const meta = { code: body.code, game: body.game, players: body.players, hostID: body.host.id, members: [], seq: 0, at: Date.now() };
+      await this.storage.put("meta", meta);
+      await this.storage.put("log", []);
+      await this.storage.setAlarm(Date.now() + ROOM_HOURS * 3600e3);
+      return json({ ok: true });
+    }
+    const meta = await this.meta();
+    if (!meta) return fail(404, "no such room");
+    if (request.headers.get("Upgrade") === "websocket") return this.join(request, meta);
+    return json({ code: meta.code, game: meta.game, players: meta.players,
+                  members: meta.members.map((m) => ({ label: m.label, here: this.isHere(m.id) })), host: this.labelOf(meta, meta.hostID) });
+  }
+
+  labelOf(meta, id) { const m = meta.members.find((x) => x.id === id); return m ? m.label : null; }
+  isHere(id) { return this.state.getWebSockets(id).length > 0; }
+  sockets() { return this.state.getWebSockets(); }
+
+  async join(request, meta) {
+    const url = new URL(request.url);
+    const id = String(url.searchParams.get("id") || "").slice(0, 40);
+    const name = cleanName(url.searchParams.get("name")) || "Someone";
+    const since = parseInt(url.searchParams.get("since") || "0", 10) || 0;
+    if (!id) return fail(400, "who are you?");
+    let member = meta.members.find((m) => m.id === id);
+    if (!member) {
+      if (meta.members.length >= meta.players) return fail(409, "room's full");
+      // Two RAHULs: the second becomes "RAHUL (2)" (same rule as the app).
+      let label = name, n = 2;
+      while (meta.members.some((m) => m.label.toLowerCase() === label.toLowerCase())) label = `${name} (${n++})`;
+      member = { id, name, label, at: Date.now() };
+      meta.members.push(member);
+      meta.at = Date.now();
+      await this.storage.put("meta", meta);
+    }
+    const pair = new WebSocketPair();
+    const [client, server] = [pair[0], pair[1]];
+    this.state.acceptWebSocket(server, [id]);
+    console.log("room join", member.label, "now", this.sockets().length, "socket(s)");
+    server.serializeAttachment({ id, label: member.label });
+    const members = meta.members.map((m) => m.label);
+    server.send(JSON.stringify({ t: "welcome", code: meta.code, game: meta.game, players: meta.players, you: member.label,
+                                 host: this.labelOf(meta, meta.hostID), members, seq: meta.seq }));
+    if (since < meta.seq) {
+      const log = (await this.storage.get("log")) || [];
+      server.send(JSON.stringify({ t: "log", msgs: log.filter((e) => e.seq > since && e.from !== member.label) }));
+    }
+    this.broadcast({ t: "members", members, host: this.labelOf(meta, meta.hostID) }, null);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  broadcast(obj, exceptID) {
+    const text = JSON.stringify(obj);
+    console.log("room broadcast", obj.t, "to", this.sockets().length, "socket(s)", this.sockets().map((w) => (w.deserializeAttachment() || {}).label).join(","));
+    for (const ws of this.sockets()) {
+      const a = ws.deserializeAttachment();
+      if (exceptID && a && a.id === exceptID) continue;
+      try { ws.send(text); } catch {}
+    }
+  }
+
+  async webSocketMessage(ws, data) {
+    const a = ws.deserializeAttachment();
+    if (typeof data !== "string" || data.length > ROOM_MSG_MAX) return;
+    let f; try { f = JSON.parse(data); } catch { return; }
+    if (f.t === "ping") { ws.send('{"t":"pong"}'); return; }
+    const meta = await this.meta();
+    if (!meta) return;
+    if (f.t === "since") {
+      const log = (await this.storage.get("log")) || [];
+      ws.send(JSON.stringify({ t: "log", msgs: log.filter((e) => e.seq > (f.n || 0) && e.from !== a.label) }));
+      return;
+    }
+    if (f.t === "msg" && f.m && typeof f.m === "object") {
+      meta.seq += 1;
+      meta.at = Date.now();
+      const entry = { seq: meta.seq, from: a.label, m: f.m };
+      const log = (await this.storage.get("log")) || [];
+      log.push(entry);
+      if (log.length > ROOM_LOG_MAX) log.splice(0, log.length - ROOM_LOG_MAX);
+      await this.storage.put("log", log);
+      await this.storage.put("meta", meta);
+      await this.storage.setAlarm(Date.now() + ROOM_HOURS * 3600e3);
+      this.broadcast({ t: "msg", seq: entry.seq, from: a.label, m: f.m }, a.id);
+      ws.send(JSON.stringify({ t: "ack", seq: entry.seq }));
+    }
+  }
+
+  async webSocketClose(ws, code, reason) { console.log("room close", (ws.deserializeAttachment() || {}).label, code, reason); await this.left(ws); }
+  async webSocketError(ws, error) { console.log("room error", (ws.deserializeAttachment() || {}).label, String(error)); await this.left(ws); }
+
+  /// A connection dropped. The seat stays (they may be back); the others are only told once
+  /// every connection of that member is gone.
+  async left(ws) {
+    const a = ws.deserializeAttachment();
+    try { ws.close(); } catch {}
+    if (!a || this.state.getWebSockets(a.id).length > 0) return;
+    const meta = await this.meta();
+    if (!meta) return;
+    this.broadcast({ t: "gone", label: a.label, members: meta.members.map((m) => m.label) }, a.id);
+  }
+
+  async alarm() {
+    for (const ws of this.sockets()) { try { ws.close(1000, "room closed"); } catch {} }
+    await this.storage.deleteAll();
+  }
 }

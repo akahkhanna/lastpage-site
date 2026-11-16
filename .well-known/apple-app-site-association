@@ -17,6 +17,11 @@
             "comment": "a friend's word or film to guess"
           },
           {
+            "/": "/r/*",
+            "#": "?*",
+            "comment": "a live game's room"
+          },
+          {
             "/": "/join/*",
             "#": "?*",
             "comment": "join a friend's phone nearby"
