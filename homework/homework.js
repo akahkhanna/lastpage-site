@@ -43,6 +43,14 @@
   }
   const isCode = (s) => CODE_RE.test((s || "").trim().toUpperCase());
   const cleanAddr = (s) => { const u = (s || "").trim().toUpperCase(); return ADDR_RE.test(u) ? u : null; };
+  // ---------- families: joined once, then names instead of addresses ----------
+  const families = () => { try { return JSON.parse(localStorage.getItem("lp.families") || "[]"); } catch { return []; } };
+  const saveFamily = (f) => { const all = families().filter((x) => x.code !== f.code); all.push(f); remember("lp.families", JSON.stringify(all)); };
+  const dropFamily = (code) => remember("lp.families", JSON.stringify(families().filter((x) => x.code !== code)));
+  const me = () => ({ name: (recall("lp.from") || "Someone").slice(0, 20), addr: myAddress() });
+  const others = () => { const seen = new Set(); return families().flatMap((f) => f.members).filter((m) => m.addr !== myAddress() && !seen.has(m.addr) && seen.add(m.addr)).sort((a, b) => a.name.localeCompare(b.name)); };
+  async function refreshFamilies() { for (const f of families()) { try { saveFamily(await api("GET", "/f/" + f.code)); } catch {} } }
+
   // This browser's homework address: made once from the name, kept here.
   function myAddress() {
     let a = recall("lp.address");
@@ -79,7 +87,16 @@
 
   // ---------- set ----------
   let qs = [{ q: "", k: "t" }], mins = 0, askedBy = null;
+  function renderChips() {
+    const list = others();
+    $("chips").hidden = !list.length;
+    const picked = cleanAddr($("to").value);
+    $("chips").innerHTML = list.map((m) => `<button class="choice ${picked === m.addr ? "on" : ""}" data-addr="${esc(m.addr)}">${esc(m.name)}</button>`).join("");
+  }
+  $("chips").addEventListener("click", (e) => { const b = e.target.closest("[data-addr]"); if (!b) return; $("to").value = cleanAddr($("to").value) === b.dataset.addr ? "" : b.dataset.addr; renderChips(); updateSend(); });
+  $("to").addEventListener("input", renderChips);
   function renderSet() {
+    renderChips();
     $("qs").innerHTML = qs.map((q, i) => `
       <div class="q">
         <div class="row q1"><b>${i + 1}.</b>
@@ -241,9 +258,33 @@
   });
 
   // ---------- routing ----------
+  function renderFamilies() {
+    const all = families();
+    $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">code ${f.code}</span><br><span class="pencil">${f.members.map((m) => m.addr === myAddress() ? esc(m.name) + " (me)" : esc(m.name)).join(" · ")}</span><br>
+      <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
+  }
+  $("famList").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-invite],[data-leave]"); if (!b) return;
+    if (b.dataset.invite) { const f = families().find((x) => x.code === b.dataset.invite); share(`Join our family "${f.name}" in That Last Page ✏️ then homework and games find you by name:`, location.origin + "/f/#" + f.code, "copiedFam", f.code); }
+    if (b.dataset.leave) { try { await api("POST", "/f/" + b.dataset.leave + "/leave", { addr: myAddress() }); } catch {} dropFamily(b.dataset.leave); renderFamilies(); }
+  });
+  $("startFam").addEventListener("click", async () => {
+    const name = $("famName").value.trim().slice(0, 20); if (!name) return;
+    if (!recall("lp.from")) { const n = prompt("Your name, as the family will see it:"); if (n) remember("lp.from", n.trim().slice(0, 20)); }
+    try { saveFamily(await api("POST", "/f", { name, member: me() })); $("famName").value = ""; renderFamilies(); }
+    catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = e.message; }
+  });
+  $("joinFam").addEventListener("click", () => joinFamily($("famCode").value));
+  async function joinFamily(code) {
+    code = (code || "").trim().toUpperCase(); if (!isCode(code)) return;
+    if (!recall("lp.from")) { const n = prompt("Your name, as the family will see it:"); if (n) remember("lp.from", n.trim().slice(0, 20)); }
+    try { saveFamily(await api("POST", "/f/" + code + "/join", me())); $("famCode").value = ""; renderFamilies(); }
+    catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "family " + code + ": " + e.message; }
+  }
   async function showHub() {
     show("hub");
     $("myAddr").textContent = myAddress();
+    renderFamilies(); refreshFamilies().then(renderFamilies);
     $("inboxList").innerHTML = "";
     try {
       const list = await api("GET", "/a/" + myAddress());
@@ -266,6 +307,9 @@
   (async () => {
   const raw = location.hash.slice(1);
   $("from").value = recall("lp.from");
+  if (raw.startsWith("f-") && isCode(raw.slice(2))) {
+    await showHub(); await joinFamily(raw.slice(2)); history.replaceState(null, "", location.pathname); return;
+  }
   if (isCode(raw)) {
     try { openPaper(await api("GET", "/h/" + raw.toUpperCase())); }
     catch (e) { await showHub(); $("hubNote").hidden = false; $("hubNote").textContent = "code " + raw.toUpperCase() + ": " + e.message; }

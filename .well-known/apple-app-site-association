@@ -32,6 +32,11 @@
             "comment": "homework by code"
           },
           {
+            "/": "/f/*",
+            "#": "?*",
+            "comment": "join a family"
+          },
+          {
             "/": "/test/sudoku.html",
             "#": "?*",
             "comment": "today's sudoku"

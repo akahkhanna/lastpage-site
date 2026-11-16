@@ -8,6 +8,13 @@
 //   PUT  /h/CODE       body: homework JSON, same id, a later stage → { ok }
 //   GET  /a/ADDRESS    → [{ code, stage, from, at }]  newest first
 //
+// Families: a named group of notebooks, joined once by link, so homework can be sent to
+// "Vihaan" rather than to an address. Expire 180 days after the last change.
+//   POST /f                 body: { name, member: { name, addr } }   → { code }
+//   GET  /f/CODE            → { code, name, members: [{ name, addr, at }] }
+//   POST /f/CODE/join       body: { name, addr }                    → family
+//   POST /f/CODE/leave      body: { addr }                          → family
+//
 // Addresses look like VIHAAN-7K2M (made on the phone; no account). Codes are 6 letters.
 
 const CODE = /^[A-HJ-NP-Z2-9]{6}$/;
@@ -15,7 +22,7 @@ const ADDRESS = /^[A-Z]{1,10}-[A-HJ-NP-Z2-9]{4}$/;
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const MAX_BODY = 16 * 1024;
 const STAGES = ["set", "answered", "marked"];
-const HOMEWORK_DAYS = 30, INBOX_DAYS = 60;
+const HOMEWORK_DAYS = 30, INBOX_DAYS = 60, FAMILY_DAYS = 180, MAX_MEMBERS = 30;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +51,18 @@ export default {
         const addr = parts[1].toUpperCase();
         if (!ADDRESS.test(addr)) return fail(400, "not an address");
         return await box(env, "a:" + addr).fetch("https://box/inbox-get");
+      }
+      if (parts[0] === "f" && parts.length === 1 && request.method === "POST") return await createFamily(request, env);
+      if (parts[0] === "f" && parts.length >= 2) {
+        const code = parts[1].toUpperCase();
+        if (!CODE.test(code)) return fail(400, "not a code");
+        const fam = box(env, "f:" + code);
+        if (parts.length === 2 && request.method === "GET") return await fam.fetch("https://box/family-get");
+        if (parts.length === 3 && request.method === "POST" && (parts[2] === "join" || parts[2] === "leave")) {
+          const body = await request.text();
+          if (body.length > 2048) return fail(400, "too big");
+          return await fam.fetch("https://box/family-" + parts[2], { method: "POST", body });
+        }
       }
       if (parts.length === 0) return json({ ok: true, what: "That Last Page: homework by code" });
       return fail(404, "nothing here");
@@ -113,6 +132,32 @@ async function updateHomework(request, env, code) {
   return json({ ok: true });
 }
 
+const cleanName = (n) => String(n || "").trim().slice(0, 20);
+function cleanMember(m) {
+  if (!m) return null;
+  const name = cleanName(m.name), addr = String(m.addr || "").toUpperCase();
+  return name && ADDRESS.test(addr) ? { name, addr } : null;
+}
+
+async function createFamily(request, env) {
+  const text = await request.text();
+  if (text.length > 2048) return fail(400, "too big");
+  let body; try { body = JSON.parse(text); } catch { return fail(400, "not JSON"); }
+  const name = cleanName(body.name), member = cleanMember(body.member);
+  if (!name) return fail(400, "no name");
+  if (!member) return fail(400, "bad member");
+  let code;
+  for (let i = 0; i < 5; i++) {
+    const c = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => ALPHABET[b % ALPHABET.length]).join("");
+    const r = await box(env, "f:" + c).fetch("https://box/family-get");
+    if (r.status === 404) { code = c; break; }
+  }
+  if (!code) return fail(503, "try again");
+  const family = { code, name, members: [{ ...member, at: Date.now() }], at: Date.now() };
+  await box(env, "f:" + code).fetch("https://box/family-put", { method: "POST", body: JSON.stringify(family) });
+  return json(family);
+}
+
 async function deliver(env, address, hw) {
   const entry = { code: hw.code, stage: stageOf(hw), from: stageOf(hw) === "answered" ? (hw.by || "") : hw.from, at: hw.at };
   await box(env, "a:" + address).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
@@ -142,6 +187,33 @@ export class Box {
       return json({ ok: true });
     }
     if (op === "/inbox-get") return json((await this.storage.get("inbox")) || []);
+    if (op === "/family-get") {
+      const f = await this.storage.get("family");
+      return f ? json(f) : fail(404, "no such family");
+    }
+    if (op === "/family-put") {
+      await this.storage.put("family", await request.json());
+      await this.storage.setAlarm(Date.now() + FAMILY_DAYS * 86400e3);
+      return json({ ok: true });
+    }
+    if (op === "/family-join" || op === "/family-leave") {
+      const f = await this.storage.get("family");
+      if (!f) return fail(404, "no such family");
+      let body; try { body = await request.json(); } catch { return fail(400, "not JSON"); }
+      const addr = String(body.addr || "").toUpperCase();
+      if (!ADDRESS.test(addr)) return fail(400, "bad address");
+      f.members = f.members.filter((m) => m.addr !== addr);
+      if (op === "/family-join") {
+        const name = cleanName(body.name);
+        if (!name) return fail(400, "no name");
+        if (f.members.length >= MAX_MEMBERS) return fail(409, "family's full");
+        f.members.push({ name, addr, at: Date.now() });
+      }
+      f.at = Date.now();
+      await this.storage.put("family", f);
+      await this.storage.setAlarm(Date.now() + FAMILY_DAYS * 86400e3);
+      return json(f);
+    }
     return fail(404, "?");
   }
 
