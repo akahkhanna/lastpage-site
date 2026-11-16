@@ -189,20 +189,24 @@ async function deliver(env, address, hw) {
 }
 
 // ---------- Apple push (APNs over HTTP/2, signed with the team's .p8 key) ----------
-let apnsJWT = { value: null, at: 0 };
+// Two keys: one for the App Store / TestFlight (production), one for Xcode builds (sandbox).
+let apnsJWT = { prod: { value: null, at: 0 }, sandbox: { value: null, at: 0 } };
 const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-async function apnsToken(env) {
+async function apnsToken(env, which) {
   // Apple wants a fresh token at least hourly, and not more often than every 20 minutes.
-  if (apnsJWT.value && Date.now() - apnsJWT.at < 50 * 60e3) return apnsJWT.value;
-  const pem = env.APNS_KEY.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  const cached = apnsJWT[which];
+  if (cached.value && Date.now() - cached.at < 50 * 60e3) return cached.value;
+  const keyPem = which === "sandbox" ? (env.APNS_KEY_SANDBOX || env.APNS_KEY) : env.APNS_KEY;
+  const keyID = which === "sandbox" ? (env.APNS_KEY_ID_SANDBOX || env.APNS_KEY_ID) : env.APNS_KEY_ID;
+  const pem = keyPem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
   const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
   const key = await crypto.subtle.importKey("pkcs8", der, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   const enc = new TextEncoder();
-  const header = b64url(enc.encode(JSON.stringify({ alg: "ES256", kid: env.APNS_KEY_ID })));
+  const header = b64url(enc.encode(JSON.stringify({ alg: "ES256", kid: keyID })));
   const claims = b64url(enc.encode(JSON.stringify({ iss: env.APNS_TEAM_ID, iat: Math.floor(Date.now() / 1000) })));
   const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc.encode(header + "." + claims));
-  apnsJWT = { value: header + "." + claims + "." + b64url(sig), at: Date.now() };
-  return apnsJWT.value;
+  apnsJWT[which] = { value: header + "." + claims + "." + b64url(sig), at: Date.now() };
+  return apnsJWT[which].value;
 }
 async function pushAPNs(env, t, payload) {
   const host = t.env === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
@@ -210,7 +214,7 @@ async function pushAPNs(env, t, payload) {
     const r = await fetch(`${host}/3/device/${t.token}`, {
       method: "POST",
       headers: {
-        authorization: "bearer " + (await apnsToken(env)),
+        authorization: "bearer " + (await apnsToken(env, t.env === "sandbox" ? "sandbox" : "prod")),
         "apns-topic": env.APNS_TOPIC || "com.akashkhanna.thelastpage",
         "apns-push-type": "alert",
         "apns-priority": "10",
