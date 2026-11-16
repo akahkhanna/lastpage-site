@@ -37,22 +37,28 @@
 
 <section id="hub" hidden>
   <h1>HOMEWORK</h1>
-  <p class="pencil">Anyone in the family can set some: Dadi, Papa, a cousin. Write the questions, send the link; they do it and send it back to you for marking. No app needed.</p>
-  <p class="pencil">my homework address: <b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
-    <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
-  <p class="small pencil">give it to Dadi: homework sent to it appears here by itself, and the marks come back the same way.</p>
-  <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
-  <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
-  <p class="note" id="hubNote" hidden></p>
+  <p class="pencil">Dadi, Papa, a cousin: anyone sets it, you do it, they mark it.</p>
   <div id="inboxList"></div>
-  <h2 style="color:var(--red);font-size:22px;margin:16px 0 0">my family</h2>
-  <p class="small pencil">join once, then homework finds you by name.</p>
-  <div id="famList"></div>
-  <p><input id="famName" placeholder="start a family: its name" maxlength="20" style="width:240px"> <button class="small" id="startFam" style="color:var(--red);font-weight:700">start →</button></p>
-  <p><input id="famCode" placeholder="join with a code" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="joinFam" style="color:var(--red);font-weight:700">join →</button></p>
-  <p class="pencil" id="copiedFam" hidden>copied!! paste it in the chat</p>
+  <p class="note" id="hubNote" hidden></p>
   <button class="go" id="toSet">set homework for someone →</button><br>
   <button class="go" id="toAsk">ask someone for homework →</button>
+
+  <p class="pencil" id="famLine" style="margin-top:14px"></p>
+  <div id="famList" hidden></div>
+  <div id="famJoin" hidden>
+    <p><input id="famName" placeholder="start a family: its name" maxlength="20" style="width:240px"> <button class="small" id="startFam" style="color:var(--red);font-weight:700">start →</button></p>
+    <p><input id="famCode" placeholder="or join with a code" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="joinFam" style="color:var(--red);font-weight:700">join →</button></p>
+  </div>
+  <p class="pencil" id="copiedFam" hidden>copied!! paste it in the chat</p>
+
+  <p><button class="small" id="moreBtn">my address · got a code? →</button></p>
+  <div id="more" hidden>
+    <p class="pencil">my homework address: <b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
+      <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
+    <p class="small pencil">homework sent to it appears here by itself (and in the app, with a knock).</p>
+    <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
+    <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
+  </div>
 </section>
 
 <section id="set" hidden>
@@ -112,7 +118,7 @@
 
 <footer>
   <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
-  <p class="small">Nothing you write here is sent anywhere: it travels in the link itself. <a href="../privacy.html">Privacy</a></p>
+  <p class="small">Homework is kept for a short while on our server so it can reach the other person, then deleted. <a href="../privacy.html">Privacy</a></p>
 </footer>
 </main>
 <script src="homework.js"></script>
