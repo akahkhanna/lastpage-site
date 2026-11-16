@@ -2,13 +2,13 @@
 <html lang="en"><head><meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Homework – That Last Page</title>
-<meta name="description" content="Set homework for someone in the family, do it, mark it. Works in any browser, no app needed.">
-<meta property="og:title" content="Homework ✏️ That Last Page">
+<title>Tests from the family – That Last Page</title>
+<meta name="description" content="Set a test for someone in the family; they do it and hand in their paper; you mark it. Any browser, no app needed.">
+<meta property="og:title" content="A test from the family ✏️ That Last Page">
 <meta property="og:description" content="Set it, do it, mark it: all in the family, no app needed.">
 <link rel="stylesheet" href="../test/test.css">
 <style>
-  /* Homework is written in normal case, not shouted. */
+  /* Tests are written in normal case, not shouted. */
   input, textarea { text-transform: none; font-weight: 400; }
   input.line { width: 100%; max-width: 420px; }
   textarea { font: 400 20px/30px "Kalam", cursive; color: var(--ink); background: transparent; border: 0;
@@ -36,12 +36,12 @@
 <body><main>
 
 <section id="hub" hidden>
-  <h1>HOMEWORK</h1>
-  <p class="pencil">Dadi, Papa, a cousin: anyone sets it, you do it, they mark it.</p>
+  <h1>TEST PAPERS</h1>
+  <p class="pencil">Dadi, Papa, a cousin, a friend: anyone sets a test, you do it, they mark it.</p>
   <div id="inboxList"></div>
   <p class="note" id="hubNote" hidden></p>
-  <button class="go" id="toSet">set homework for someone →</button><br>
-  <button class="go" id="toAsk">ask someone for homework →</button>
+  <button class="go" id="toSet">set a test for someone →</button><br>
+  <button class="go" id="toAsk">ask someone for a test →</button>
 
   <p class="pencil" id="famLine" style="margin-top:14px"></p>
   <div id="famList" hidden></div>
@@ -53,20 +53,20 @@
 
   <p><button class="small" id="moreBtn">my address · got a code? →</button></p>
   <div id="more" hidden>
-    <p class="pencil">my homework address: <b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
+    <p class="pencil">my test address: <b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
       <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
-    <p class="small pencil">homework sent to it appears here by itself (and in the app, with a knock).</p>
+    <p class="small pencil">a test sent to it appears here by itself (and in the app, with a knock).</p>
     <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
     <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
   </div>
 </section>
 
 <section id="set" hidden>
-  <h1>SET HOMEWORK</h1>
+  <h1>SET A TEST</h1>
   <p class="note" id="askedNote" hidden></p>
   <p><input class="line" id="from" placeholder="from (your name, e.g. Dadi)" maxlength="20"></p>
   <div class="choices" id="chips" hidden style="padding-left:0;margin:6px 0"></div>
-  <p><input class="line" id="to" placeholder="for (their name, or their homework address)" maxlength="20"></p>
+  <p><input class="line" id="to" placeholder="for (their name, or their test address)" maxlength="20"></p>
   <p><input class="line" id="noteIn" placeholder="a note on top (optional)" maxlength="120"></p>
   <div id="qs"></div>
   <button class="small" id="addQ">+ another question</button>
@@ -79,8 +79,8 @@
 </section>
 
 <section id="ask" hidden>
-  <h1>ASK FOR HOMEWORK</h1>
-  <p class="pencil">Send it to Dadi, Papa, anyone: they get a link that opens the homework page with your name on it.</p>
+  <h1>ASK FOR A TEST</h1>
+  <p class="pencil">Send it to Dadi, Papa, anyone: they get a link that opens the test page with your name on it.</p>
   <p><input class="line" id="askFrom" placeholder="your name" maxlength="20"></p>
   <p><input class="line" id="askSubject" placeholder="on what? (7 and 8 times tables, spellings…)" maxlength="60"></p>
   <button class="go" id="sendAsk">ask →</button>
@@ -95,12 +95,12 @@
   <div id="paperQs"></div>
   <div id="doFoot" hidden>
     <p><span class="pencil">your name:</span> <input id="by" maxlength="20"></p>
-    <button class="go" id="handIn" disabled>hand it in →</button>
+    <button class="go" id="handIn" disabled>hand in your paper →</button>
   </div>
   <div id="sentFoot" hidden>
-    <p class="remark">handed in ✓</p>
+    <p class="remark">paper handed in ✓</p>
     <p class="small pencil" id="sentNote"></p>
-    <button class="go" id="sendAnswers">send it for marking →</button>
+    <button class="go" id="sendAnswers">send your paper for marking →</button>
     <div id="shareAns" hidden></div>
     <p class="small pencil">the marks come back the same way.</p>
     <p class="pencil" id="copiedAns" hidden>copied!! paste it in the chat</p>
@@ -108,7 +108,7 @@
   <div id="markFoot" hidden>
     <p><input class="line" id="remarkIn" placeholder="a remark (&quot;Shabash!&quot;, &quot;neater writing!&quot;)" maxlength="60"></p>
     <p class="small pencil" id="markHint">tick or cross every answer, then send it back.</p>
-    <button class="go" id="sendMarked" hidden>send it back marked →</button>
+    <button class="go" id="sendMarked" hidden>send the paper back →</button>
     <div id="shareMarked" hidden></div>
     <p class="pencil" id="copiedMarked" hidden>copied!! paste it in the chat</p>
   </div>
@@ -116,12 +116,12 @@
     <p class="remark" id="remarkOut"></p>
     <p class="note" id="signed" style="padding-left:120px"></p>
   </div>
-  <p><button class="small" id="own">set some homework yourself →</button></p>
+  <p><button class="small" id="own">set a test yourself →</button></p>
 </section>
 
 <footer>
   <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
-  <p class="small">Homework is kept for a short while on our server so it can reach the other person, then deleted. <a href="../privacy.html">Privacy</a></p>
+  <p class="small">Tests are kept for a short while on our server so they can reach the other person, then deleted. <a href="../privacy.html">Privacy</a></p>
 </footer>
 </main>
 <script src="homework.js"></script>

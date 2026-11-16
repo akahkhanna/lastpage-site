@@ -66,10 +66,10 @@
   const score = (o) => [(o.m || []).filter(Boolean).length, o.qs.length];
   function message(o) {
     const s = stage(o), n = o.qs.length;
-    if (s === "asked") return `${o.from} wants some homework${o.note ? " on " + o.note : ""}! ✏️ Set it here:`;
-    if (s === "set") return `${o.to ? o.to + ", " : ""}${o.from} has set you homework ✏️ (${n} question${n === 1 ? "" : "s"}${o.mins ? ", " + o.mins + " min" : ""}). Open it in That Last Page:`;
-    if (s === "answered") return `${o.by ? o.by + " has" : "I've"} done ${o.from}'s homework ✏️ Please mark it:`;
-    const [r, t] = score(o); return `${o.from} has marked ${o.by || "the"}'s homework: ${r}/${t}${o.remark ? " — " + o.remark : ""} ✏️`;
+    if (s === "asked") return `${o.from} wants a test${o.note ? " on " + o.note : ""}! ✏️ Set one here:`;
+    if (s === "set") return `${o.to ? o.to + ", " : ""}${o.from} has set you a test ✏️ (${n} question${n === 1 ? "" : "s"}${o.mins ? ", " + o.mins + " min" : ""}). Open it in That Last Page:`;
+    if (s === "answered") return `${o.by ? o.by + " has" : "I've"} handed in ${o.from}'s test paper ✏️ Please mark it:`;
+    const [r, t] = score(o); return `${o.from} has marked ${o.by || "the"}'s paper: ${r}/${t}${o.remark ? " — " + o.remark : ""} ✏️`;
   }
 
   // Browsers only open the share sheet in the instant of a tap, so after a server call we show
@@ -163,7 +163,7 @@
       const { code } = await api("POST", "/h", o);
       o.code = code;
       $("codeOut").hidden = false;
-      $("codeOut").innerHTML = `code: <b>${code}</b>` + (addr ? `<br><span class="pencil">delivered to ${addr} ✓ it'll appear in their notebook.</span>` : "");
+      $("codeOut").innerHTML = `code: <b>${code}</b>` + (addr ? `<br><span class="pencil">delivered to ${addr} ✓ it'll land on their last page.</span>` : "");
       $("sendSet").hidden = true;
       shareRow($("shareSet"), message(o), await linkFor(o), code);
     } catch (e) {
@@ -191,8 +191,8 @@
     startedAt = Date.now(); handedIn = false;
     show("paper");
     $("mrsT").hidden = s !== "set";
-    $("mrsT").textContent = `Mrs T.: "${o.from} has sent homework. No talking."`;
-    $("title").textContent = s === "answered" ? `MARKING: ${(o.by || "").toUpperCase()}'S HOMEWORK` : `HOMEWORK from ${o.from}`;
+    $("mrsT").textContent = `Mrs T.: "A test from ${o.from}. No talking."`;
+    $("title").textContent = s === "answered" ? `MARKING: ${(o.by || "").toUpperCase()}'S PAPER` : s === "marked" ? "your paper is back!" : `TEST from ${o.from}`;
     const who = s === "set" ? (o.to || "_______") : (o.by || "_______");
     $("printed").textContent = `Name: ${who}   Questions: ${o.qs.length}` + (o.mins ? `   Time: ${o.mins} min` : "");
     $("noteOut").hidden = !o.note || s === "marked"; $("noteOut").textContent = o.note ? `"${o.note}"` : "";
@@ -249,7 +249,7 @@
     // On the server: the answers go straight to whoever set it; the marks come back here.
     const o = answered(); if (!o.ta) o.ta = myAddress();
     $("sentNote").textContent = "sending to " + hw.from + "…";
-    try { await api("PUT", "/h/" + hw.code, o); hw.ta = o.ta; $("sentNote").textContent = "sent to " + hw.from + " ✓ the marks come back the same way."; }
+    try { await api("PUT", "/h/" + hw.code, o); hw.ta = o.ta; $("sentNote").textContent = "sent to " + hw.from + " ✓ it comes back marked."; }
     catch (e) { $("sentNote").textContent = "couldn't send (" + e.message + "): share the link instead."; }
     $("sendAnswers").hidden = true;
     shareRow($("shareAns"), message(o), await linkFor(o), hw.code);
@@ -262,7 +262,7 @@
     if (hw.code) {
       if (!o.fa) o.fa = myAddress();
       $("sendMarked").disabled = true; $("sendMarked").textContent = "sending…";
-      try { await api("PUT", "/h/" + hw.code, o); $("markHint").hidden = false; $("markHint").textContent = "sent to " + (hw.by || "them") + " ✓ it'll appear in their notebook."; }
+      try { await api("PUT", "/h/" + hw.code, o); $("markHint").hidden = false; $("markHint").textContent = "sent to " + (hw.by || "them") + " ✓ it'll land on their last page."; }
       catch (e) { $("markHint").hidden = false; $("markHint").textContent = "couldn't send (" + e.message + "): share the link instead."; }
       $("sendMarked").hidden = true;
     }
@@ -275,7 +275,7 @@
     // One line when settled ("my family: Khanna · Papa (me), Vihaan"); the forms only when there's none, or on tap.
     $("famLine").innerHTML = all.length
       ? `my family: ${all.map((f) => `<b>${esc(f.name)}</b> · ${f.members.map((m) => m.addr === myAddress() ? esc(m.name) + " (me)" : esc(m.name)).join(", ")}`).join(" · ")} <button class="small" id="famMore" style="color:var(--red)">manage →</button>`
-      : `no family yet: <button class="small" id="famMore" style="color:var(--red);font-weight:700">join or start one →</button> <span class="small">(then homework goes to a name, not a code)</span>`;
+      : `no family yet: <button class="small" id="famMore" style="color:var(--red);font-weight:700">join or start one →</button> <span class="small">(then tests go to a name, not a code)</span>`;
     $("famJoin").hidden = all.length > 0 && $("famList").hidden;
     $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">code ${f.code}</span><br><span class="pencil">${f.members.map((m) => m.addr === myAddress() ? esc(m.name) + " (me)" : esc(m.name)).join(" · ")}</span><br>
       <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
@@ -288,7 +288,7 @@
   $("moreBtn").addEventListener("click", () => { $("more").hidden = !$("more").hidden; });
   $("famList").addEventListener("click", async (e) => {
     const b = e.target.closest("[data-invite],[data-leave]"); if (!b) return;
-    if (b.dataset.invite) { const f = families().find((x) => x.code === b.dataset.invite); share(`Join our family "${f.name}" in That Last Page ✏️ then homework and games find you by name:`, location.origin + "/f/#" + f.code, "copiedFam", f.code); }
+    if (b.dataset.invite) { const f = families().find((x) => x.code === b.dataset.invite); share(`Join our family "${f.name}" in That Last Page ✏️ then tests and games find you by name:`, location.origin + "/f/#" + f.code, "copiedFam", f.code); }
     if (b.dataset.leave) { try { await api("POST", "/f/" + b.dataset.leave + "/leave", { addr: myAddress() }); } catch {} dropFamily(b.dataset.leave); renderFamilies(); }
   });
   $("startFam").addEventListener("click", async () => {
@@ -312,7 +312,7 @@
     try {
       const list = await api("GET", "/a/" + myAddress());
       $("inboxList").innerHTML = list.slice(0, 6).map((e) => {
-        const what = e.stage === "set" ? `✏️ homework from ${esc(e.from)}` : e.stage === "answered" ? `📝 ${esc(e.from)}'s answers to mark` : `✓ marked by ${esc(e.from)}`;
+        const what = e.stage === "set" ? `✏️ a test from ${esc(e.from)}` : e.stage === "answered" ? `📝 ${esc(e.from)}'s paper to mark` : `✓ your paper is back from ${esc(e.from)}`;
         return `<p><button class="small" data-open="${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">${what} →</button></p>`;
       }).join("") || "";
     } catch {}
@@ -321,7 +321,7 @@
   $("openCode").addEventListener("click", () => { const c = $("codeIn").value.trim().toUpperCase(); if (isCode(c)) location.hash = c; });
   $("codeIn").addEventListener("input", () => { $("openCode").disabled = !isCode($("codeIn").value); });
   $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("openCode").click(); });
-  $("shareAddr").addEventListener("click", () => share(`My homework address in That Last Page is ${myAddress()} ✏️ Set me some at`, location.origin + "/homework/", "copiedAddr"));
+  $("shareAddr").addEventListener("click", () => share(`My test address in That Last Page is ${myAddress()} ✏️ Set me a test at`, location.origin + "/homework/", "copiedAddr"));
   $("toSet").addEventListener("click", () => { askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); $("from").focus(); });
   $("toAsk").addEventListener("click", () => { show("ask"); $("askFrom").value = recall("lp.from"); });
   $("own").addEventListener("click", () => { history.replaceState(null, "", location.pathname); askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); });

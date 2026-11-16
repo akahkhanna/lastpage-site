@@ -177,9 +177,9 @@ async function deliver(env, address, hw) {
   const { tokens = [] } = await r.json();
   if (!tokens.length || !env.APNS_KEY) return;
   const n = hw.qs.length;
-  const text = stage === "set" ? { title: `Homework from ${hw.from} ✏️`, body: `${n} question${n === 1 ? "" : "s"}${hw.mins ? ", " + hw.mins + " min" : ""}${hw.note ? ". \"" + hw.note + "\"" : ""}` }
-    : stage === "answered" ? { title: `${hw.by || "Someone"} has handed in their homework`, body: `${n} answer${n === 1 ? "" : "s"} to mark` }
-    : { title: `${hw.from} has marked your homework`, body: `${(hw.m || []).filter(Boolean).length}/${n}${hw.remark ? " — " + hw.remark : ""}` };
+  const text = stage === "set" ? { title: `A test from ${hw.from} ✏️`, body: `${n} question${n === 1 ? "" : "s"}${hw.mins ? ", " + hw.mins + " min" : ""}${hw.note ? ". \"" + hw.note + "\"" : ""}` }
+    : stage === "answered" ? { title: `${hw.by || "Someone"} has handed in their paper`, body: `${n} answer${n === 1 ? "" : "s"} to mark` }
+    : { title: `${hw.from} has marked your paper`, body: `${(hw.m || []).filter(Boolean).length}/${n}${hw.remark ? " — " + hw.remark : ""}` };
   const dead = [];
   for (const t of tokens) {
     const status = await pushAPNs(env, t, { aps: { alert: text, sound: "default" }, code: hw.code, stage });
