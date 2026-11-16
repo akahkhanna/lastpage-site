@@ -1,0 +1,14 @@
+# That Last Page's small server: homework by code and by address (and, later, rooms and
+# family boards). Cloudflare Workers + Durable Objects, free plan. Deploy: `wrangler deploy`
+# from this folder (ask first: it's public once deployed). Local: `wrangler dev`.
+name = "lastpage-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[durable_objects.bindings]]
+name = "BOX"
+class_name = "Box"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Box"]

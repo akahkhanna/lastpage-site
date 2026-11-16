@@ -30,7 +30,28 @@
       return check(JSON.parse(new TextDecoder().decode(bytes)));
     } catch { return null; }
   }
-  const linkFor = async (o) => location.origin + location.pathname + "#" + (await encode(o));
+  const linkFor = async (o) => o.code ? location.origin + "/h/#" + o.code : location.origin + location.pathname + "#" + (await encode(o));
+
+  // ---------- the server: homework by code, delivered to addresses ----------
+  const API = "https://lastpage-api.akkikhanna.workers.dev";
+  const CODE_RE = /^[A-HJ-NP-Z2-9]{6}$/, ADDR_RE = /^[A-Z]{1,10}-[A-HJ-NP-Z2-9]{4}$/;
+  async function api(method, path, body) {
+    const r = await fetch(API + path, { method, headers: body ? { "Content-Type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || ("server said " + r.status));
+    return j;
+  }
+  const isCode = (s) => CODE_RE.test((s || "").trim().toUpperCase());
+  const cleanAddr = (s) => { const u = (s || "").trim().toUpperCase(); return ADDR_RE.test(u) ? u : null; };
+  // This browser's homework address: made once from the name, kept here.
+  function myAddress() {
+    let a = recall("lp.address");
+    if (a) return a;
+    const L = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    let stem = (recall("lp.from") || "ME").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10) || "ME";
+    let tail = ""; for (let i = 0; i < 4; i++) tail += L[Math.floor(Math.random() * L.length)];
+    a = stem + "-" + tail; remember("lp.address", a); return a;
+  }
   const stage = (o) => (o.m ? "marked" : o.a ? "answered" : o.qs.length ? "set" : "asked");
   const newID = () => { const L = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; for (let i = 0; i < 6; i++) s += L[Math.floor(Math.random() * L.length)]; return s; };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -43,8 +64,8 @@
     const [r, t] = score(o); return `${o.from} has marked ${o.by || "the"}'s homework: ${r}/${t}${o.remark ? " — " + o.remark : ""} ✏️`;
   }
 
-  async function share(text, url, copiedId) {
-    const both = text + "\n" + url;
+  async function share(text, url, copiedId, code) {
+    const both = text + "\n" + url + (code ? "\n(or type the code " + code + " in the app)" : "");
     if (navigator.share) {
       try { await navigator.share({ text: both }); return; } catch (e) { if (e.name === "AbortError") return; }
     }
@@ -105,7 +126,24 @@
   $("sendSet").addEventListener("click", async () => {
     const o = ready(); if (!o) return;
     remember("lp.from", o.from);
-    share(message(o), await linkFor(o), "copiedSet");
+    const addr = cleanAddr($("to").value);
+    if (addr) { o.ta = addr; o.to = addr.split("-")[0]; }
+    o.fa = myAddress();   // the answers come back here
+    $("sendSet").disabled = true; $("sendSet").textContent = "sending…";
+    try {
+      const { code } = await api("POST", "/h", o);
+      o.code = code;
+      $("codeOut").hidden = false;
+      $("codeOut").innerHTML = `code: <b>${code}</b>` + (addr ? `<br><span class="pencil">delivered to ${addr} ✓ it'll appear in their notebook.</span>` : "");
+      $("sendSet").textContent = addr ? "send the link too →" : "send the link →";
+      $("sendSet").disabled = false;
+      $("sendSet").onclick = async () => share(message(o), await linkFor(o), "copiedSet", code);
+      share(message(o), await linkFor(o), "copiedSet", code);
+    } catch (e) {
+      $("sendSet").textContent = "send it →"; $("sendSet").disabled = false;
+      $("setHint").hidden = false; $("setHint").textContent = "couldn't reach the server (" + e.message + "): sending a long link instead.";
+      share(message(o), await linkFor(o), "copiedSet");
+    }
   });
 
   // ---------- ask ----------
@@ -176,28 +214,64 @@
     const o = { ...hw, by: ($("by").value.trim() || "Someone").slice(0, 20), a: answers.map((a) => a.slice(0, 120)), secs: Math.round((Date.now() - startedAt) / 1000) };
     return o;
   }
-  function handIn() {
+  async function handIn() {
     if (handedIn) return; handedIn = true; clearInterval(clockTimer);
     remember("lp.from", $("by").value.trim());
     $("doFoot").hidden = true; $("sentFoot").hidden = false; renderPaper();
+    if (!hw.code) return;
+    // On the server: the answers go straight to whoever set it; the marks come back here.
+    const o = answered(); if (!o.ta) o.ta = myAddress();
+    $("sentNote").textContent = "sending to " + hw.from + "…";
+    try { await api("PUT", "/h/" + hw.code, o); hw.ta = o.ta; $("sentNote").textContent = "sent to " + hw.from + " ✓ the marks come back the same way."; $("sendAnswers").textContent = "send " + hw.from + " the link too →"; }
+    catch (e) { $("sentNote").textContent = "couldn't send (" + e.message + "): share the link instead."; }
   }
   $("handIn").addEventListener("click", handIn);
-  $("sendAnswers").addEventListener("click", async () => { const o = answered(); share(message(o), await linkFor(o), "copiedAns"); });
+  $("sendAnswers").addEventListener("click", async () => { const o = answered(); share(message(o), await linkFor(o), "copiedAns", hw.code); });
   $("sendMarked").addEventListener("click", async () => {
     const remark = $("remarkIn").value.trim().slice(0, 60);
     const o = { ...hw, m: marks.map(Boolean) }; if (remark) o.remark = remark;
-    share(message(o), await linkFor(o), "copiedMarked");
+    if (hw.code) {
+      if (!o.fa) o.fa = myAddress();
+      $("sendMarked").disabled = true; $("sendMarked").textContent = "sending…";
+      try { await api("PUT", "/h/" + hw.code, o); $("markHint").hidden = false; $("markHint").textContent = "sent to " + (hw.by || "them") + " ✓ it'll appear in their notebook."; $("sendMarked").textContent = "send the link too →"; }
+      catch (e) { $("markHint").hidden = false; $("markHint").textContent = "couldn't send (" + e.message + "): share the link instead."; $("sendMarked").textContent = "send it back marked →"; }
+      $("sendMarked").disabled = false;
+    }
+    share(message(o), await linkFor(o), "copiedMarked", hw.code);
   });
 
   // ---------- routing ----------
+  async function showHub() {
+    show("hub");
+    $("myAddr").textContent = myAddress();
+    $("inboxList").innerHTML = "";
+    try {
+      const list = await api("GET", "/a/" + myAddress());
+      $("inboxList").innerHTML = list.slice(0, 8).map((e) => {
+        const what = e.stage === "set" ? `homework from ${esc(e.from)}` : e.stage === "answered" ? `${esc(e.from)}'s answers to mark` : `marked by ${esc(e.from)}`;
+        return `<p><button class="small" data-open="${e.code}" style="color:var(--ink)">${what} → <b>${e.code}</b></button></p>`;
+      }).join("") || "";
+    } catch {}
+  }
+  $("inboxList").addEventListener("click", (e) => { const b = e.target.closest("[data-open]"); if (b) location.hash = b.dataset.open; });
+  $("openCode").addEventListener("click", () => { const c = $("codeIn").value.trim().toUpperCase(); if (isCode(c)) location.hash = c; });
+  $("codeIn").addEventListener("input", () => { $("openCode").disabled = !isCode($("codeIn").value); });
+  $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("openCode").click(); });
+  $("shareAddr").addEventListener("click", () => share(`My homework address in That Last Page is ${myAddress()} ✏️ Set me some at`, location.origin + "/homework/", "copiedAddr"));
   $("toSet").addEventListener("click", () => { askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); $("from").focus(); });
   $("toAsk").addEventListener("click", () => { show("ask"); $("askFrom").value = recall("lp.from"); });
   $("own").addEventListener("click", () => { history.replaceState(null, "", location.pathname); askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); });
   addEventListener("hashchange", () => location.reload());
 
   (async () => {
-  const o = await decode(location.hash.slice(1));
+  const raw = location.hash.slice(1);
   $("from").value = recall("lp.from");
+  if (isCode(raw)) {
+    try { openPaper(await api("GET", "/h/" + raw.toUpperCase())); }
+    catch (e) { await showHub(); $("hubNote").hidden = false; $("hubNote").textContent = "code " + raw.toUpperCase() + ": " + e.message; }
+    return;
+  }
+  const o = await decode(raw);
   if (o && stage(o) === "asked") {
     askedBy = o; show("set");
     $("askedNote").hidden = false; $("askedNote").textContent = `${o.from} asked for some${o.note ? " on " + o.note : ""}!`;
@@ -206,7 +280,7 @@
   } else if (o) {
     openPaper(o);
   } else {
-    show("hub");
+    await showHub();
   }
   })();
 })();

@@ -27,6 +27,11 @@
             "comment": "homework set, answered or marked"
           },
           {
+            "/": "/h/*",
+            "#": "?*",
+            "comment": "homework by code"
+          },
+          {
             "/": "/test/sudoku.html",
             "#": "?*",
             "comment": "today's sudoku"

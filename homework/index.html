@@ -38,6 +38,13 @@
 <section id="hub" hidden>
   <h1>HOMEWORK</h1>
   <p class="pencil">Anyone in the family can set some: Dadi, Papa, a cousin. Write the questions, send the link; they do it and send it back to you for marking. No app needed.</p>
+  <p class="pencil">my homework address: <b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
+    <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
+  <p class="small pencil">give it to Dadi: homework sent to it appears here by itself, and the marks come back the same way.</p>
+  <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
+  <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
+  <p class="note" id="hubNote" hidden></p>
+  <div id="inboxList"></div>
   <button class="go" id="toSet">set homework for someone →</button><br>
   <button class="go" id="toAsk">ask someone for homework →</button>
 </section>
@@ -46,11 +53,12 @@
   <h1>SET HOMEWORK</h1>
   <p class="note" id="askedNote" hidden></p>
   <p><input class="line" id="from" placeholder="from (your name, e.g. Dadi)" maxlength="20"></p>
-  <p><input class="line" id="to" placeholder="for (their name)" maxlength="20"></p>
+  <p><input class="line" id="to" placeholder="for (their name, or their homework address)" maxlength="20"></p>
   <p><input class="line" id="noteIn" placeholder="a note on top (optional)" maxlength="120"></p>
   <div id="qs"></div>
   <button class="small" id="addQ">+ another question</button>
   <p class="mins"><span class="pencil">time:</span> <span id="minsRow"></span></p>
+  <p class="remark" id="codeOut" hidden style="font-size:26px"></p>
   <button class="go" id="sendSet" disabled>send it →</button>
   <p class="small pencil" id="setHint">write your name and at least one question (choices need two options).</p>
   <p class="pencil" id="copiedSet" hidden>copied!! paste it in the chat</p>
@@ -77,6 +85,7 @@
   </div>
   <div id="sentFoot" hidden>
     <p class="remark">handed in ✓</p>
+    <p class="small pencil" id="sentNote"></p>
     <button class="go" id="sendAnswers">send it for marking →</button>
     <p class="small pencil">the marks come back the same way.</p>
     <p class="pencil" id="copiedAns" hidden>copied!! paste it in the chat</p>
