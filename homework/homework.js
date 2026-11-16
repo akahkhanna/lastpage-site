@@ -6,24 +6,31 @@
   const $ = (id) => document.getElementById(id);
   const MAX_Q = 10, MAX_C = 4;
 
-  function encode(obj) {
-    const bytes = new TextEncoder().encode(JSON.stringify(obj));
-    let bin = ""; bytes.forEach((x) => (bin += String.fromCharCode(x)));
-    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  // JSON → raw deflate (so the link stays short enough for WhatsApp to make it tappable) →
+  // base64url, with "z" in front. Links without the "z" are plain JSON (older ones).
+  const b64 = (bytes) => { let bin = ""; bytes.forEach((x) => (bin += String.fromCharCode(x))); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+  const unb64 = (s) => { const pad = s.length % 4 ? "=".repeat(4 - (s.length % 4)) : ""; return Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + pad), (c) => c.charCodeAt(0)); };
+  async function pipe(bytes, stream) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer()); }
+  async function encode(obj) {
+    const plain = new TextEncoder().encode(JSON.stringify(obj));
+    if (typeof CompressionStream === "undefined") return b64(plain);
+    return "z" + b64(await pipe(plain, new CompressionStream("deflate-raw")));
   }
-  function decode(s) {
+  function check(o) {
+    if (!o || typeof o.id !== "string" || typeof o.from !== "string" || !Array.isArray(o.qs)) return null;
+    if (o.qs.length > MAX_Q || !o.qs.every((q) => q && typeof q.q === "string" && q.q)) return null;
+    if (o.a && o.a.length !== o.qs.length) return null;
+    if (o.m && o.m.length !== o.qs.length) return null;
+    return o;
+  }
+  async function decode(s) {
     try {
-      const pad = s.length % 4 ? "=".repeat(4 - (s.length % 4)) : "";
-      const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/") + pad);
-      const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
-      if (!o || typeof o.id !== "string" || typeof o.from !== "string" || !Array.isArray(o.qs)) return null;
-      if (o.qs.length > MAX_Q || !o.qs.every((q) => q && typeof q.q === "string" && q.q)) return null;
-      if (o.a && o.a.length !== o.qs.length) return null;
-      if (o.m && o.m.length !== o.qs.length) return null;
-      return o;
+      let bytes = unb64(s.startsWith("z") ? s.slice(1) : s);
+      if (s.startsWith("z")) bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
+      return check(JSON.parse(new TextDecoder().decode(bytes)));
     } catch { return null; }
   }
-  const linkFor = (o) => location.origin + location.pathname + "#" + encode(o);
+  const linkFor = async (o) => location.origin + location.pathname + "#" + (await encode(o));
   const stage = (o) => (o.m ? "marked" : o.a ? "answered" : o.qs.length ? "set" : "asked");
   const newID = () => { const L = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; for (let i = 0; i < 6; i++) s += L[Math.floor(Math.random() * L.length)]; return s; };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -37,11 +44,12 @@
   }
 
   async function share(text, url, copiedId) {
+    const both = text + "\n" + url;
     if (navigator.share) {
-      try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === "AbortError") return; }
+      try { await navigator.share({ text: both }); return; } catch (e) { if (e.name === "AbortError") return; }
     }
-    try { await navigator.clipboard.writeText(text + " " + url); }
-    catch { prompt("Copy this:", text + " " + url); return; }
+    try { await navigator.clipboard.writeText(both); }
+    catch { prompt("Copy this:", both); return; }
     $(copiedId).hidden = false; setTimeout(() => ($(copiedId).hidden = true), 2500);
   }
   const remember = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
@@ -94,19 +102,19 @@
   $("minsRow").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { mins = +b.dataset.mins; renderSet(); } });
   $("addQ").addEventListener("click", () => { qs.push({ q: "", k: "t" }); renderSet(); $("qs").querySelector(`[data-q="${qs.length - 1}"]`).focus(); });
   ["from", "to", "noteIn"].forEach((id) => $(id).addEventListener("input", updateSend));
-  $("sendSet").addEventListener("click", () => {
+  $("sendSet").addEventListener("click", async () => {
     const o = ready(); if (!o) return;
     remember("lp.from", o.from);
-    share(message(o), linkFor(o), "copiedSet");
+    share(message(o), await linkFor(o), "copiedSet");
   });
 
   // ---------- ask ----------
-  $("sendAsk").addEventListener("click", () => {
+  $("sendAsk").addEventListener("click", async () => {
     const from = $("askFrom").value.trim().slice(0, 20) || "Someone";
     const subject = $("askSubject").value.trim().slice(0, 60);
     remember("lp.from", from);
     const o = { v: 1, id: newID(), from, qs: [] }; if (subject) o.note = subject;
-    share(message(o), linkFor(o), "copiedAsk");
+    share(message(o), await linkFor(o), "copiedAsk");
   });
 
   // ---------- do / mark / marked ----------
@@ -174,11 +182,11 @@
     $("doFoot").hidden = true; $("sentFoot").hidden = false; renderPaper();
   }
   $("handIn").addEventListener("click", handIn);
-  $("sendAnswers").addEventListener("click", () => { const o = answered(); share(message(o), linkFor(o), "copiedAns"); });
-  $("sendMarked").addEventListener("click", () => {
+  $("sendAnswers").addEventListener("click", async () => { const o = answered(); share(message(o), await linkFor(o), "copiedAns"); });
+  $("sendMarked").addEventListener("click", async () => {
     const remark = $("remarkIn").value.trim().slice(0, 60);
     const o = { ...hw, m: marks.map(Boolean) }; if (remark) o.remark = remark;
-    share(message(o), linkFor(o), "copiedMarked");
+    share(message(o), await linkFor(o), "copiedMarked");
   });
 
   // ---------- routing ----------
@@ -187,7 +195,8 @@
   $("own").addEventListener("click", () => { history.replaceState(null, "", location.pathname); askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); });
   addEventListener("hashchange", () => location.reload());
 
-  const o = decode(location.hash.slice(1));
+  (async () => {
+  const o = await decode(location.hash.slice(1));
   $("from").value = recall("lp.from");
   if (o && stage(o) === "asked") {
     askedBy = o; show("set");
@@ -199,4 +208,5 @@
   } else {
     show("hub");
   }
+  })();
 })();
