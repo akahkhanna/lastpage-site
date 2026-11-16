@@ -26,7 +26,7 @@
   <button class="small" id="rub" hidden>rub out</button>
   <div id="after" hidden>
     <p class="done" id="done"></p>
-    <button class="go" id="share">send my time →</button>
+    <button class="go" id="share">challenge someone →</button>
     <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
     <p><a href="index.html" style="color:var(--ink);font-weight:700">today's surprise test →</a></p>
   </div>
@@ -36,6 +36,7 @@
   </footer>
 </main>
 <script src="dots.js"></script>
+<script src="dare.js"></script>
 <script>
 (function () {
   const D = window.DotToDot, N = D.SIZE;
@@ -130,7 +131,7 @@
     showDone();
   }
   const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-  function showDone() {
+  function showDone() { Dare.show(day, doneSecs);
     document.getElementById("done").textContent = `done in ${clock(doneSecs)} ✓`;
     document.getElementById("after").hidden = false;
   }
@@ -142,13 +143,13 @@
   canvas.addEventListener("pointercancel", () => { dragging = false; held = null; });
   document.getElementById("rub").addEventListener("click", () => { line = []; draw(); });
   document.getElementById("share").addEventListener("click", async () => {
-    const text = `Dot to dot #${p.number} ✓ in ${clock(doneSecs)}. Can you beat me?`;
-    const url = location.origin + location.pathname + "#" + p.number;
+    const text = `Dot to dot #${p.number} ✓ in ${clock(doneSecs)}. Beat my time!`;
+    const url = Dare.link(day, doneSecs);
     if (navigator.share) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === "AbortError") return; } }
     try { await navigator.clipboard.writeText(text + " " + url); } catch { prompt("Copy this:", text + " " + url); return; }
     const c = document.getElementById("copied"); c.hidden = false; setTimeout(() => (c.hidden = true), 2500);
   });
-  draw(); if (doneSecs) showDone();
+  draw(); Dare.show(day, doneSecs); if (doneSecs) showDone();
 })();
 </script>
 </body>

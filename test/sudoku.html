@@ -38,7 +38,7 @@
   <p class="pencil" id="status"></p>
   <div id="after" hidden>
     <p class="done" id="done"></p>
-    <button class="go" id="share">send my time →</button>
+    <button class="go" id="share">challenge someone →</button>
     <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
     <p><a href="dots.html" style="color:var(--ink);font-weight:700">today's dot to dot →</a></p>
   </div>
@@ -48,6 +48,7 @@
   </footer>
 </main>
 <script src="sudoku.js"></script>
+<script src="dare.js"></script>
 <script>
 (function () {
   const S = window.Sudoku;
@@ -112,18 +113,18 @@
     sel = null; draw(); showDone();
   }
   const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-  function showDone() {
+  function showDone() { Dare.show(day, doneSecs);
     document.getElementById("done").textContent = `done in ${clock(doneSecs)} ✓`;
     document.getElementById("after").hidden = false;
   }
   document.getElementById("share").addEventListener("click", async () => {
-    const text = `Mini sudoku #${p.number} ✓ in ${clock(doneSecs)}. Can you beat me?`;
-    const url = location.origin + location.pathname + "#" + p.number;
+    const text = `Mini sudoku #${p.number} ✓ in ${clock(doneSecs)}. Beat my time!`;
+    const url = Dare.link(day, doneSecs);
     if (navigator.share) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === "AbortError") return; } }
     try { await navigator.clipboard.writeText(text + " " + url); } catch { prompt("Copy this:", text + " " + url); return; }
     const c = document.getElementById("copied"); c.hidden = false; setTimeout(() => (c.hidden = true), 2500);
   });
-  draw(); if (doneSecs) showDone();
+  draw(); Dare.show(day, doneSecs); if (doneSecs) showDone();
 })();
 </script>
 </body>
