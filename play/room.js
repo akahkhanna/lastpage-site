@@ -56,6 +56,19 @@
   addEventListener("pagehide", () => { if (wantOpen) { try { ws.send(JSON.stringify({ t: "msg", m: { bye: { caught: false } } })); } catch {} } });
 
   const app = { name: "", note: () => {} };
+  const ctx = {
+    get me() { return me; }, get host() { return host; }, get members() { return members; }, get name() { return app.name; },
+    them() { return members.find((x) => x !== me) || "your friend"; },
+    send, note: (t) => app.note(t),
+    on(message, membersChanged) { onMessage = message; onMembers = membersChanged; },
+  };
+  const TITLES = { noughtsCrosses: "Noughts & crosses", bookCricket: "Book cricket", dotsBoxes: "Dots & boxes", hangman: "Hangman", bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "Name place animal thing" };
+  function begin(el) {
+    if (game === "noughtsCrosses") noughts(el);
+    else if (game === "bookCricket") cricket(el);
+    else if (root.Live && root.Live[game]) root.Live[game](el, ctx);
+    else el.innerHTML = `<p class="status">${esc(TITLES[game] || game)} isn't playable in a browser yet: open the link in the app.</p>`;
+  }
 
   // ---------- noughts & crosses ----------
   function noughts(el) {
@@ -165,16 +178,11 @@
   }
 
   // ---------- joining and starting ----------
-  const TITLES = { noughtsCrosses: "Noughts & crosses", bookCricket: "Book cricket" };
   function run(el, roomCode, name) {
     code = roomCode.toUpperCase(); app.name = name;
     app.note = (t) => { const n = el.querySelector("#rnote"); if (n) n.textContent = t; };
     el.innerHTML = `<p class="status">joining room ${esc(code)}…</p>`;
-    onReady = () => {
-      if (game === "noughtsCrosses") noughts(el);
-      else if (game === "bookCricket") cricket(el);
-      else el.innerHTML = `<p class="status">${esc(TITLES[game] || game)} isn't playable in a browser yet: open the link in the app.</p>`;
-    };
+    onReady = () => begin(el);
     onMembers = () => {
       if (started) return;
       const waiting = playersWanted - members.length;
@@ -183,8 +191,9 @@
     };
     connect();
   }
-  async function start(el, gameKind, name) {
-    const { code: c } = await api("POST", "/r", { game: gameKind, players: 2, host: { id: myId(), name } });
+  async function start(el, gameKind, name, players) {
+    players = Math.min(Math.max(players || 2, 2), 8);
+    const { code: c } = await api("POST", "/r", { game: gameKind, players, host: { id: myId(), name } });
     const link = `${location.origin}/r/#${c}`;
     const fam = others();
     el.innerHTML = `<p class="status">${esc(TITLES[gameKind])}: room <b>${esc(c)}</b></p>
@@ -195,10 +204,10 @@
     const copy = el.querySelector("#copyLink"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); copy.textContent = "copied!!"; } catch { prompt("Copy this:", link); } });
     code = c; app.name = name;
     app.note = (t) => { const n = el.querySelector("#rnote"); if (n) n.textContent = t; };
-    onReady = () => { if (gameKind === "noughtsCrosses") noughts(el); else cricket(el); };
+    onReady = () => begin(el);
     onMembers = () => {
       if (started) return;
-      const n = el.querySelector("#rnote"); if (n) n.textContent = members.length > 1 ? `${members.filter((m) => m !== me).join(", ")} here!` : "waiting for them…";
+      const n = el.querySelector("#rnote"); if (n) n.textContent = members.length > 1 ? `${members.filter((m) => m !== me).join(", ")} here${members.length < playersWanted ? " · waiting for " + (playersWanted - members.length) + " more" : "!"}` : "waiting for them…";
     };
     connect();
   }

@@ -48,7 +48,9 @@
   </footer>
 </main>
 <script src="play.js"></script>
+<script src="../hangman/rules.js"></script>
 <script src="room.js"></script>
+<script src="live.js"></script>
 <script>
 (function () {
   const P = window.Play, app = document.getElementById("app");
@@ -219,9 +221,10 @@
       if (roomCode) window.Room.run(app, roomCode, name);
       else {
         app.innerHTML = `<p class="status">start a live game:</p>
-          <p><button class="go" data-live="noughtsCrosses">noughts & crosses →</button><br><button class="go" data-live="bookCricket">book cricket →</button></p>
+          <p>${[["noughtsCrosses", "noughts & crosses"], ["dotsBoxes", "dots & boxes"], ["bookCricket", "book cricket"], ["hangman", "hangman"], ["bollywood", "Bollywood"], ["hollywood", "Hollywood"]].map(([k, t]) => `<button class="go" data-live="${k}">${t} →</button><br>`).join("")}
+          <button class="go" data-live="namePlace">name place animal thing →</button> <span class="note">with <select id="npl">${[2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}">${n} players</option>`).join("")}</select></span></p>
           <p class="note">they join in the app or in any browser, by link or by name (if you're in a family together).</p>`;
-        app.querySelectorAll("[data-live]").forEach((b) => b.addEventListener("click", () => window.Room.start(app, b.dataset.live, name)));
+        app.querySelectorAll("[data-live]").forEach((b) => b.addEventListener("click", () => window.Room.start(app, b.dataset.live, name, b.dataset.live === "namePlace" ? parseInt(document.getElementById("npl").value, 10) : 2)));
       }
     };
     if (myName) return go(myName);
