@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Family board – That Last Page</title>
+<meta property="og:title" content="Family board ✏️ That Last Page">
+<meta property="og:description" content="Today's puzzle times, by name. Join the family and your times line up too.">
+<link rel="stylesheet" href="../test/test.css">
+<style>
+  table.board { border-collapse: collapse; font-size: 19px; margin: 8px 0; }
+  table.board td { padding: 2px 10px 2px 0; white-space: nowrap; }
+  table.board td.best { color: var(--red); font-weight: 700; }
+  table.board td.none { color: rgba(95,95,95,.5); }
+  .fams button.on { color: var(--red); font-weight: 700; }
+</style></head>
+<body><main>
+  <h1>FAMILY BOARD</h1>
+  <p class="pencil" id="intro">today's puzzle times, by name. Fastest on a puzzle = 1 win; a new race every Monday.</p>
+  <p class="fams" id="fams"></p>
+  <div id="board"></div>
+  <p class="note" id="note"></p>
+  <p><a class="go" style="text-decoration:none" href="../test/sudoku.html">today's mini sudoku →</a> · <a class="go" style="text-decoration:none" href="../test/dots.html">dot to dot →</a> · <a class="go" style="text-decoration:none" href="../test/trail.html">word trail →</a></p>
+  <p class="small pencil">your times join the board when you do the puzzles here (or in the app) as a member of the family. <a href="../homework/">join or start a family →</a></p>
+  <footer>
+    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
+    <p class="small">Times are kept against your notebook's address on our server, not your name or number. <a href="../privacy.html">Privacy</a></p>
+  </footer>
+</main>
+<script src="../test/dare.js"></script>
+<script>
+(function () {
+  const API = "https://lastpage-api.akkikhanna.workers.dev";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  const dayFor = (d) => Math.max(0, Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(2026, 10, 1)) / 86400000));
+  const today = dayFor(new Date());
+  const recall = (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
+  const families = () => { try { return JSON.parse(recall("lp.families") || "[]"); } catch { return []; } };
+  const PUZ = [["sudoku", "🔢"], ["dots", "✏️"], ["trail", "🔤"]];
+  async function show(code) {
+    $("note").textContent = "fetching…";
+    let b;
+    try { const r = await fetch(`${API}/f/${code}/board?day=${today}`); b = await r.json(); if (!r.ok) throw new Error(b.error || r.status); }
+    catch (e) { $("note").textContent = "couldn't fetch the board: " + e.message; return; }
+    $("note").textContent = "";
+    document.title = `${b.name} – family board`;
+    const wins = {};
+    for (let d = today - 6; d <= today; d++) for (const [p] of PUZ) {
+      const done = b.members.map((m) => [m.addr, (m.days[d] || {})[p]]).filter((x) => x[1]);
+      if (!done.length) continue;
+      const best = done.reduce((a, x) => (x[1].s < a[1].s ? x : a));
+      wins[best[0]] = (wins[best[0]] || 0) + 1;
+    }
+    const me = recall("lp.address");
+    const sorted = b.members.slice().sort((x, y) => (wins[y.addr] || 0) - (wins[x.addr] || 0) || x.name.localeCompare(y.name));
+    const fastest = {}; for (const [p] of PUZ) fastest[p] = Math.min(...b.members.map((m) => ((m.days[today] || {})[p] || {}).s || Infinity));
+    const streak = (m) => { let n = 0; while (m.days[today - n] && Object.keys(m.days[today - n]).length) n++; return n; };
+    $("board").innerHTML = `<p class="status"><b>${esc(b.name)}</b> · today</p><table class="board">${sorted.map((m) => `<tr><td><b>${esc(m.addr === me ? "me" : m.name)}</b></td>${PUZ.map(([p, ic]) => { const r = (m.days[today] || {})[p]; return r ? `<td class="${r.s === fastest[p] ? "best" : ""}">${ic} ${clock(r.s)}</td>` : `<td class="none">${ic} ☐</td>`; }).join("")}<td>${streak(m) > 1 ? streak(m) + "🔥" : ""}</td></tr>`).join("")}</table>
+      <p class="pencil">this week: ${sorted.map((m) => `${esc(m.addr === me ? "me" : m.name)} ${wins[m.addr] || 0}`).join(" · ")}</p>`;
+  }
+  const hash = location.hash.slice(1).toUpperCase();
+  const fams = families();
+  const codes = fams.map((f) => f.code);
+  if (/^[A-HJ-NP-Z2-9]{6}$/.test(hash) && !codes.includes(hash)) codes.unshift(hash);
+  if (!codes.length) { $("note").textContent = "you're not in a family yet."; }
+  else {
+    if (codes.length > 1) {
+      $("fams").innerHTML = codes.map((c) => `<button class="small" data-c="${c}">${esc((fams.find((f) => f.code === c) || {}).name || c)}</button>`).join(" ");
+      $("fams").addEventListener("click", (e) => { const b = e.target.closest("[data-c]"); if (!b) return; $("fams").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); show(b.dataset.c); });
+      $("fams").querySelector("button").classList.add("on");
+    }
+    show(codes[0]);
+  }
+})();
+</script>
+</body></html>

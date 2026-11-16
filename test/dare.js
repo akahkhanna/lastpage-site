@@ -40,5 +40,14 @@
     const n = myName();
     return location.origin + location.pathname + "#" + (n ? `${day + 1}-${secs}-${encodeURIComponent(n)}` : `${day + 1}`);
   }
-  root.Dare = { show, link, clock };
+  // The family board: a finished puzzle's time goes against this browser's address (made once,
+  // the same one the homework page uses), if it's in a family.
+  function post(puzzle, day, secs, hints) {
+    let addr = "", fams = [];
+    try { addr = localStorage.getItem("lp.address") || ""; fams = JSON.parse(localStorage.getItem("lp.families") || "[]"); } catch {}
+    if (!addr || !fams.length) return;
+    fetch("https://lastpage-api.akkikhanna.workers.dev/a/" + addr + "/result", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ day, puzzle, seconds: secs, hints: hints || 0 }) }).catch(() => {});
+  }
+  root.Dare = { show, link, clock, post };
 })(window);

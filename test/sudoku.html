@@ -109,7 +109,7 @@
   }
   function finish() {
     doneSecs = Math.max(1, Math.round((Date.now() - (started || Date.now())) / 1000));
-    try { localStorage.setItem(key, JSON.stringify(doneSecs)); } catch {}
+    try { localStorage.setItem(key, JSON.stringify(doneSecs)); } catch {} Dare.post("sudoku", day, doneSecs, typeof hints === "number" ? hints : 0);
     sel = null; draw(); showDone();
   }
   const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");

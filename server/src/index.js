@@ -21,6 +21,11 @@
 //   WS   /r/CODE?id=…&name=…&since=N   (a WebSocket; see Room below for the frames)
 //   POST /r/CODE/invite     body: { addr, from }  → delivers "come and play" to an address (+ push)
 //
+// Family board: each notebook posts its daily puzzle times against its address; a family's
+// board gathers its members' last few weeks.
+//   POST /a/ADDRESS/result   body: { day, puzzle: "sudoku"|"dots"|"trail", seconds, hints }  → { ok }
+//   GET  /f/CODE/board?day=N → { day, members: [{ name, addr, days: { "N": { sudoku: {s,h}, … }, … } }] }
+//
 // Families: a named group of notebooks, joined once by link, so homework can be sent to
 // "Vihaan" rather than to an address. Expire 180 days after the last change.
 //   POST /f                 body: { name, member: { name, addr } }   → { code }
@@ -66,6 +71,14 @@ export default {
         const addr = parts[1].toUpperCase();
         if (!ADDRESS.test(addr)) return fail(400, "not an address");
         if (parts.length === 2 && request.method === "GET") return await box(env, "a:" + addr).fetch("https://box/inbox-get");
+        if (parts.length === 3 && parts[2] === "result" && request.method === "POST") {
+          const body = await request.text();
+          if (body.length > 512) return fail(400, "too big");
+          let r; try { r = JSON.parse(body); } catch { return fail(400, "not JSON"); }
+          const day = parseInt(r.day, 10), seconds = parseInt(r.seconds, 10), hints = parseInt(r.hints, 10) || 0;
+          if (!["sudoku", "dots", "trail"].includes(r.puzzle) || !(day >= 0 && day < 100000) || !(seconds > 0 && seconds < 86400)) return fail(400, "bad result");
+          return await box(env, "a:" + addr).fetch("https://box/result-add", { method: "POST", body: JSON.stringify({ day, puzzle: r.puzzle, s: seconds, h: hints }) });
+        }
         if (parts.length === 3 && parts[2] === "token" && request.method === "POST") {
           const body = await request.text();
           if (body.length > 1024) return fail(400, "too big");
@@ -89,6 +102,7 @@ export default {
         if (!CODE.test(code)) return fail(400, "not a code");
         const fam = box(env, "f:" + code);
         if (parts.length === 2 && request.method === "GET") return await fam.fetch("https://box/family-get");
+        if (parts.length === 3 && parts[2] === "board" && request.method === "GET") return await familyBoard(env, fam, url);
         if (parts.length === 3 && request.method === "POST" && (parts[2] === "join" || parts[2] === "leave")) {
           const body = await request.text();
           if (body.length > 2048) return fail(400, "too big");
@@ -164,6 +178,19 @@ async function updateHomework(request, env, code) {
 }
 
 const cleanName = (n) => String(n || "").trim().slice(0, 20);
+
+/// The family's puzzle times for the last 30 days up to `day`, member by member.
+async function familyBoard(env, fam, url) {
+  const r = await fam.fetch("https://box/family-get");
+  if (r.status !== 200) return fail(404, "no such family");
+  const family = await r.json();
+  const day = parseInt(url.searchParams.get("day") || "0", 10) || 0;
+  const members = await Promise.all(family.members.map(async (m) => {
+    const rr = await box(env, "a:" + m.addr).fetch(`https://box/result-get?from=${day - 29}&to=${day}`);
+    return { name: m.name, addr: m.addr, days: rr.status === 200 ? await rr.json() : {} };
+  }));
+  return json({ code: family.code, name: family.name, day, members });
+}
 
 // ---------- rooms ----------
 async function createRoom(request, env) {
@@ -297,7 +324,8 @@ export class Box {
   constructor(state) { this.storage = state.storage; }
 
   async fetch(request) {
-    const op = new URL(request.url).pathname;
+    const url = new URL(request.url);
+    const op = url.pathname;
     if (op === "/get") {
       const hw = await this.storage.get("hw");
       return hw ? json(hw) : fail(404, "no such code");
@@ -331,6 +359,23 @@ export class Box {
       return json({ ok: true });
     }
     if (op === "/inbox-get") return json((await this.storage.get("inbox")) || []);
+    if (op === "/result-add") {
+      const r = await request.json();
+      const all = (await this.storage.get("results")) || {};
+      const d = all[r.day] || (all[r.day] = {});
+      if (!d[r.puzzle] || r.s < d[r.puzzle].s) d[r.puzzle] = { s: r.s, h: r.h };   // the best go of the day stands
+      for (const k of Object.keys(all)) if (parseInt(k, 10) < r.day - 90) delete all[k];
+      await this.storage.put("results", all);
+      await this.storage.setAlarm(Date.now() + INBOX_DAYS * 86400e3);
+      return json({ ok: true });
+    }
+    if (op === "/result-get") {
+      const from = parseInt(url.searchParams.get("from") || "0", 10), to = parseInt(url.searchParams.get("to") || "0", 10);
+      const all = (await this.storage.get("results")) || {};
+      const out = {};
+      for (const k of Object.keys(all)) { const d = parseInt(k, 10); if (d >= from && d <= to) out[k] = all[k]; }
+      return json(out);
+    }
     if (op === "/family-get") {
       const f = await this.storage.get("family");
       return f ? json(f) : fail(404, "no such family");
