@@ -72,6 +72,18 @@
     const [r, t] = score(o); return `${o.from} has marked ${o.by || "the"}'s homework: ${r}/${t}${o.remark ? " — " + o.remark : ""} ✏️`;
   }
 
+  // Browsers only open the share sheet in the instant of a tap, so after a server call we show
+  // buttons instead: a WhatsApp link (a plain link, always allowed) and "copy".
+  function shareRow(el, text, url, code) {
+    const both = text + "\n" + url + (code ? "\n(or type the code " + code + " in the app)" : "");
+    el.hidden = false;
+    el.innerHTML = `<a class="go" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(both)}">send on WhatsApp →</a>
+      <button class="small" data-copy>copy the message</button> <span class="pencil" data-copied hidden>copied!!</span>`;
+    el.querySelector("[data-copy]").onclick = async () => {
+      try { await navigator.clipboard.writeText(both); el.querySelector("[data-copied]").hidden = false; }
+      catch { prompt("Copy this:", both); }
+    };
+  }
   async function share(text, url, copiedId, code) {
     const both = text + "\n" + url + (code ? "\n(or type the code " + code + " in the app)" : "");
     if (navigator.share) {
@@ -152,14 +164,12 @@
       o.code = code;
       $("codeOut").hidden = false;
       $("codeOut").innerHTML = `code: <b>${code}</b>` + (addr ? `<br><span class="pencil">delivered to ${addr} ✓ it'll appear in their notebook.</span>` : "");
-      $("sendSet").textContent = addr ? "send the link too →" : "send the link →";
-      $("sendSet").disabled = false;
-      $("sendSet").onclick = async () => share(message(o), await linkFor(o), "copiedSet", code);
-      share(message(o), await linkFor(o), "copiedSet", code);
+      $("sendSet").hidden = true;
+      shareRow($("shareSet"), message(o), await linkFor(o), code);
     } catch (e) {
-      $("sendSet").textContent = "send it →"; $("sendSet").disabled = false;
-      $("setHint").hidden = false; $("setHint").textContent = "couldn't reach the server (" + e.message + "): sending a long link instead.";
-      share(message(o), await linkFor(o), "copiedSet");
+      $("sendSet").hidden = true;
+      $("setHint").hidden = false; $("setHint").textContent = "couldn't reach the server (" + e.message + "): here's a long link instead.";
+      shareRow($("shareSet"), message(o), await linkFor(o));
     }
   });
 
@@ -239,22 +249,24 @@
     // On the server: the answers go straight to whoever set it; the marks come back here.
     const o = answered(); if (!o.ta) o.ta = myAddress();
     $("sentNote").textContent = "sending to " + hw.from + "…";
-    try { await api("PUT", "/h/" + hw.code, o); hw.ta = o.ta; $("sentNote").textContent = "sent to " + hw.from + " ✓ the marks come back the same way."; $("sendAnswers").textContent = "send " + hw.from + " the link too →"; }
+    try { await api("PUT", "/h/" + hw.code, o); hw.ta = o.ta; $("sentNote").textContent = "sent to " + hw.from + " ✓ the marks come back the same way."; }
     catch (e) { $("sentNote").textContent = "couldn't send (" + e.message + "): share the link instead."; }
+    $("sendAnswers").hidden = true;
+    shareRow($("shareAns"), message(o), await linkFor(o), hw.code);
   }
   $("handIn").addEventListener("click", handIn);
-  $("sendAnswers").addEventListener("click", async () => { const o = answered(); share(message(o), await linkFor(o), "copiedAns", hw.code); });
+  $("sendAnswers").addEventListener("click", async () => { const o = answered(); shareRow($("shareAns"), message(o), await linkFor(o), hw.code); });
   $("sendMarked").addEventListener("click", async () => {
     const remark = $("remarkIn").value.trim().slice(0, 60);
     const o = { ...hw, m: marks.map(Boolean) }; if (remark) o.remark = remark;
     if (hw.code) {
       if (!o.fa) o.fa = myAddress();
       $("sendMarked").disabled = true; $("sendMarked").textContent = "sending…";
-      try { await api("PUT", "/h/" + hw.code, o); $("markHint").hidden = false; $("markHint").textContent = "sent to " + (hw.by || "them") + " ✓ it'll appear in their notebook."; $("sendMarked").textContent = "send the link too →"; }
-      catch (e) { $("markHint").hidden = false; $("markHint").textContent = "couldn't send (" + e.message + "): share the link instead."; $("sendMarked").textContent = "send it back marked →"; }
-      $("sendMarked").disabled = false;
+      try { await api("PUT", "/h/" + hw.code, o); $("markHint").hidden = false; $("markHint").textContent = "sent to " + (hw.by || "them") + " ✓ it'll appear in their notebook."; }
+      catch (e) { $("markHint").hidden = false; $("markHint").textContent = "couldn't send (" + e.message + "): share the link instead."; }
+      $("sendMarked").hidden = true;
     }
-    share(message(o), await linkFor(o), "copiedMarked", hw.code);
+    shareRow($("shareMarked"), message(o), await linkFor(o), hw.code);
   });
 
   // ---------- routing ----------
