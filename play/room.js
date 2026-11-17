@@ -53,7 +53,11 @@
   }
   function send(m) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: "msg", m })); }
   function leave() { send({ bye: { caught: false } }); wantOpen = false; setTimeout(() => ws && ws.close(), 300); }
-  addEventListener("pagehide", () => { if (wantOpen) { try { ws.send(JSON.stringify({ t: "msg", m: { bye: { caught: false } } })); } catch {} } });
+  // No "bye" when the page is hidden or the browser switches apps (Android does that for WhatsApp):
+  // the friend would think we'd quit and stop sending moves. A real drop shows as "gone" from the
+  // server, and the socket reconnects and catches up by itself.
+  addEventListener("pageshow", (e) => { if (e.persisted && wantOpen && (!ws || ws.readyState > 1)) connect(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && wantOpen && (!ws || ws.readyState > 1)) connect(); });
 
   const app = { name: "", note: () => {} };
   const ctx = {
@@ -101,7 +105,7 @@
       });
       const acts = el.querySelector("#acts");
       if (over) acts.innerHTML = `<button class="go" id="again">again →</button>`;
-      const again = el.querySelector("#again"); if (again) again.addEventListener("click", () => { nextRound(); send({ again: {} }); });
+      const again = el.querySelector("#again"); if (again) again.addEventListener("click", () => { if (!roundOver()) return; nextRound(); send({ again: {} }); });
     }
     function play(i) {
       b = b.slice(0, i) + P.toMove(b, starter) + b.slice(i + 1);
@@ -109,10 +113,13 @@
       if (w) k[b[w[0]] === "t" ? 0 : 1]++; else if (!b.includes(".")) k[2]++;
       render();
     }
+    // "again" from either side starts the next round once: a second "again" for a round that's
+    // already been restarted is ignored, as in the app (both pressing must not swap the starter twice).
+    const roundOver = () => P.ncOver(b) || !!caught;
     function nextRound() { starter = starter === "t" ? "x" : "t"; b = "........."; caught = null; render(); }
     onMessage = (m) => {
       if (m.mark) { const i = m.mark._0; if (b[i] === "." && P.toMove(b, starter) === theirs && !P.ncOver(b)) play(i); }
-      else if (m.again) nextRound();
+      else if (m.again) { if (roundOver()) nextRound(); }
       else if (m.lostRound) { caught = "them"; k[iAmTick ? 0 : 1]++; render(); }
       else if (m.status) { app.note(m.status._0 || ""); }
       else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; wantOpen = false; }

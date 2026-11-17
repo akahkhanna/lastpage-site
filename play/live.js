@@ -56,11 +56,11 @@
         const [a, r, c] = l.dataset.e.split(":").map(Number);
         if (play(!!a, r, c)) ctx.send({ line: { across: !!a, row: r, col: c } });
       }));
-      on(el, "again", () => { starter = starter === "first" ? "second" : "first"; reset(); render(); ctx.send({ again: {} }); });
+      on(el, "again", () => { if (!over()) return; starter = starter === "first" ? "second" : "first"; reset(); render(); ctx.send({ again: {} }); });
     }
     ctx.on((m) => {
       if (m.line) { if (!over() && toMove === them) play(m.line.across, m.line.row, m.line.col); }
-      else if (m.again) { starter = starter === "first" ? "second" : "first"; reset(); render(); }
+      else if (m.again) { if (over()) { starter = starter === "first" ? "second" : "first"; reset(); render(); } }   // once per round
       else if (m.lostRound) { caught = "them"; render(); }
       else if (m.status) ctx.note(m.status._0 || "");
       else if (m.bye) leftNote(el, ctx, m);
