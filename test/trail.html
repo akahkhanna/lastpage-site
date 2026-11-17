@@ -10,21 +10,32 @@
 <meta property="og:site_name" content="That Last Page">
 <meta property="og:title" content="Today's word trail — can you beat my time?">
 <meta property="og:description" content="Find 4 hidden words through touching letters, using every letter once. No app needed.">
-<link rel="stylesheet" href="test.css">
-<style>
-  #grid { width: 100%; max-width: 380px; aspect-ratio: 1; touch-action: none; display: block; margin: 10px 0; }
-  .rows { font: 700 22px/34px "Kalam", cursive; letter-spacing: .35em; }
-  .done { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 6px 0; }
-  .shake { animation: shake .25s; } @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-</style>
+
+
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="theme-color" content="#fbfaf6">
+<meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+<link rel="stylesheet" href="/site.css">
+<style>
+  #grid { width: 100%; max-width: 380px; aspect-ratio: 1; touch-action: none; display: block; margin: 14px 0; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+  .rows { font: 700 20px/32px "Courier New", monospace; letter-spacing: .3em; }
+  .shake { animation: shake .25s; } @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+</style>
 </head>
 <body>
-<main>
-  <h1 id="title">WORD TRAIL</h1>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/" aria-current="page">Games</a>
+      <a href="/homework/">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet"><div class="wrap content game-page"><a class="back" href="/games/">← Games</a>
+
+  <h1 id="title">Word trail</h1>
   <p id="intro"></p>
   <canvas id="grid" aria-label="Word trail grid"></canvas>
   <div class="rows" id="rows"></div>
@@ -35,11 +46,10 @@
     <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
     <p><a href="index.html" style="color:var(--ink);font-weight:700">today's surprise test →</a> &nbsp; <a href="dots.html" style="color:var(--ink);font-weight:700">dot to dot →</a></p>
   </div>
-  <footer>
-    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
-    <p class="small">Nothing you do here is sent anywhere. <a href="../privacy.html">Privacy</a></p>
-  </footer>
-</main>
+  
+
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+</div></main>
 <script src="trail.js"></script>
 <script src="dare.js"></script>
 <script>
@@ -50,8 +60,8 @@
   const fromLink = parseInt(location.hash.slice(1), 10);
   const day = fromLink >= 1 && fromLink - 1 <= today ? fromLink - 1 : today;
   const p = W.make(day);
-  const INKS = ["#24377e", "#b8322a", "#1a734d", "#734099"];
-  document.getElementById("title").textContent = "WORD TRAIL #" + p.number;
+  const INKS = ["#262e43", "#a63d33", "#1a734d", "#734099"];
+  document.getElementById("title").textContent = "Word trail #" + p.number;
   document.getElementById("intro").innerHTML = `Find 4 words about <b>${p.theme}</b>. Trace each through touching letters; use every letter once.`;
   const canvas = document.getElementById("grid"), ctx = canvas.getContext("2d");
   let trace = [], found = {}, started = null, doneSecs = null;
@@ -73,8 +83,8 @@
     ctx.strokeStyle = "rgba(95,95,95,.35)"; ctx.lineWidth = 1.2; ctx.beginPath();
     for (let i = 0; i <= N; i++) { ctx.moveTo(i * s, 0); ctx.lineTo(i * s, side); ctx.moveTo(0, i * s); ctx.lineTo(side, i * s); } ctx.stroke();
     Object.entries(found).forEach(([w, cells]) => { ctx.globalAlpha = .1; ctx.fillStyle = INKS[w]; cells.forEach((c) => ctx.fillRect((c % N) * s + 3, Math.floor(c / N) * s + 3, s - 6, s - 6)); ctx.globalAlpha = .55; stroke(cells, INKS[w], s * 0.12); ctx.globalAlpha = 1; });
-    ctx.globalAlpha = .15; ctx.fillStyle = "#5f5f5f"; trace.forEach((c) => ctx.fillRect((c % N) * s + 3, Math.floor(c / N) * s + 3, s - 6, s - 6)); ctx.globalAlpha = .6; stroke(trace, "#5f5f5f", s * 0.1); ctx.globalAlpha = 1;
-    ctx.fillStyle = "#24377e"; ctx.font = `700 ${Math.round(s * 0.5)}px Kalam, cursive`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.globalAlpha = .15; ctx.fillStyle = "#5d6170"; trace.forEach((c) => ctx.fillRect((c % N) * s + 3, Math.floor(c / N) * s + 3, s - 6, s - 6)); ctx.globalAlpha = .6; stroke(trace, "#5d6170", s * 0.1); ctx.globalAlpha = 1;
+    ctx.fillStyle = "#262e43"; ctx.font = `700 ${Math.round(s * 0.5)}px Georgia, serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     p.letters.forEach((l, c) => { if (l) { const [x, y] = centre(c); ctx.fillText(l, x, y + 2); } });
     document.getElementById("rows").innerHTML = p.words.map((wd, w) => `<div style="color:${INKS[w]}">${found[w] ? wd : wd.replace(/./g, "_")}</div>`).join("");
   }

@@ -2,14 +2,26 @@
 <html lang="en"><head><meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>That Last Page – Support</title><link rel="stylesheet" href="style.css"><link rel="manifest" href="/manifest.json">
+<title>That Last Page – Support</title><link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="theme-color" content="#fbfaf6">
+<meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+<link rel="stylesheet" href="/site.css">
+<style>p, li { margin: 0 0 12px; max-width: 640px; } ul { padding-left: 20px; } h2 { margin: 22px 0 8px; }</style>
 </head>
-<body><main>
-<h1>That Last Page</h1>
-<p>The back page of your school notebook, on your iPhone: FLAMES, book cricket, noughts &amp; crosses, dots &amp; boxes, hangman, and Bollywood &amp; Hollywood. Just flip back to your notes before Mrs T. sees.</p>
+<body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/" aria-current="page">Games</a>
+      <a href="/homework/">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet"><div class="wrap content game-page">
+<h1>Help</h1>
+<p>The back page of your school notebook, on your iPhone: FLAMES, book cricket, noughts &amp; crosses, dots &amp; boxes, hangman, Bollywood &amp; Hollywood. Flip back to your notes before Mrs T. sees. <a href="games/">The games also run in any browser →</a></p>
 
 <h2>Need help?</h2>
 <p>Email <a href="mailto:akki_khanna@yahoo.com">akki_khanna@yahoo.com</a> and we'll get back to you.</p>
@@ -23,7 +35,7 @@
 <li><b>Where is my data?</b> Only on your iPhone. There's no account and nothing is uploaded. Deleting the app deletes your notebook.</li>
 </ul>
 
-<p><a href="games/">Play in your browser</a>: FLAMES, guess my word and today's puzzles, no app needed.</p>
-<p><a href="privacy.html">Privacy policy</a></p>
 <p class="small">© 2026 Akash Khanna</p>
-</main></body></html>
+
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+</div></main></body></html>

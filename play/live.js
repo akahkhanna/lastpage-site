@@ -40,11 +40,11 @@
       let svg = `<svg viewBox="0 0 ${W} ${W}" style="width:100%;max-width:300px;display:block;margin:8px 0" aria-label="dots and boxes">`;
       for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (boxes[r][c])
         svg += `<rect x="${pad + c * S + 3}" y="${pad + r * S + 3}" width="${S - 6}" height="${S - 6}" fill="${boxes[r][c] === "first" ? "rgba(36,55,126,.15)" : "rgba(184,50,42,.15)"}"/>
-          <text x="${pad + c * S + S / 2}" y="${pad + r * S + S / 2 + 8}" text-anchor="middle" font-family="Kalam" font-size="22" fill="${boxes[r][c] === "first" ? "#24377e" : "#b8322a"}">${boxes[r][c] === "first" ? esc(firstName[0]) : esc(secondName[0])}</text>`;
+          <text x="${pad + c * S + S / 2}" y="${pad + r * S + S / 2 + 8}" text-anchor="middle" font-family="var(--display)" font-size="22" fill="${boxes[r][c] === "first" ? "#24377e" : "var(--red)"}">${boxes[r][c] === "first" ? esc(firstName[0]) : esc(secondName[0])}</text>`;
       const edge = (isA, r, c) => {
         const k = key(isA, r, c), drawn = lines[k];
         const x1 = pad + c * S, y1 = pad + r * S, x2 = isA ? x1 + S : x1, y2 = isA ? y1 : y1 + S;
-        return `<line data-e="${isA ? 1 : 0}:${r}:${c}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${drawn ? (drawn === "first" ? "#24377e" : "#b8322a") : "rgba(95,95,95,.12)"}" stroke-width="${drawn ? 4 : 10}" stroke-linecap="round" style="cursor:pointer"/>`;
+        return `<line data-e="${isA ? 1 : 0}:${r}:${c}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${drawn ? (drawn === "first" ? "#24377e" : "var(--red)") : "rgba(95,95,95,.12)"}" stroke-width="${drawn ? 4 : 10}" stroke-linecap="round" style="cursor:pointer"/>`;
       };
       for (let r = 0; r <= N; r++) for (let c = 0; c < N; c++) svg += edge(true, r, c);
       for (let r = 0; r < N; r++) for (let c = 0; c <= N; c++) svg += edge(false, r, c);
@@ -98,8 +98,8 @@
           return;
         }
         const rev = game.revealed(), wrong = game.wrong(), over = game.over();
-        const slots = rev.map((c) => c === " " ? '<span style="display:inline-block;width:14px"></span>' : `<span style="display:inline-block;width:26px;border-bottom:2px solid #5f5f5f;text-align:center;font:700 26px Kalam;margin:0 2px">${c || (iSet ? `<span style="color:#aaa">${""}</span>` : "")}</span>`).join("");
-        const banner = M.banner ? `<p style="font:700 28px Kalam;letter-spacing:.1em;margin:4px 0">${[...M.banner].map((c, i) => i < wrong ? `<s style="color:#b8322a">${c}</s>` : c).join("")}</p>` : `<p class="note">${wrong} of ${M.chances} wrong</p>`;
+        const slots = rev.map((c) => c === " " ? '<span style="display:inline-block;width:14px"></span>' : `<span style="display:inline-block;width:26px;border-bottom:2px solid var(--muted);text-align:center;font:700 26px var(--display);margin:0 2px">${c || (iSet ? `<span style="color:#aaa">${""}</span>` : "")}</span>`).join("");
+        const banner = M.banner ? `<p style="font:700 28px var(--display);letter-spacing:.1em;margin:4px 0">${[...M.banner].map((c, i) => i < wrong ? `<s style="color:var(--red)">${c}</s>` : c).join("")}</p>` : `<p class="note">${wrong} of ${M.chances} wrong</p>`;
         let status = iSet ? (over ? (game.won() ? `${esc(their)} got it!!` : `${esc(their)} is hanged!! it was ${esc(game.word)}`) : `${esc(their)} is guessing… (${esc(game.word)})`)
                           : (over ? (game.won() ? (M.banner ? "got it!!" : "saved him!!") : `${M.banner ? M.banner + "!!" : "hanged!!"} it was ${esc(game.word)}`) : `guess a letter · ${M.chances - wrong} chance${M.chances - wrong === 1 ? "" : "s"} left`);
         let keys = "";
@@ -179,7 +179,7 @@
     const canAddUp = () => waitingFor().length === 0;
     function render() {
       const their = ctx.members.filter((m) => m !== ctx.me);
-      const circled = `<span style="display:inline-block;border:2.5px solid #b8322a;border-radius:50%;width:44px;height:44px;line-height:40px;text-align:center;font:700 28px Kalam;color:#b8322a">${letter}</span>`;
+      const circled = `<span style="display:inline-block;border:2.5px solid var(--red);border-radius:50%;width:44px;height:44px;line-height:40px;text-align:center;font:700 28px var(--display);color:var(--red)">${letter}</span>`;
       const totalsLine = Object.keys(totals).length ? `<p class="scoreline">${[ctx.me, ...their].map((p) => `${esc(p === ctx.me ? "me" : p)} ${totals[p] || 0}`).join(" · ")}</p>` : "";
       if (stage === "pick") {
         if (inCharge) {
@@ -211,8 +211,8 @@
       let html = `<p class="status">${circled} ${stage === "added" ? "added up!" : canAddUp() ? (inCharge ? "cross anything that isn't right, then add up" : `cross anything that isn't right · ${esc(ctx.host)} adds up`) : `waiting for ${esc(waitingFor().join(", "))}'s sheet…`}</p>`;
       html += `<table class="card"><tr><td></td>${players.map((p) => `<td><b>${esc(p === ctx.me ? "me" : p)}</b></td>`).join("")}</tr>`;
       for (const c of columns) html += `<tr><td class="note">${COLS[c]}</td>${players.map((p) => { const a = p === ctx.me ? mine[c] : others[p][c]; const ok = counts(p, c); const bad = !valid(a); const pt = points ? points[p][c] : null;
-        return `<td>${bad ? `<s style="color:#999">${esc(a || "–")}</s>` : ok ? esc(a) : `<s style="color:#b8322a">${esc(a)}</s>`}${p !== ctx.me && stage === "marking" && !bad ? ` <button class="small" data-j="${esc(p)}:${c}" style="padding:0 6px">${ok ? "✓" : "✗"}</button>` : ""}${pt !== null ? ` <span class="note">${pt}</span>` : ""}</td>`; }).join("")}</tr>`;
-      if (points) html += `<tr><td><b>total</b></td>${players.map((p) => `<td><b style="color:#b8322a">${Object.values(points[p]).reduce((a, b) => a + b, 0)}</b></td>`).join("")}</tr>`;
+        return `<td>${bad ? `<s style="color:#999">${esc(a || "–")}</s>` : ok ? esc(a) : `<s style="color:var(--red)">${esc(a)}</s>`}${p !== ctx.me && stage === "marking" && !bad ? ` <button class="small" data-j="${esc(p)}:${c}" style="padding:0 6px">${ok ? "✓" : "✗"}</button>` : ""}${pt !== null ? ` <span class="note">${pt}</span>` : ""}</td>`; }).join("")}</tr>`;
+      if (points) html += `<tr><td><b>total</b></td>${players.map((p) => `<td><b style="color:var(--red)">${Object.values(points[p]).reduce((a, b) => a + b, 0)}</b></td>`).join("")}</tr>`;
       html += `</table>${totalsLine}`;
       if (stage === "marking") html += inCharge ? `<button class="go" id="addup" ${canAddUp() ? "" : "disabled"}>add up →</button>` : "";
       else html += inCharge ? `<button class="go" id="next">next letter →</button>` : `<p class="note">next letter: ${esc(ctx.host)} picks it</p>`;

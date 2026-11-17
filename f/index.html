@@ -4,8 +4,8 @@
 <title>Join the family – That Last Page</title>
 <meta property="og:title" content="Join our family in That Last Page ✏️">
 <meta property="og:description" content="Then tests and games find you by name. No sign-up.">
-<link rel="stylesheet" href="../test/test.css">
-<style>.go { display: inline-block; text-decoration: none; }</style>
+
+
 <!-- f links: the app opens them itself (universal links). A browser carries on to the
      web page, except on an iPhone, which gets the choice: an iPhone that once chose Safari for our
      links keeps choosing it, so "open in the app" uses the app's own thatlastpage:// scheme. -->
@@ -18,10 +18,26 @@
     document.getElementById("web").href = web;
   });
 </script>
-</head><body><main>
-<h1>JOIN THE FAMILY</h1>
+<link rel="stylesheet" href="/site.css">
+<style>.go { display: inline-flex; align-items: center; min-height: 43px; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); font-weight: 700; color: var(--red); text-decoration: none; }
+#app.go { background: var(--red); border-color: var(--red); color: #fffaf2; }
+p { margin: 0 0 12px; max-width: 560px; }</style>
+</head><body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/" aria-current="page">Games</a>
+      <a href="/homework/">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet"><div class="wrap content game-page">
+<h1>Join the family</h1>
 <p class="pencil">Then tests and game invites find you by name. No sign-up.</p>
 <p><a class="go" id="app" href="#">open in the app →</a></p>
 <p><a class="go" id="web" href="#">or carry on in the browser →</a></p>
 <p class="small pencil">if our links keep opening here instead of the app: pull this page down a little and tap <b>Open</b> in the banner at the top, once. After that they open the app by themselves.</p>
-</main></body></html>
+
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+</div></main></body></html>

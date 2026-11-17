@@ -212,3 +212,14 @@ button.small { background:none; border:0; padding:0; color:var(--red); font-weig
 .paper-title .button { flex:none }
 .panel .note { padding:0 20px }
 #famAsk .family-links { padding-top:12px }
+
+/* ---- game and text pages (everything but the two hubs) ---- */
+.game-page h1 { font-size: clamp(32px, 5vw, 46px); margin: 0 0 8px; line-height: 1.05 }
+.game-page > p:first-of-type, .game-page .lead { color: var(--muted); margin: 0 0 14px }
+.game-page p { margin: 0 0 10px }
+.done { color: var(--red); font: 700 italic 26px/1.2 var(--display); margin: 10px 0 }
+#dare { font-family: var(--display) }
+.game-page h2 { font-size: 22px; margin: 18px 0 6px }
+.page-footer { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 12px }
+.game-page #after, .game-page #end { margin-top: 12px }
+.game-page button.go { display: block }

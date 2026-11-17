@@ -6,18 +6,30 @@
 </script>
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Join a game – That Last Page</title><link rel="stylesheet" href="../style.css">
+<title>Join a game – That Last Page</title>
 <meta property="og:title" content="Come and play on That Last Page ✏️">
 <meta property="og:description" content="Your friend's waiting. Tap to join their game.">
-<style>
-  .open { display: inline-block; margin: 1em 0; padding: .7em 1.2em; border-radius: 10px;
-          background: #1f3a93; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.1rem; }
-</style><link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="theme-color" content="#fbfaf6">
+<meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+<link rel="stylesheet" href="/site.css">
+<style>
+  .open { display: inline-flex; align-items: center; min-height: 43px; margin: 6px 0 14px; padding: 8px 14px; border-radius: 6px; background: var(--red); color: #fffaf2; text-decoration: none; font-weight: 700; }
+  p { margin: 0 0 12px; max-width: 560px; }
+</style>
 </head>
-<body><main>
+<body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/" aria-current="page">Games</a>
+      <a href="/homework/">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet"><div class="wrap content game-page">
 <h1>Your friend wants to play</h1>
 <p id="what">Join their game in That Last Page.</p>
 <a class="open" href="https://apps.apple.com/app/id6831963769">get That Last Page (iPhone) →</a>
@@ -25,7 +37,9 @@
 <p class="small">Already have the app and still seeing this page? Press and hold the link and choose <b>Open in “That Last Page”</b>.</p>
 <p class="small">No iPhone? <a id="web" href="../play/#live">play right here in the browser →</a></p>
 <p class="small"><a href="../">That Last Page</a> · <a href="../privacy.html">Privacy</a></p>
-</main>
+
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+</div></main>
 <script>
   // "#<game>.<code>.<players>". Nothing is sent anywhere: it stays in this page.
   const games = { noughtsCrosses: "noughts & crosses", dotsBoxes: "dots & boxes", hangman: "hangman",

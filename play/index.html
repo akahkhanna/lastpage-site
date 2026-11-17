@@ -10,43 +10,57 @@
 <meta property="og:site_name" content="That Last Page">
 <meta property="og:title" content="Your turn! 🏏 ✓✗">
 <meta property="og:description" content="Noughts & crosses or book cricket, a turn at a time. Tap to play, no app needed.">
-<link rel="stylesheet" href="../test/test.css">
-<style>
-  #board { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 300px; aspect-ratio: 1; margin: 10px 0; position: relative; }
-  #board button { all: unset; display: flex; align-items: center; justify-content: center; font: 700 56px Kalam, cursive; cursor: pointer; aspect-ratio: 1; }
-  #board button:nth-child(-n+6) { border-bottom: 3px solid var(--ink); }
-  #board button:not(:nth-child(3n)) { border-right: 3px solid var(--ink); }
-  #board button.t { color: var(--ink); } #board button.x { color: var(--pencil); }
-  #board button.win { color: var(--red); }
-  .status { font-size: 22px; margin: 6px 0; }
-  .scoreline { font: 400 24px/34px "Caveat", cursive; color: var(--ink); }
-  .page { margin-top: 10px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 92px; height: 84px; background: var(--paper);
-          box-shadow: 0 2px 4px rgba(0,0,0,.15); transform: rotate(-2deg); cursor: pointer; margin-right: 16px; vertical-align: middle; }
-  .page small { font: 11px Georgia, serif; color: var(--print); }
-  .page b { font-size: 30px; line-height: 40px; }
-  .call { color: var(--red); font-weight: 700; font-size: 32px; }
-  table.card { border-collapse: collapse; margin: 8px 0; font-size: 18px; }
-  table.card td { padding: 0 10px 0 0; vertical-align: top; }
-  table.card td.balls { font-size: 16px; }
-  .big { color: var(--red); font-weight: 700; font-size: 30px; transform: rotate(-3deg); transform-origin: left; margin: 8px 0; }
-  .note { font: 400 19px/28px "Caveat", cursive; color: var(--pencil); margin: 0; }
-  input.name { width: 200px; }
-</style>
+
+
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="theme-color" content="#fbfaf6">
+<meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
+<link rel="stylesheet" href="/site.css">
+<style>
+  #board { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; max-width: 300px; aspect-ratio: 1; margin: 12px 0; position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  #board button { all: unset; display: flex; align-items: center; justify-content: center; font: 700 52px var(--display); cursor: pointer; aspect-ratio: 1; }
+  #board button:nth-child(-n+6) { border-bottom: 2px solid var(--border); }
+  #board button:not(:nth-child(3n)) { border-right: 2px solid var(--border); }
+  #board button.t { color: var(--ink); } #board button.x { color: var(--red); }
+  #board button.win { background: #f3e7db; }
+  .status { font-size: 17px; margin: 6px 0; color: var(--ink); }
+  .scoreline { color: var(--muted); font-size: 14px; margin: 4px 0; }
+  .page { margin-top: 10px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 92px; height: 84px; background: #fff5d9; border: 1px solid #806444; border-radius: 6px 2px 2px 6px;
+          box-shadow: 3px 4px 0 #79573032; transform: rotate(-2deg); cursor: pointer; margin-right: 16px; vertical-align: middle; }
+  .page small { font: 11px var(--display); color: var(--muted); }
+  .page b { font: italic 700 30px/40px var(--display); color: var(--red); }
+  .call { color: var(--red); font-weight: 700; font-size: 28px; font-family: var(--display); }
+  table.card { border-collapse: collapse; margin: 8px 0; font-size: 15px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+  table.card td { padding: 6px 12px; vertical-align: top; }
+  table.card td.balls { font-size: 14px; color: var(--muted); }
+  .big { color: var(--red); font: 700 italic 26px/1.2 var(--display); margin: 10px 0; }
+  .note { color: var(--muted); font-size: 14px; margin: 4px 0; font-weight: 400; }
+  input.name, .content input { width: 220px; display: inline-block; }
+  #app > p, #app > div { margin: 0 0 10px; }
+  #app button.go { display: inline-block; margin: 4px 16px 4px 0; }
+  .word { font: 700 24px/1 var(--display); letter-spacing: .2em; }
+</style>
 </head>
 <body>
-<main>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/" aria-current="page">Games</a>
+      <a href="/homework/">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet"><div class="wrap content game-page">
+  <a class="back" href="/games/">← Games</a>
   <h1 id="title">Your turn</h1>
   <div id="app"></div>
-  <p class="pencil" id="copied" hidden>copied!! paste it in the chat</p>
-  <footer>
-    <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
-    <p class="small">The game travels inside the link you send; nothing is stored anywhere. <a href="../privacy.html">Privacy</a></p>
-  </footer>
-</main>
+  <p class="pencil" id="copied" hidden>Copied. Paste it in the chat.</p>
+  
+
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+</div></main>
 <script src="play.js"></script>
 <script src="../hangman/rules.js"></script>
 <script src="room.js"></script>
@@ -72,11 +86,11 @@
   function start(broken) {
     document.getElementById("title").textContent = "Play a friend";
     app.innerHTML = `${broken ? '<p class="status" style="color:var(--red)">That link looks broken. Ask for it again, or start a new game:</p>' : ""}
-      <p><a class="go" style="text-decoration:none" href="#live">play live, right now →</a> <span class="note">(against the app or another browser)</span></p>
-      <p>Or take turns by sending links in a chat. No app needed.</p>
-      <p>your name: <input class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></p>
-      <button class="go" data-g="nc">noughts & crosses →</button><br>
-      <button class="go" data-g="bc">book cricket →</button>`;
+      <p><a class="button primary" href="#live">Play live, right now</a> <span class="note">against the app or another browser</span></p>
+      <p class="status">Or take turns: make your move and send the link.</p>
+      <p><label>Your name<br><input class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></label></p>
+      <button class="go" data-g="nc">Noughts & crosses →</button>
+      <button class="go" data-g="bc">Book cricket →</button>`;
     app.querySelectorAll("button[data-g]").forEach((b) => b.addEventListener("click", () => {
       const nm = document.getElementById("nm").value.trim().toUpperCase().slice(0, 20) || "ME";
       myName = nm; localStorage.setItem(NAME_KEY, nm);

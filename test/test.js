@@ -10,7 +10,7 @@
   const test = T.make(day);
   const answers = test.questions.map(() => "");
   const key = "lp.test." + day;
-  $("title").textContent = "SURPRISE TEST #" + test.number;
+  $("title").textContent = "Surprise test #" + test.number;
   try { $("name").value = localStorage.getItem("lp.from") || ""; } catch {}
 
   test.questions.forEach((q, i) => {
