@@ -373,6 +373,7 @@
   (async () => {
   const raw = location.hash.slice(1);
   $("from").value = recall("lp.from");
+  if (raw === "join" || raw === "start") { await showHub(); history.replaceState(null, "", location.pathname); openPane(raw); return; }
   if (raw.startsWith("f-") && isCode(raw.slice(2))) {
     await showHub(); history.replaceState(null, "", location.pathname); await previewFamily(raw.slice(2)); return;
   }

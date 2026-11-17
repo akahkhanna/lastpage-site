@@ -11,41 +11,69 @@
 <meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
 <link rel="stylesheet" href="/site.css">
-<style>
-  table.board { border-collapse: collapse; font-size: 16px; margin: 8px 0 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  table.board td { padding: 8px 14px; white-space: nowrap; border-bottom: 1px solid var(--soft-border); }
-  table.board tr:last-child td { border-bottom: 0; }
-  table.board td.best { color: var(--red); font-weight: 700; }
-  table.board td.none { color: #b9b2a4; }
-  .fams { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
-  .fams button { min-height: 36px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: #fbf7ed; font: inherit; font-size: 14px; cursor: pointer; }
-  .fams button.on { color: var(--red); border-color: var(--red); font-weight: 700; }
-  .lower-links { margin-top: 10px; }
-</style>
 </head>
+<style>
+  .fams { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+  .fams button { min-height:36px; padding:4px 12px; border:1px solid var(--border); border-radius:999px; background:#fbf7ed; font:inherit; font-size:14px; cursor:pointer }
+  .fams button.on { color:var(--red); border-color:var(--red); font-weight:700 }
+  .board-symbol.sudoku { background:#eadab4; color:#4b4433 } .board-symbol.dots { background:#dce5ee; color:#35486d } .board-symbol.words { background:#e4ead8; color:#424f39 }
+  a.board-shortcut, a.button { text-decoration:none; color:inherit }
+</style>
 <body>
 <header class="site-header">
   <div class="wrap header-row">
     <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
     <nav class="site-nav" aria-label="Pages">
-      <a href="/games/" aria-current="page">Games</a>
+      <a href="/games/">Games</a>
       <a href="/homework/">Test papers</a>
+      <a href="/board/" aria-current="page">Family board</a>
     </nav>
   </div>
 </header>
-<main class="sheet"><div class="wrap content game-page"><a class="back" href="/games/">← Games</a>
-
-  <h1>Family board</h1>
-  
-  <p class="fams" id="fams"></p>
-  <div id="board"></div>
-  <p class="note" id="note"></p>
-  <div class="lower-links"><a href="../test/sudoku.html">Mini sudoku →</a><a href="../test/dots.html">Dot to dot →</a><a href="../test/trail.html">Word trail →</a><a href="../homework/">My family →</a></div>
-  
-  
-
-<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
-</div></main>
+<main class="sheet">
+  <section class="wrap content" aria-labelledby="board-title">
+    <div class="page-heading board-heading">
+      <div><h1 id="board-title">Family board</h1><p id="famName" hidden></p><div class="fams" id="fams" hidden></div></div>
+      <a class="button" id="settings" href="/homework/" hidden>Family settings</a>
+    </div>
+    <p class="note" id="note" hidden></p>
+    <div class="board-grid" id="scores" hidden>
+      <section class="panel" aria-labelledby="times-title">
+        <div class="panel-head"><h2 id="times-title">Today’s times</h2></div>
+        <table class="board-table times-table" aria-labelledby="times-title">
+          <thead><tr><th scope="col">Player</th><th scope="col">Mini sudoku</th><th scope="col">Dot to dot</th><th scope="col">Word trail</th></tr></thead>
+          <tbody id="times"></tbody>
+        </table>
+        <div class="board-callout board-note" id="noTimes">Times appear when you finish a puzzle.</div>
+      </section>
+      <section class="panel" aria-labelledby="wins-title">
+        <div class="panel-head"><h2 id="wins-title">This week</h2><span class="board-note">Resets Monday</span></div>
+        <ul class="board-wins" id="wins" aria-label="Weekly wins"></ul>
+        <details class="board-callout">
+          <summary>How wins work</summary>
+          <p class="board-note">The fastest time on each daily puzzle earns one win. Streaks count days in a row with at least one puzzle done.</p>
+        </details>
+      </section>
+    </div>
+    <section class="panel board-empty" id="noFamily" aria-labelledby="no-family-title" hidden>
+      <h2 id="no-family-title">Play with your family</h2>
+      <p class="board-note">Join or start a family to compare puzzle times.</p>
+      <div class="dialog-actions">
+        <a class="button primary" href="/homework/#join">Join with a code</a>
+        <a class="button" href="/homework/#start">Start a family</a>
+      </div>
+    </section>
+    <section class="board-play" aria-labelledby="board-play-title">
+      <div class="section-head"><h2 id="board-play-title">Play today’s puzzles</h2></div>
+      <div class="board-play-grid">
+        <a class="board-shortcut" href="../test/sudoku.html"><span class="board-symbol sudoku" aria-hidden="true">1·6</span>Mini sudoku <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="board-shortcut" href="../test/dots.html"><span class="board-symbol dots" aria-hidden="true">•─•</span>Dot to dot <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="board-shortcut" href="../test/trail.html"><span class="board-symbol words" aria-hidden="true">Aa</span>Word trail <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+    </section>
+    <footer class="page-footer board-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+  </section>
+</main>
 <script src="../test/dare.js"></script>
 <script>
 (function () {
@@ -57,37 +85,54 @@
   const today = dayFor(new Date());
   const recall = (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
   const families = () => { try { return JSON.parse(recall("lp.families") || "[]"); } catch { return []; } };
-  const PUZ = [["sudoku", "🔢"], ["dots", "✏️"], ["trail", "🔤"]];
+  const PUZ = ["sudoku", "dots", "trail"];
+  const me = recall("lp.address");
+  const mine = (m) => m.addr === me || (m.addrs || []).includes(me);
+  const streak = (m) => { let n = 0; while (m.days[today - n] && Object.keys(m.days[today - n]).length) n++; return n; };
+  const person = (m) => `<span class="board-person"><span class="avatar" aria-hidden="true">${esc(m.name.slice(0, 1).toUpperCase())}</span><span><b>${esc(m.name)}</b>${mine(m) ? "<small>You</small>" : ""}${streak(m) > 1 ? `<small>${streak(m)}-day streak</small>` : ""}</span></span>`;
+
   async function show(code) {
-    $("note").textContent = "fetching…";
+    $("note").hidden = false; $("note").textContent = "Fetching…";
     let b;
     try { const r = await fetch(`${API}/f/${code}/board?day=${today}`); b = await r.json(); if (!r.ok) throw new Error(b.error || r.status); }
-    catch (e) { $("note").textContent = "couldn't fetch the board: " + e.message; return; }
-    $("note").textContent = "";
-    document.title = `${b.name} – family board`;
+    catch (e) { $("note").textContent = "Couldn't fetch the board: " + e.message; return; }
+    $("note").hidden = true;
+    document.title = `${b.name} · Family board`;
+    $("famName").hidden = false; $("famName").textContent = b.name;
+    $("settings").hidden = false;
+    $("scores").hidden = false;
+    // Wins over the last 7 days: fastest on a puzzle that day gets one.
     const wins = {};
-    for (let d = today - 6; d <= today; d++) for (const [p] of PUZ) {
+    for (let d = today - 6; d <= today; d++) for (const p of PUZ) {
       const done = b.members.map((m) => [m.addr, (m.days[d] || {})[p]]).filter((x) => x[1]);
       if (!done.length) continue;
       const best = done.reduce((a, x) => (x[1].s < a[1].s ? x : a));
       wins[best[0]] = (wins[best[0]] || 0) + 1;
     }
-    const me = recall("lp.address");
-    const mine = (m) => m.addr === me || (m.addrs || []).includes(me);
-    const sorted = b.members.slice().sort((x, y) => (wins[y.addr] || 0) - (wins[x.addr] || 0) || x.name.localeCompare(y.name));
-    const fastest = {}; for (const [p] of PUZ) fastest[p] = Math.min(...b.members.map((m) => ((m.days[today] || {})[p] || {}).s || Infinity));
-    const streak = (m) => { let n = 0; while (m.days[today - n] && Object.keys(m.days[today - n]).length) n++; return n; };
-    $("board").innerHTML = `<p class="status"><b>${esc(b.name)}</b> · today. Fastest on a puzzle = 1 win; a new race every Monday.</p><table class="board">${sorted.map((m) => `<tr><td><b>${esc(mine(m) ? "me" : m.name)}</b></td>${PUZ.map(([p, ic]) => { const r = (m.days[today] || {})[p]; return r ? `<td class="${r.s === fastest[p] ? "best" : ""}">${ic} ${clock(r.s)}</td>` : `<td class="none">${ic} ☐</td>`; }).join("")}<td>${streak(m) > 1 ? streak(m) + "🔥" : ""}</td></tr>`).join("")}</table>
-      <p class="pencil">This week: ${sorted.map((m) => `${esc(mine(m) ? "me" : m.name)} ${wins[m.addr] || 0}`).join(" · ")}</p>`;
+    const fastest = {}; for (const p of PUZ) fastest[p] = Math.min(...b.members.map((m) => ((m.days[today] || {})[p] || {}).s || Infinity));
+    const anyToday = PUZ.some((p) => Number.isFinite(fastest[p]));
+    $("noTimes").hidden = anyToday;
+    const byName = b.members.slice().sort((x, y) => x.name.localeCompare(y.name));
+    $("times").innerHTML = byName.map((m) => `<tr><th scope="row">${person(m)}</th>${PUZ.map((p) => {
+      const r = (m.days[today] || {})[p];
+      if (!r) return `<td><span class="no-time" aria-hidden="true">—</span><span class="sr-only">Not played</span></td>`;
+      const best = r.s === fastest[p];
+      return `<td><span class="board-time${best ? " fastest" : ""}">${clock(r.s)}${best ? '<span class="sr-only"> fastest today</span>' : ""}</span></td>`;
+    }).join("")}</tr>`).join("");
+    const byWins = b.members.slice().sort((x, y) => (wins[y.addr] || 0) - (wins[x.addr] || 0) || x.name.localeCompare(y.name));
+    $("wins").innerHTML = byWins.map((m) => { const w = wins[m.addr] || 0; return `<li>${person(m)}<strong class="win-total">${w} ${w === 1 ? "win" : "wins"}</strong></li>`; }).join("");
   }
+
   const hash = location.hash.slice(1).toUpperCase();
   const fams = families();
   const codes = fams.map((f) => f.code);
   if (/^[A-HJ-NP-Z2-9]{6}$/.test(hash) && !codes.includes(hash)) codes.unshift(hash);
-  if (!codes.length) { $("note").textContent = "You're not in a family yet. Join or start one on the Test papers page, and everyone's times line up here."; }
+  if (!codes.length) { $("noFamily").hidden = false; }
   else {
     if (codes.length > 1) {
-      $("fams").innerHTML = codes.map((c) => `<button class="small" data-c="${c}">${esc((fams.find((f) => f.code === c) || {}).name || c)}</button>`).join(" ");
+      // Several families: chips under the title switch between them.
+      $("fams").hidden = false;
+      $("fams").innerHTML = codes.map((c) => `<button data-c="${c}">${esc((fams.find((f) => f.code === c) || {}).name || c)}</button>`).join("");
       $("fams").addEventListener("click", (e) => { const b = e.target.closest("[data-c]"); if (!b) return; $("fams").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); show(b.dataset.c); });
       $("fams").querySelector("button").classList.add("on");
     }

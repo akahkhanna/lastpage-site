@@ -97,7 +97,7 @@ h3 { font-size:23px; line-height:1.13; letter-spacing:-.035em }
 .person-name small { font-size:12px; font-weight:400; color:var(--muted); margin-left:6px }
 .family-label { padding:14px 20px 0; color:var(--muted); font-size:13px; font-weight:700 }
 .family-links { display:flex; align-items:center; gap:10px 15px; flex-wrap:wrap; padding:4px 20px 12px }
-.family-links .text-button { min-height:40px }
+.family-links .text-button { display:inline-flex; align-items:center; gap:4px; min-height:40px }
 .settings { display:flex; justify-content:space-between; align-items:center; width:100%; min-height:50px; padding:9px 20px; text-align:left; font-weight:700; border:0; border-top:1px solid var(--soft-border); background:transparent; border-radius:0 0 10px 10px }
 .settings:hover { background:#f7f2e8 }
 .inbox-list { list-style:none; margin:0; padding:0 20px }
@@ -126,16 +126,58 @@ dialog::backdrop { background:#2b2b37a0 }
 .dialog-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px }
 .demo-status { margin:12px 0 0; padding:10px; background:#edf0e8; border-radius:6px; color:#3b4d34 }
 code { font-family:"Courier New",monospace; font-weight:700 }
+.board-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:16px }
+.board-heading p { overflow-wrap:anywhere }
+.board-heading .button { flex:none }
+.board-grid { display:grid; grid-template-columns:minmax(0,2.1fr) minmax(0,1fr); gap:18px; align-items:start }
+.board-grid .panel-head { padding-inline:20px }
+.board-note { color:var(--muted); font-size:13px }
+.board-table { width:100%; border-collapse:collapse; text-align:left; font-variant-numeric:tabular-nums }
+.board-table thead th { background:#f8f4eb; color:var(--muted); font-size:13px; font-weight:700 }
+.board-table :is(th,td) { padding:12px 6px; border-bottom:1px solid var(--soft-border) }
+.board-table tr > :first-child { padding-left:20px }
+.board-table tr > :last-child { padding-right:20px }
+.board-table tbody tr:last-child > * { border-bottom:0 }
+.times-table { table-layout:fixed }
+.times-table tr > :first-child { width:32% }
+.times-table tr > :not(:first-child) { text-align:center }
+.board-person { display:flex; align-items:center; gap:9px }
+.board-person .avatar { width:32px; height:32px; font-size:19px; flex:none }
+.board-person small { display:block; color:var(--muted); font-size:11px; font-weight:400 }
+.board-person b { display:block }
+.board-time { display:inline-block; padding:2px 6px; border-radius:4px }
+.board-time.fastest { color:#394b34; background:#e4ebda; font-weight:700 }
+.board-table .no-time { color:var(--muted) }
+.board-wins { margin:0; padding:4px 20px; list-style:none }
+.board-wins li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 0 }
+.board-wins li + li { border-top:1px solid var(--soft-border) }
+.win-total { font:700 22px/1 var(--display); font-variant-numeric:lining-nums tabular-nums }
+.board-callout { padding:9px 20px; border-top:1px solid var(--soft-border); min-height:44px }
+.board-callout summary { color:var(--red); cursor:pointer; font-weight:700 }
+.board-callout p { margin:6px 0 4px }
+.board-play { margin-top:25px }
+.board-play-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px }
+.board-shortcut { display:grid; grid-template-columns:41px 1fr auto; align-items:center; gap:10px; text-align:left; min-height:63px; padding:9px 12px; border:1px solid var(--border); border-radius:8px; background:var(--card); font:700 17px/1.12 var(--display) }
+.board-shortcut:hover { border-color:#ad9c81; background:#fbf7ee }
+.board-symbol { display:grid; place-items:center; width:40px; height:40px; border-radius:5px; font:700 16px/1 "Courier New",monospace }
+.board-empty { padding:20px }
+.board-empty p { margin-top:8px }
+.board-footer { margin-top:18px; align-items:center }
+.board-footer .text-button { min-height:40px }
+.board-footer label { min-height:40px; display:flex; align-items:center; gap:6px; cursor:pointer }
+.board-footer input { accent-color:var(--red) }
+.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
 @media (max-width:760px) {
   .wrap { width:calc(100% - 32px) }
   .content { padding:29px 0 18px 14px }
   .paper-grid { grid-template-columns:1fr }
+  .board-grid { grid-template-columns:1fr }
   .paper-title { gap:18px; align-items:flex-start; flex-direction:column }
   .page-heading { margin-bottom:24px }
   .game-grid { gap:11px }
 }
 @media (max-width:530px) {
-  .header-row { min-height:58px; gap:8px }
+  .header-row { min-height:58px; flex-wrap:wrap; gap:0 8px; padding-block:8px }
   .site-nav { gap:2px }
   .site-nav a { font-size:12px; padding:8px }
   .wordmark { gap:7px; font-size:19px }
@@ -155,8 +197,24 @@ code { font-family:"Courier New",monospace; font-weight:700 }
   .game-section + .game-section { margin-top:21px }
   .panel-head { min-height:60px }
   .inbox-empty { min-height:164px }
+  .board-heading { align-items:flex-start; flex-direction:column; gap:10px }
+  .board-heading .button { min-height:40px }
+  .board-grid .panel-head,.board-callout { padding-inline:12px }
+  .board-table :is(th,td) { padding-inline:4px }
+  .board-table tr > :first-child { padding-left:12px }
+  .board-table tr > :last-child { padding-right:8px }
+  .board-table thead th { font-size:12px }
+  .board-table .avatar { display:none }
+  .board-play-grid { grid-template-columns:1fr; gap:8px }
+  .board-shortcut { min-height:48px; padding-block:6px }
+  .board-symbol { width:34px; height:34px }
+  .board-wins { padding-inline:12px }
 }
-@media (max-width:350px) { .site-nav a { padding-inline:5px } .wordmark { font-size:17px } }
+@media (max-width:385px) {
+  .header-row { padding-block:10px 5px; gap:5px }
+  .site-nav { flex-basis:100% }
+  .site-nav a { padding-inline:8px }
+}
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important } }
 
 /* ---- ours: links, pages, the test forms and papers ---- */
