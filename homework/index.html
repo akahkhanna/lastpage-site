@@ -35,6 +35,13 @@
   h2 { margin: 22px 0 0; font: 700 24px/40px "Kalam", cursive; color: var(--red); }
   #nav a { color: var(--pencil); }
   #famList p { margin: 6px 0 0; }
+  .acts { display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline; margin: 6px 0 0; }
+  .acts .go { font-size: 24px; }
+  .row2 { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; margin: 6px 0 0; }
+  .row2 input { width: 150px; font-size: 20px; }
+  .row2 input.code { width: 92px; text-transform: uppercase; }
+  input::placeholder { text-transform: none; font-weight: 400; color: rgba(95,95,95,.5); }
+  button.red { color: var(--red); font-weight: 700; }
 </style><link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
 <meta name="theme-color" content="#fbfaf6">
@@ -45,28 +52,23 @@
 <section id="hub" hidden>
   <p class="small pencil" id="nav" style="margin-bottom:4px"><a href="/test/">today's puzzles</a> · <a href="/play/#live">play live</a> · <a href="/">all games</a></p>
   <h1>TEST PAPERS</h1>
-  <p class="pencil">Dadi, Papa, a cousin, a friend: anyone sets a test, you do it, they mark it.</p>
   <div id="inboxList"></div>
   <p class="note" id="hubNote" hidden></p>
-  <button class="go" id="toSet">set a test for someone →</button><br>
-  <button class="go" id="toAsk">ask someone for a test →</button>
+  <p class="acts"><button class="go" id="toSet">set a test →</button> <button class="go" id="toAsk">ask for one →</button></p>
 
   <h2>MY FAMILY</h2>
-  <p class="pencil">join once, then tests and game invites go to a name, not a code.</p>
   <div id="famAsk" hidden></div>
   <div id="famList"></div>
   <div id="famJoin">
-    <p><input id="famName" placeholder="start a family: its name" maxlength="20" style="width:240px"> <button class="small" id="startFam" style="color:var(--red);font-weight:700">start →</button></p>
-    <p><input id="famCode" placeholder="or join with a code" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="joinFam" style="color:var(--red);font-weight:700">join →</button></p>
+    <p class="row2"><input id="famName" placeholder="family name" maxlength="20"> <button class="small red" id="startFam">start →</button>
+       <span class="pencil small">or</span> <input id="famCode" class="code" placeholder="code" maxlength="6"> <button class="small red" id="joinFam">join →</button></p>
   </div>
   <p class="pencil" id="copiedFam" hidden>copied!! paste it in the chat</p>
 
   <h2>MY ADDRESS</h2>
-  <p class="pencil"><b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
-    <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
-  <p class="small pencil">a test sent to it appears here by itself (and in the app, with a knock).</p>
+  <p class="row2"><b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b> <button class="small red" id="shareAddr" aria-label="share my address">share →</button>
+     <span class="pencil small" style="margin-left:14px">got a code?</span> <input id="codeIn" class="code" placeholder="code" maxlength="6"> <button class="small red" id="openCode" disabled>open →</button></p>
   <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
-  <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
 </section>
 
 <section id="set" hidden>
@@ -128,8 +130,7 @@
 </section>
 
 <footer>
-  <a class="app" href="https://apps.apple.com/app/id6831963769">Get the whole notebook (with the teacher!) on iPhone →</a>
-  <p class="small">Tests are kept for a short while on our server so they can reach the other person, then deleted. <a href="../privacy.html">Privacy</a></p>
+  <p class="small pencil"><a href="https://apps.apple.com/app/id6831963769">the app, on iPhone →</a> · <a href="../privacy.html">privacy</a></p>
 </footer>
 </main>
 <script src="homework.js"></script>

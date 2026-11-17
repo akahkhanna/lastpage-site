@@ -274,10 +274,12 @@
   function renderFamilies() {
     const all = families();
     // Every family, in full, on the page: members, "that's me", invite, leave, the board. The forms stay below.
-    $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">code ${f.code}</span><br><span class="pencil">${f.members.map((m) => isMe(m) ? esc(m.name) + " (me)" : esc(m.name) + ((m.addrs || []).length > 1 ? ` (${m.addrs.length} devices)` : "")).join(" · ")}</span><br>
-      ${f.members.some((m) => !isMe(m)) ? `<span class="small pencil">that's me: ${f.members.filter((m) => !isMe(m)).map((m) => `<button class="small" data-me="${f.code}:${esc(m.name)}" style="color:var(--ink);font-weight:700">${esc(m.name)}</button>`).join(" ")}</span><br>` : ""}
-      <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> · <a class="small" href="/board/#${f.code}" style="color:var(--ink)">🏆 family board →</a> · <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
-    $("famName").placeholder = all.length ? "start another family: its name" : "start a family: its name";
+    // One line per family (name · who's in it), one small line of actions. "that's me" only
+    // when this browser isn't in it yet (joined from the phone under another spelling).
+    $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">· ${f.members.map((m) => isMe(m) ? "me" : esc(m.name)).join(", ")}</span> <span class="small pencil">code ${f.code}</span><br>
+      ${f.members.some(isMe) ? "" : `<span class="small pencil">that's me: ${f.members.map((m) => `<button class="small" data-me="${f.code}:${esc(m.name)}" style="color:var(--ink);font-weight:700">${esc(m.name)}</button>`).join(" ")}</span><br>`}
+      <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> · <a class="small" href="/board/#${f.code}" style="color:var(--ink)">🏆 board →</a> · <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
+    $("famName").placeholder = all.length ? "another family" : "family name";
   }
   $("famList").addEventListener("click", async (e) => {
     const b = e.target.closest("[data-invite],[data-leave],[data-me]"); if (!b) return;
@@ -330,7 +332,7 @@
         if (e.kind === "room") return Date.now() - e.at < 30 * 60e3 ? `<p><a class="small" href="/play/#r-${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">🎲 ${esc(e.from)} wants to play ${esc(e.game || "")} →</a></p>` : "";
         const what = e.stage === "set" ? `✏️ a test from ${esc(e.from)}` : e.stage === "answered" ? `📝 ${esc(e.from)}'s paper to mark` : `✓ your paper is back from ${esc(e.from)}`;
         return `<p><button class="small" data-open="${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">${what} →</button></p>`;
-      }).join("") || `<p class="small pencil">nothing waiting. Set someone a test, or ask for one.</p>`;
+      }).join("") || "";
     } catch {}
   }
   $("inboxList").addEventListener("click", (e) => { const b = e.target.closest("[data-open]"); if (b) location.hash = b.dataset.open; });
