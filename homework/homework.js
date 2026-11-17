@@ -48,7 +48,8 @@
   const saveFamily = (f) => { const all = families().filter((x) => x.code !== f.code); all.push(f); remember("lp.families", JSON.stringify(all)); };
   const dropFamily = (code) => remember("lp.families", JSON.stringify(families().filter((x) => x.code !== code)));
   const me = () => ({ name: (recall("lp.from") || "Someone").slice(0, 20), addr: myAddress() });
-  const others = () => { const seen = new Set(); return families().flatMap((f) => f.members).filter((m) => m.addr !== myAddress() && !seen.has(m.addr) && seen.add(m.addr)).sort((a, b) => a.name.localeCompare(b.name)); };
+  const isMe = (m) => m.addr === myAddress() || (m.addrs || []).includes(myAddress());
+  const others = () => { const seen = new Set(); return families().flatMap((f) => f.members).filter((m) => !isMe(m) && !seen.has(m.addr) && seen.add(m.addr)).sort((a, b) => a.name.localeCompare(b.name)); };
   async function refreshFamilies() { for (const f of families()) { try { saveFamily(await api("GET", "/f/" + f.code)); } catch {} } }
 
   // This browser's homework address: made once from the name, kept here.
@@ -277,7 +278,8 @@
       ? `my family: ${all.map((f) => `<b>${esc(f.name)}</b> · ${f.members.map((m) => m.addr === myAddress() ? esc(m.name) + " (me)" : esc(m.name)).join(", ")}`).join(" · ")} <button class="small" id="famMore" style="color:var(--red)">manage →</button>`
       : `no family yet: <button class="small" id="famMore" style="color:var(--red);font-weight:700">join or start one →</button> <span class="small">(then tests go to a name, not a code)</span>`;
     $("famJoin").hidden = all.length > 0 && $("famList").hidden;
-    $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">code ${f.code}</span><br><span class="pencil">${f.members.map((m) => m.addr === myAddress() ? esc(m.name) + " (me)" : esc(m.name)).join(" · ")}</span><br>
+    $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">code ${f.code}</span><br><span class="pencil">${f.members.map((m) => isMe(m) ? esc(m.name) + " (me)" : esc(m.name) + ((m.addrs || []).length > 1 ? ` (${m.addrs.length} devices)` : "")).join(" · ")}</span><br>
+      ${f.members.some((m) => !isMe(m)) ? `<span class="small pencil">that's me: ${f.members.filter((m) => !isMe(m)).map((m) => `<button class="small" data-me="${f.code}:${esc(m.name)}" style="color:var(--ink);font-weight:700">${esc(m.name)}</button>`).join(" ")}</span><br>` : ""}
       <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
   }
   $("famLine").addEventListener("click", (e) => {
@@ -287,7 +289,8 @@
   });
   $("moreBtn").addEventListener("click", () => { $("more").hidden = !$("more").hidden; });
   $("famList").addEventListener("click", async (e) => {
-    const b = e.target.closest("[data-invite],[data-leave]"); if (!b) return;
+    const b = e.target.closest("[data-invite],[data-leave],[data-me]"); if (!b) return;
+    if (b.dataset.me) { const [code, name] = [b.dataset.me.slice(0, 6), b.dataset.me.slice(7)]; try { remember("lp.from", name); saveFamily(await api("POST", "/f/" + code + "/join", { name, addr: myAddress() })); renderFamilies(); } catch (err) { alert(err.message); } return; }
     if (b.dataset.invite) { const f = families().find((x) => x.code === b.dataset.invite); share(`Join our family "${f.name}" in That Last Page ✏️ then tests and games find you by name:`, location.origin + "/f/#" + f.code, "copiedFam", f.code); }
     if (b.dataset.leave) { try { await api("POST", "/f/" + b.dataset.leave + "/leave", { addr: myAddress() }); } catch {} dropFamily(b.dataset.leave); renderFamilies(); }
   });

@@ -57,11 +57,12 @@
       wins[best[0]] = (wins[best[0]] || 0) + 1;
     }
     const me = recall("lp.address");
+    const mine = (m) => m.addr === me || (m.addrs || []).includes(me);
     const sorted = b.members.slice().sort((x, y) => (wins[y.addr] || 0) - (wins[x.addr] || 0) || x.name.localeCompare(y.name));
     const fastest = {}; for (const [p] of PUZ) fastest[p] = Math.min(...b.members.map((m) => ((m.days[today] || {})[p] || {}).s || Infinity));
     const streak = (m) => { let n = 0; while (m.days[today - n] && Object.keys(m.days[today - n]).length) n++; return n; };
-    $("board").innerHTML = `<p class="status"><b>${esc(b.name)}</b> · today</p><table class="board">${sorted.map((m) => `<tr><td><b>${esc(m.addr === me ? "me" : m.name)}</b></td>${PUZ.map(([p, ic]) => { const r = (m.days[today] || {})[p]; return r ? `<td class="${r.s === fastest[p] ? "best" : ""}">${ic} ${clock(r.s)}</td>` : `<td class="none">${ic} ☐</td>`; }).join("")}<td>${streak(m) > 1 ? streak(m) + "🔥" : ""}</td></tr>`).join("")}</table>
-      <p class="pencil">this week: ${sorted.map((m) => `${esc(m.addr === me ? "me" : m.name)} ${wins[m.addr] || 0}`).join(" · ")}</p>`;
+    $("board").innerHTML = `<p class="status"><b>${esc(b.name)}</b> · today</p><table class="board">${sorted.map((m) => `<tr><td><b>${esc(mine(m) ? "me" : m.name)}</b></td>${PUZ.map(([p, ic]) => { const r = (m.days[today] || {})[p]; return r ? `<td class="${r.s === fastest[p] ? "best" : ""}">${ic} ${clock(r.s)}</td>` : `<td class="none">${ic} ☐</td>`; }).join("")}<td>${streak(m) > 1 ? streak(m) + "🔥" : ""}</td></tr>`).join("")}</table>
+      <p class="pencil">this week: ${sorted.map((m) => `${esc(mine(m) ? "me" : m.name)} ${wins[m.addr] || 0}`).join(" · ")}</p>`;
   }
   const hash = location.hash.slice(1).toUpperCase();
   const fams = families();
