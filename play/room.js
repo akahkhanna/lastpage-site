@@ -178,38 +178,54 @@
   }
 
   // ---------- joining and starting ----------
+  // The lobby lives in the panel's "waiting" section (#liveWaiting) while the name form hides;
+  // once everyone's here the game replaces the whole panel.
+  function lobby(el) {
+    const form = el.querySelector("#liveForm"); if (form) form.hidden = true;
+    const w = el.querySelector("#liveWaiting") || el;
+    w.hidden = false;
+    return w;
+  }
+  const change = `<button class="text-button" type="button" id="liveEdit">Change name</button>`;
   function run(el, roomCode, name) {
     code = roomCode.toUpperCase(); app.name = name;
-    app.note = (t) => { const n = el.querySelector("#rnote"); if (n) n.textContent = t; };
-    el.innerHTML = `<p class="status">joining room ${esc(code)}…</p>`;
+    const w = lobby(el);
+    app.note = (t) => { const n = w.querySelector("#rnote"); if (n) n.textContent = t; };
+    w.innerHTML = `<h2>Joining…</h2><p class="live-hint">Room <span class="live-code">${esc(code)}</span> · joining as ${esc(name)}</p><p class="live-hint" id="rnote"></p>${change}`;
     onReady = () => begin(el);
     onMembers = () => {
       if (started) return;
       const waiting = playersWanted - members.length;
-      el.innerHTML = `<p class="status">${esc(TITLES[game] || "the game")} · ${members.map(esc).join(", ")} here · waiting for ${waiting} more…</p>
-        <p class="note">code <b>${esc(code)}</b> · send the link: ${location.origin}/r/#${esc(code)}</p>`;
+      const here = members.filter((m) => m !== me);
+      w.innerHTML = `<h2>Waiting for ${waiting === 1 ? "another player" : waiting + " more players"}</h2>
+        <p class="live-hint">${esc(TITLES[game] || "The game")} · joining as ${esc(name)}${here.length ? " · here: " + here.map(esc).join(", ") : ""}</p>
+        <p class="live-hint" id="rnote"></p>${change}`;
     };
     connect();
   }
   async function start(el, gameKind, name, players) {
     players = Math.min(Math.max(players || 2, 2), 8);
+    const w = lobby(el);
+    w.innerHTML = `<h2>Making the room…</h2>`;
     const { code: c } = await api("POST", "/r", { game: gameKind, players, host: { id: myId(), name } });
     const link = `${location.origin}/r/#${c}`;
     const fam = others();
-    el.innerHTML = `<p class="status">${esc(TITLES[gameKind])}: room <b>${esc(c)}</b></p>
-      ${fam.length ? `<p class="note">play with: ${fam.map((m) => `<button class="small" data-inv="${esc(m.addr)}" style="color:var(--red);font-weight:700">${esc(m.name)} →</button>`).join(" ")}</p>` : ""}
-      <p><a class="go" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Play ${TITLES[gameKind]} with me on That Last Page ✏️ Tap to join (app or browser):\n${link}`)}">send the invite on WhatsApp →</a>
-      <button class="small" id="copyLink">copy the link</button></p><p class="note" id="rnote">waiting for them…</p>`;
-    el.querySelectorAll("[data-inv]").forEach((b) => b.addEventListener("click", async () => { try { await api("POST", `/r/${c}/invite`, { addr: b.dataset.inv, from: name }); b.textContent = b.textContent.replace("→", "✓ asked"); } catch (e) { alert(e.message); } }));
-    const copy = el.querySelector("#copyLink"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); copy.textContent = "copied!!"; } catch { prompt("Copy this:", link); } });
+    const text = `Play ${TITLES[gameKind]} with me on That Last Page ✏️ Tap to join (app or browser):\n${link}`;
+    w.innerHTML = `<h2>Waiting for ${players === 2 ? "another player" : players - 1 + " more players"}</h2>
+      <p class="live-hint">${esc(TITLES[gameKind])} · room <span class="live-code">${esc(c)}</span> · you're ${esc(name)}</p>
+      ${fam.length ? `<div class="live-chips"><span class="live-hint">Invite:</span>${fam.map((m) => `<button class="text-button" type="button" data-inv="${esc(m.addr)}">${esc(m.name)}</button>`).join("")}</div>` : ""}
+      <div class="live-actions"><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">Send on WhatsApp</a><button class="button" type="button" id="copyLink">Copy the link</button></div>
+      <p class="live-hint" id="rnote">They join in the app or any browser, by link or by name.</p>${change}`;
+    w.querySelectorAll("[data-inv]").forEach((b) => b.addEventListener("click", async () => { try { await api("POST", `/r/${c}/invite`, { addr: b.dataset.inv, from: name }); b.textContent = b.textContent.replace(/ ✓ asked$/, "") + " ✓ asked"; } catch (e) { alert(e.message); } }));
+    const copy = w.querySelector("#copyLink"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); copy.textContent = "Copied"; } catch { prompt("Copy this:", link); } });
     code = c; app.name = name;
-    app.note = (t) => { const n = el.querySelector("#rnote"); if (n) n.textContent = t; };
+    app.note = (t) => { const n = w.querySelector("#rnote"); if (n) n.textContent = t; };
     onReady = () => begin(el);
     onMembers = () => {
       if (started) return;
-      const n = el.querySelector("#rnote"); if (n) n.textContent = members.length > 1 ? `${members.filter((m) => m !== me).join(", ")} here${members.length < playersWanted ? " · waiting for " + (playersWanted - members.length) + " more" : "!"}` : "waiting for them…";
+      const n = w.querySelector("#rnote"); if (n) n.textContent = members.length > 1 ? `${members.filter((m) => m !== me).join(", ")} here${members.length < playersWanted ? " · waiting for " + (playersWanted - members.length) + " more" : "!"}` : "Waiting for them…";
     };
     connect();
   }
-  root.Room = { run, start, leave };
+  root.Room = { run, start, leave, TITLES, api };
 })(window);

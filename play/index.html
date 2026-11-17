@@ -230,23 +230,56 @@
 
   // ---------- live rooms (against the app, or another browser) ----------
   function live(roomCode) {
-    const go = (name) => {
-      myName = name; localStorage.setItem(NAME_KEY, name);
-      document.getElementById("title").textContent = "Play live";
-      if (roomCode) window.Room.run(app, roomCode, name);
-      else {
-        app.innerHTML = `<p class="status">start a live game:</p>
-          <p>${[["noughtsCrosses", "noughts & crosses"], ["dotsBoxes", "dots & boxes"], ["bookCricket", "book cricket"], ["hangman", "hangman"], ["bollywood", "Bollywood"], ["hollywood", "Hollywood"]].map(([k, t]) => `<button class="go" data-live="${k}">${t} →</button><br>`).join("")}
-          <button class="go" data-live="namePlace">name place animal thing →</button> <span class="note">with <select id="npl">${[2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}">${n} players</option>`).join("")}</select></span></p>
-          <p class="note">they join in the app or in any browser, by link or by name (if you're in a family together).</p>`;
-        app.querySelectorAll("[data-live]").forEach((b) => b.addEventListener("click", () => window.Room.start(app, b.dataset.live, name, b.dataset.live === "namePlace" ? parseInt(document.getElementById("npl").value, 10) : 2)));
-      }
-    };
-    if (myName) return go(myName);
-    app.innerHTML = `<p class="status">your name: <input class="name" id="nm" maxlength="20" placeholder="your name" autofocus></p><button class="go" id="ok">play →</button>`;
-    const ok = () => { const n = document.getElementById("nm").value.trim().toUpperCase().slice(0, 20); if (n) go(n); };
-    document.getElementById("ok").addEventListener("click", ok);
-    document.getElementById("nm").addEventListener("keydown", (e) => { if (e.key === "Enter") ok(); });
+    document.getElementById("title").hidden = true;
+    const pageBack = document.querySelector("a.back"); if (pageBack) pageBack.hidden = true;   // the panel has its own
+    const T = window.Room.TITLES;
+    const games = [["noughtsCrosses", "crosses"], ["bookCricket", "cricket"], ["dotsBoxes", ""], ["hangman", ""], ["bollywood", ""], ["hollywood", ""]];
+    app.innerHTML = `<a class="live-back" href="/games/"><span aria-hidden="true">←</span> Games</a>
+      <div class="live-panel">
+        <div class="live-copy" id="liveCopy">
+          <h1>${roomCode ? "Join a live game" : "Start a live game"}</h1>
+          <p class="live-game-name" id="liveGame" hidden></p>
+          <form class="live-form" id="liveForm">
+            <label for="liveName">Your name</label>
+            <input id="liveName" maxlength="20" autocomplete="nickname" autocapitalize="characters" enterkeyhint="go" value="${esc(myName)}" placeholder="your name" required>
+            <p class="live-hint">Use the name your friend will recognise.</p>
+            ${roomCode ? `<button class="button primary" type="submit">Join game <span aria-hidden="true">→</span></button>` : `
+            <label>Game</label>
+            <div class="mode-grid live-games">
+              ${games.map(([k]) => `<button type="button" class="mode" data-live="${k}"><span><strong>${esc(T[k])}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`).join("")}
+              <button type="button" class="mode" data-live="namePlace"><span><strong>${esc(T.namePlace)}</strong><small>with <select id="npl" aria-label="players">${[2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}">${n} players</option>`).join("")}</select></small></span><span class="arrow" aria-hidden="true">→</span></button>
+            </div>
+            <p class="live-hint">They join in the app or any browser, by link or by name if you're in a family together.</p>`}
+          </form>
+          <section class="live-state" id="liveWaiting" hidden></section>
+        </div>
+        <div class="live-art" id="liveArt" data-game="crosses" aria-hidden="true">
+          <span class="live-grid"><span class="xo"><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span><span></span><span>○</span><span></span><span></span></span></span>
+          <span class="book"><i><b>42</b></i><i><b>43</b></i></span>
+        </div>
+      </div>`;
+    const nameIn = document.getElementById("liveName");
+    const takeName = () => { const n = nameIn.value.trim().toUpperCase().slice(0, 20); if (!n) { nameIn.setCustomValidity("Enter your name to join."); nameIn.reportValidity(); return null; } myName = n; localStorage.setItem(NAME_KEY, n); return n; };
+    nameIn.addEventListener("input", () => nameIn.setCustomValidity(""));
+    const art = (k) => { document.getElementById("liveArt").dataset.game = k === "bookCricket" ? "cricket" : "crosses"; };
+    if (roomCode) {
+      // Which game, and who's there, before asking for a name.
+      window.Room.api("GET", "/r/" + roomCode).then((info) => {
+        const g = document.getElementById("liveGame"); g.hidden = false;
+        const here = (info.members || []).filter((m) => m.here).map((m) => m.label);
+        g.textContent = (T[info.game] || "A live game") + (here.length ? ` · ${here.join(", ")} ${here.length === 1 ? "is" : "are"} waiting` : "");
+        art(info.game);
+      }).catch(() => {});
+      document.getElementById("liveForm").addEventListener("submit", (e) => { e.preventDefault(); const n = takeName(); if (n) window.Room.run(app, roomCode, n); });
+    } else {
+      document.getElementById("liveForm").addEventListener("submit", (e) => e.preventDefault());
+      app.querySelectorAll("[data-live]").forEach((b) => b.addEventListener("click", () => {
+        const n = takeName(); if (!n) return;
+        art(b.dataset.live);
+        window.Room.start(app, b.dataset.live, n, b.dataset.live === "namePlace" ? parseInt(document.getElementById("npl").value, 10) : 2);
+      }));
+    }
+    document.addEventListener("click", (e) => { if (e.target.closest("#liveEdit")) { localStorage.removeItem(NAME_KEY); location.reload(); } });
   }
 
   // Another link opened in the same tab: start again with that game.

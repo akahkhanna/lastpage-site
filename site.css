@@ -26,7 +26,7 @@ h3 { font-size:23px; line-height:1.13; letter-spacing:-.035em }
 .site-nav { display:flex; align-items:center; gap:6px }
 .site-nav a { text-decoration:none; padding:8px 13px; border-radius:6px; font-weight:700; white-space:nowrap }
 .site-nav a:hover { background:#f0eade }
-.site-nav a[aria-current="page"] { color:var(--red); background:#f3e7db }
+.site-nav a[aria-current] { color:var(--red); background:#f3e7db }
 .sheet { min-height:calc(100vh - 73px); background:repeating-linear-gradient(to bottom,transparent 0 31px,#6e95bb22 31px 32px),var(--paper) }
 .content { position:relative; padding:42px 0 22px 26px; border-left:1px solid #c7665c77 }
 .page-heading { margin-bottom:32px }
@@ -167,6 +167,33 @@ code { font-family:"Courier New",monospace; font-weight:700 }
 .board-footer label { min-height:40px; display:flex; align-items:center; gap:6px; cursor:pointer }
 .board-footer input { accent-color:var(--red) }
 .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+.live-back { display:inline-flex; align-items:center; min-height:44px; gap:7px; margin:-9px 0 13px; text-decoration:none; font-weight:700; color:var(--muted) }
+.live-back:hover { color:var(--red); text-decoration:underline; text-underline-offset:3px }
+.live-panel { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); max-width:900px; background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:0 3px 0 #7b5c3610 }
+.live-copy { min-width:0; padding:clamp(24px,4vw,45px) }
+.live-copy h1 { font-size:clamp(41px,5.3vw,68px); letter-spacing:-.06em }
+.live-game-name { margin-top:10px; color:var(--muted); font:italic 700 21px/1.2 var(--display) }
+.live-form { display:grid; gap:8px; margin-top:25px }
+.live-form label { font-weight:700 }
+.live-form input { display:block; width:100%; min-height:48px; padding:9px 11px; color:var(--ink); background:#fffefa; border:1px solid #a59b8d; border-radius:6px; font-size:16px }
+.live-hint { color:var(--muted); font-size:13px }
+.live-form .button { justify-self:start; margin-top:8px; min-height:46px; padding-inline:18px }
+.live-state { margin-top:23px; padding-top:18px; border-top:1px solid var(--soft-border); overflow-wrap:anywhere }
+.live-state h2 { font-size:26px }
+.live-state .live-hint { margin-top:7px }
+.live-state .text-button { min-height:44px; margin-top:8px }
+.live-art { position:relative; display:grid; place-items:center; min-height:270px; overflow:hidden; border-left:1px solid var(--soft-border); border-radius:0 11px 11px 0; background:radial-gradient(#8c7e6447 1px,transparent 1px) center / 12px 12px,#eee6d5 }
+.live-art .live-grid { position:absolute; top:50%; left:50%; display:grid; place-items:center; width:144px; aspect-ratio:1; border:1px solid #b1a7bf; border-radius:4px; background:#eee7f5; color:#504268; box-shadow:6px 8px 0 #62576d1a; transform:translate(-72%,-70%) rotate(-13deg) }
+.live-art .xo { width:104px; transform:rotate(3deg) }
+.live-art .xo span { font-size:26px }
+.live-art .book { position:absolute; top:50%; left:50%; width:146px; height:82px; transform:translate(-16%,4%) rotate(14deg); filter:drop-shadow(5px 6px 0 #79573032) }
+.live-art .book i { background-size:77% 46px }
+.live-art .book b { bottom:6px; font-size:15px }
+.live-art[data-game="crosses"] .live-grid { transform:translate(-50%,-50%) rotate(-10deg) }
+.live-art[data-game="cricket"] .book { transform:translate(-50%,-50%) rotate(10deg) }
+.live-art[data-game="crosses"] .book,.live-art[data-game="cricket"] .live-grid { display:none }
+.live-footer { margin-top:13px }
+.mode-link { text-decoration:none }
 @media (max-width:760px) {
   .wrap { width:calc(100% - 32px) }
   .content { padding:29px 0 18px 14px }
@@ -209,6 +236,10 @@ code { font-family:"Courier New",monospace; font-weight:700 }
   .board-shortcut { min-height:48px; padding-block:6px }
   .board-symbol { width:34px; height:34px }
   .board-wins { padding-inline:12px }
+  .live-panel { grid-template-columns:1fr }
+  .live-copy { padding:22px 18px }
+  .live-art { display:none }
+  .live-form .button { justify-self:stretch }
 }
 @media (max-width:385px) {
   .header-row { padding-block:10px 5px; gap:5px }
@@ -281,3 +312,12 @@ button.small { background:none; border:0; padding:0; color:var(--red); font-weig
 .page-footer { margin-top: 28px; border-top: 1px solid var(--border); padding-top: 12px }
 .game-page #after, .game-page #end { margin-top: 12px }
 .game-page button.go { display: block }
+
+/* live lobby extras */
+.live-games { margin-top: 6px }
+.live-games .mode { width: 100% }
+.live-games select { font: inherit; font-size: 14px; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; background: #fff }
+.live-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px }
+.live-chips { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; margin-top: 8px }
+.live-code { font: 700 15px/1 "Courier New", monospace; letter-spacing: .08em }
+#app .live-panel + * { margin-top: 14px }
