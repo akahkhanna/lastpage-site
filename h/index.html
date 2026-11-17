@@ -1,10 +1,27 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Homework – That Last Page</title>
-<meta property="og:title" content="Homework ✏️ That Last Page">
+<title>A test – That Last Page</title>
+<meta property="og:title" content="A test ✏️ That Last Page">
 <meta property="og:description" content="Open it in That Last Page, or do it right here.">
-<!-- Short homework links (/h/#CODE): the app opens them itself; a browser comes here and
-     carries on to the homework page with the code. -->
-<script>location.replace("../homework/" + location.hash);</script>
-</head><body></body></html>
+<link rel="stylesheet" href="../test/test.css">
+<style>.go { display: inline-block; text-decoration: none; }</style>
+<!-- h links: the app opens them itself (universal links). A browser carries on to the
+     web page, except on an iPhone, which gets the choice: an iPhone that once chose Safari for our
+     links keeps choosing it, so "open in the app" uses the app's own thatlastpage:// scheme. -->
+<script>
+  const code = location.hash.slice(1).toUpperCase();
+  const web = "../homework/#" + code;
+  if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) location.replace(web);
+  addEventListener("DOMContentLoaded", () => {
+    document.getElementById("app").href = "thatlastpage://h/" + code;
+    document.getElementById("web").href = web;
+  });
+</script>
+</head><body><main>
+<h1>A TEST FOR YOU</h1>
+<p class="pencil">Do it in the app, or right here.</p>
+<p><a class="go" id="app" href="#">open in the app →</a></p>
+<p><a class="go" id="web" href="#">or carry on in the browser →</a></p>
+<p class="small pencil">if our links keep opening here instead of the app: pull this page down a little and tap <b>Open</b> in the banner at the top, once. After that they open the app by themselves.</p>
+</main></body></html>

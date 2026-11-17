@@ -113,6 +113,7 @@ export default {
           const linked = f.linked || [];
           for (const a of linked) await box(env, "a:" + a).fetch("https://box/alias-set", { method: "POST", body: JSON.stringify(linked.filter((x) => x !== a)) });
           if (parts[2] === "leave") { const addr = String((JSON.parse(body) || {}).addr || "").toUpperCase(); if (ADDRESS.test(addr)) await box(env, "a:" + addr).fetch("https://box/alias-set", { method: "POST", body: "[]" }); }
+          if (parts[2] === "join") { const b = JSON.parse(body) || {}; await notifyJoin(env, f, cleanName(b.name), String(b.addr || "").toUpperCase(), linked.length); }
           delete f.linked;
           return json(f);
         }
@@ -292,6 +293,29 @@ async function inboxAll(env, address, entry) {
   return tokens;
 }
 
+/// "Vihaan is in Khannas": everyone already in the family hears a new member (or a member's
+/// new phone) arrived, so they know tests and invites now reach them.
+async function notifyJoin(env, f, typed, addr, devices) {
+  const member = f.members.find((m) => (m.addrs || [m.addr]).includes(addr));
+  const name = member ? member.name : typed;
+  if (!name) return;
+  const entry = { kind: "family", code: f.code, stage: "joined-" + addr, from: name, at: Date.now() };
+  const tokens = [];
+  for (const m of f.members) {
+    if ((m.addrs || [m.addr]).includes(addr)) continue;
+    for (const t of await inboxAll(env, m.addr, entry)) if (!tokens.some((x) => x.token === t.token)) tokens.push(t);
+  }
+  if (!tokens.length || !env.APNS_KEY) return;
+  const text = devices > 1 ? { title: `${name}'s phone is in ${f.name} too ✏️`, body: "tests and game invites reach it now" }
+    : { title: `${name} is in ${f.name} ✏️`, body: "set them a test, or ask them to play" };
+  const dead = [];
+  for (const t of tokens) {
+    const status = await pushAPNs(env, t, { aps: { alert: text, sound: "default" }, family: f.code });
+    if (status === 410 || status === 400) dead.push(t.token);
+  }
+  for (const t of tokens) if (dead.includes(t.token)) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+}
+
 async function deliver(env, address, hw) {
   const stage = stageOf(hw);
   const entry = { code: hw.code, stage, from: stage === "answered" ? (hw.by || "") : hw.from, at: hw.at };
@@ -370,7 +394,7 @@ export class Box {
     if (op === "/inbox-add") {
       const entry = await request.json();
       let list = (await this.storage.get("inbox")) || [];
-      list = list.filter((e) => e.code !== entry.code);
+      list = list.filter((e) => e.code !== entry.code || (entry.kind === "family" && e.stage !== entry.stage));
       list.unshift(entry);
       await this.storage.put("inbox", list.slice(0, 50));
       await this.storage.setAlarm(Date.now() + INBOX_DAYS * 86400e3);

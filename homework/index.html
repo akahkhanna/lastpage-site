@@ -32,6 +32,9 @@
   .clock.low { color: var(--red); }
   #by { width: 160px; }
   [hidden] { display: none !important; }
+  h2 { margin: 22px 0 0; font: 700 24px/40px "Kalam", cursive; color: var(--red); }
+  #nav a { color: var(--pencil); }
+  #famList p { margin: 6px 0 0; }
 </style><link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
 <meta name="theme-color" content="#fbfaf6">
@@ -40,6 +43,7 @@
 <body><main>
 
 <section id="hub" hidden>
+  <p class="small pencil" id="nav" style="margin-bottom:4px"><a href="/test/">today's puzzles</a> · <a href="/play/#live">play live</a> · <a href="/">all games</a></p>
   <h1>TEST PAPERS</h1>
   <p class="pencil">Dadi, Papa, a cousin, a friend: anyone sets a test, you do it, they mark it.</p>
   <div id="inboxList"></div>
@@ -47,22 +51,21 @@
   <button class="go" id="toSet">set a test for someone →</button><br>
   <button class="go" id="toAsk">ask someone for a test →</button>
 
-  <p class="pencil" id="famLine" style="margin-top:14px"></p>
-  <div id="famList" hidden></div>
-  <div id="famJoin" hidden>
+  <h2>MY FAMILY</h2>
+  <p class="pencil">join once, then tests and game invites go to a name, not a code.</p>
+  <div id="famList"></div>
+  <div id="famJoin">
     <p><input id="famName" placeholder="start a family: its name" maxlength="20" style="width:240px"> <button class="small" id="startFam" style="color:var(--red);font-weight:700">start →</button></p>
     <p><input id="famCode" placeholder="or join with a code" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="joinFam" style="color:var(--red);font-weight:700">join →</button></p>
   </div>
   <p class="pencil" id="copiedFam" hidden>copied!! paste it in the chat</p>
 
-  <p><button class="small" id="moreBtn">my address · got a code? →</button></p>
-  <div id="more" hidden>
-    <p class="pencil">my test address: <b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
-      <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
-    <p class="small pencil">a test sent to it appears here by itself (and in the app, with a knock).</p>
-    <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
-    <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
-  </div>
+  <h2>MY ADDRESS</h2>
+  <p class="pencil"><b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b>
+    <button class="small" id="shareAddr" aria-label="share my address">share →</button></p>
+  <p class="small pencil">a test sent to it appears here by itself (and in the app, with a knock).</p>
+  <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
+  <p><input id="codeIn" placeholder="got a code? type it" maxlength="6" style="width:200px;text-transform:uppercase"> <button class="small" id="openCode" disabled style="color:var(--red);font-weight:700">open →</button></p>
 </section>
 
 <section id="set" hidden>

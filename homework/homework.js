@@ -273,21 +273,12 @@
   // ---------- routing ----------
   function renderFamilies() {
     const all = families();
-    // One line when settled ("my family: Khanna · Papa (me), Vihaan"); the forms only when there's none, or on tap.
-    $("famLine").innerHTML = all.length
-      ? `my family: ${all.map((f) => `<b>${esc(f.name)}</b> · ${f.members.map((m) => m.addr === myAddress() ? esc(m.name) + " (me)" : esc(m.name)).join(", ")}`).join(" · ")} <button class="small" id="famMore" style="color:var(--red)">manage →</button>`
-      : `no family yet: <button class="small" id="famMore" style="color:var(--red);font-weight:700">join or start one →</button> <span class="small">(then tests go to a name, not a code)</span>`;
-    $("famJoin").hidden = all.length > 0 && $("famList").hidden;
+    // Every family, in full, on the page: members, "that's me", invite, leave, the board. The forms stay below.
     $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">code ${f.code}</span><br><span class="pencil">${f.members.map((m) => isMe(m) ? esc(m.name) + " (me)" : esc(m.name) + ((m.addrs || []).length > 1 ? ` (${m.addrs.length} devices)` : "")).join(" · ")}</span><br>
       ${f.members.some((m) => !isMe(m)) ? `<span class="small pencil">that's me: ${f.members.filter((m) => !isMe(m)).map((m) => `<button class="small" data-me="${f.code}:${esc(m.name)}" style="color:var(--ink);font-weight:700">${esc(m.name)}</button>`).join(" ")}</span><br>` : ""}
-      <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
+      <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> · <a class="small" href="/board/#${f.code}" style="color:var(--ink)">🏆 family board →</a> · <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
+    $("famName").placeholder = all.length ? "start another family: its name" : "start a family: its name";
   }
-  $("famLine").addEventListener("click", (e) => {
-    if (!e.target.closest("#famMore")) return;
-    const open = $("famList").hidden;
-    $("famList").hidden = !open; $("famJoin").hidden = !open;
-  });
-  $("moreBtn").addEventListener("click", () => { $("more").hidden = !$("more").hidden; });
   $("famList").addEventListener("click", async (e) => {
     const b = e.target.closest("[data-invite],[data-leave],[data-me]"); if (!b) return;
     if (b.dataset.me) { const [code, name] = [b.dataset.me.slice(0, 6), b.dataset.me.slice(7)]; try { remember("lp.from", name); saveFamily(await api("POST", "/f/" + code + "/join", { name, addr: myAddress() })); renderFamilies(); } catch (err) { alert(err.message); } return; }
@@ -304,7 +295,11 @@
   async function joinFamily(code) {
     code = (code || "").trim().toUpperCase(); if (!isCode(code)) return;
     if (!recall("lp.from")) { const n = prompt("Your name, as the family will see it:"); if (n) remember("lp.from", n.trim().slice(0, 20)); }
-    try { saveFamily(await api("POST", "/f/" + code + "/join", me())); $("famCode").value = ""; renderFamilies(); }
+    try {
+      const f = await api("POST", "/f/" + code + "/join", me()); saveFamily(f); $("famCode").value = ""; renderFamilies();
+      const others = f.members.filter((m) => !isMe(m)).map((m) => m.name);
+      $("hubNote").hidden = false; $("hubNote").textContent = `you're in ${f.name}` + (others.length ? ` with ${others.join(", ")}. Tests and game invites find you here now ✓` : ". Invite someone, and tests and games go by name.");
+    }
     catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "family " + code + ": " + e.message; }
   }
   async function showHub() {
@@ -315,9 +310,11 @@
     try {
       const list = await api("GET", "/a/" + myAddress());
       $("inboxList").innerHTML = list.slice(0, 6).map((e) => {
+        if (e.kind === "family") return `<p class="pencil">👋 ${esc(e.from)} joined the family</p>`;
+        if (e.kind === "room") return Date.now() - e.at < 30 * 60e3 ? `<p><a class="small" href="/play/#r-${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">🎲 ${esc(e.from)} wants to play ${esc(e.game || "")} →</a></p>` : "";
         const what = e.stage === "set" ? `✏️ a test from ${esc(e.from)}` : e.stage === "answered" ? `📝 ${esc(e.from)}'s paper to mark` : `✓ your paper is back from ${esc(e.from)}`;
         return `<p><button class="small" data-open="${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">${what} →</button></p>`;
-      }).join("") || "";
+      }).join("") || `<p class="small pencil">nothing waiting. Set someone a test, or ask for one.</p>`;
     } catch {}
   }
   $("inboxList").addEventListener("click", (e) => { const b = e.target.closest("[data-open]"); if (b) location.hash = b.dataset.open; });

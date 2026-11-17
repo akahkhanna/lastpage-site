@@ -3,8 +3,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Join the family – That Last Page</title>
 <meta property="og:title" content="Join our family in That Last Page ✏️">
-<meta property="og:description" content="Then homework and games find you by name. No sign-up.">
-<!-- Family join links (/f/#CODE): the app opens them itself; a browser comes here and carries
-     on to the homework page, which joins. -->
-<script>location.replace("../homework/#f-" + location.hash.slice(1));</script>
-</head><body></body></html>
+<meta property="og:description" content="Then tests and games find you by name. No sign-up.">
+<link rel="stylesheet" href="../test/test.css">
+<style>.go { display: inline-block; text-decoration: none; }</style>
+<!-- f links: the app opens them itself (universal links). A browser carries on to the
+     web page, except on an iPhone, which gets the choice: an iPhone that once chose Safari for our
+     links keeps choosing it, so "open in the app" uses the app's own thatlastpage:// scheme. -->
+<script>
+  const code = location.hash.slice(1).toUpperCase();
+  const web = "../homework/#f-" + code;
+  if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) location.replace(web);
+  addEventListener("DOMContentLoaded", () => {
+    document.getElementById("app").href = "thatlastpage://f/" + code;
+    document.getElementById("web").href = web;
+  });
+</script>
+</head><body><main>
+<h1>JOIN THE FAMILY</h1>
+<p class="pencil">Then tests and game invites find you by name. No sign-up.</p>
+<p><a class="go" id="app" href="#">open in the app →</a></p>
+<p><a class="go" id="web" href="#">or carry on in the browser →</a></p>
+<p class="small pencil">if our links keep opening here instead of the app: pull this page down a little and tap <b>Open</b> in the banner at the top, once. After that they open the app by themselves.</p>
+</main></body></html>
