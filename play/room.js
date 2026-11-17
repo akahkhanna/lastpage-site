@@ -218,12 +218,13 @@
     const link = `${location.origin}/r/#${c}`;
     const fam = others();
     const text = `Play ${TITLES[gameKind]} with me on That Last Page ✏️ Tap to join (app or browser):\n${link}`;
-    w.innerHTML = `<h2>Waiting for ${players === 2 ? "another player" : players - 1 + " more players"}</h2>
+    w.innerHTML = `<p class="live-hint" id="pushLine" hidden></p><h2>Waiting for ${players === 2 ? "another player" : players - 1 + " more players"}</h2>
       <p class="live-hint">${esc(TITLES[gameKind])} · room <span class="live-code">${esc(c)}</span> · you're ${esc(name)}</p>
       ${fam.length ? `<div class="live-chips"><span class="live-hint">Invite:</span>${fam.map((m) => `<button class="text-button" type="button" data-inv="${esc(m.addr)}">${esc(m.name)}</button>`).join("")}</div>` : ""}
       <div class="live-actions"><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">Send on WhatsApp</a><button class="button" type="button" id="copyLink">Copy the link</button></div>
       <p class="live-hint" id="rnote">They join in the app or any browser, by link or by name.</p>${change}`;
     w.querySelectorAll("[data-inv]").forEach((b) => b.addEventListener("click", async () => { try { await api("POST", `/r/${c}/invite`, { addr: b.dataset.inv, from: name }); b.textContent = b.textContent.replace(/ ✓ asked$/, "") + " ✓ asked"; } catch (e) { alert(e.message); } }));
+    if (root.LPPush) root.LPPush.render();
     const copy = w.querySelector("#copyLink"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); copy.textContent = "Copied"; } catch { prompt("Copy this:", link); } });
     code = c; app.name = name;
     app.note = (t) => { const n = w.querySelector("#rnote"); if (n) n.textContent = t; };
