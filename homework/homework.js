@@ -273,42 +273,61 @@
   // ---------- routing ----------
   function renderFamilies() {
     const all = families();
-    // Every family, in full, on the page: members, "that's me", invite, leave, the board. The forms stay below.
-    // One line per family (name · who's in it), one small line of actions. "that's me" only
-    // when this browser isn't in it yet (joined from the phone under another spelling).
-    $("famList").innerHTML = all.map((f) => `<p><b>${esc(f.name)}</b> <span class="pencil">· ${f.members.map((m) => isMe(m) ? "me" : esc(m.name)).join(", ")}</span> <span class="small pencil">code ${f.code}</span><br>
-      ${f.members.some(isMe) ? "" : `<span class="small pencil">that's me: ${f.members.map((m) => `<button class="small" data-me="${f.code}:${esc(m.name)}" style="color:var(--ink);font-weight:700">${esc(m.name)}</button>`).join(" ")}</span><br>`}
-      <button class="small" data-invite="${f.code}" style="color:var(--red);font-weight:700">invite someone →</button> · <a class="small" href="/board/#${f.code}" style="color:var(--ink)">🏆 board →</a> · <button class="small" data-leave="${f.code}">leave</button></p>`).join("");
-    $("famName").placeholder = all.length ? "another family" : "family name";
+    // The panel: each family's name, its people, invite and board. "That's you?" only when this
+    // browser isn't in it yet (joined from the phone under another spelling).
+    $("famList").innerHTML = all.map((f) => `
+      <p class="family-label">${esc(f.name)}<span class="code-chip">code ${f.code}</span></p>
+      ${f.members.map((m) => `<div class="family-person"><span class="avatar" aria-hidden="true">${esc(m.name.slice(0, 1).toUpperCase())}</span><span class="person-name">${esc(m.name)}${isMe(m) ? " <small>You</small>" : ""}</span></div>`).join("")}
+      ${f.members.some(isMe) ? "" : `<div class="family-links"><span class="small">That's you?</span> ${f.members.map((m) => `<button class="text-button" data-me="${f.code}:${esc(m.name)}">${esc(m.name)}</button>`).join(" ")}</div>`}
+      <div class="family-links"><button class="text-button" data-invite="${f.code}">Invite someone</button><a class="text-button" href="/board/#${f.code}">Family board <span aria-hidden="true">→</span></a></div>`).join("");
+    $("famJoin").hidden = all.length > 0;
   }
-  $("famList").addEventListener("click", async (e) => {
+  // Settings: the address, joining or starting another family, leaving one.
+  function renderSettings() {
+    const all = families();
+    const row = (key, title, extra = "") => `<button class="mode" data-dialog="${key}" ${extra}><span><strong>${title}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`;
+    $("settingsList").innerHTML = row("address", "My test address") + row("join", "Join a family") + row("start", all.length ? "Start another family" : "Start a family")
+      + all.map((f) => `<button class="mode" data-leave="${f.code}"><span><strong>Leave ${esc(f.name)}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`).join("");
+  }
+  document.addEventListener("click", async (e) => {
+    if (e.target.closest('[data-dialog="settings"]')) renderSettings();
     const b = e.target.closest("[data-invite],[data-leave],[data-me]"); if (!b) return;
     if (b.dataset.me) { const [code, name] = [b.dataset.me.slice(0, 6), b.dataset.me.slice(7)]; try { remember("lp.from", name); saveFamily(await api("POST", "/f/" + code + "/join", { name, addr: myAddress() })); renderFamilies(); } catch (err) { alert(err.message); } return; }
-    if (b.dataset.invite) { const f = families().find((x) => x.code === b.dataset.invite); share(`Join our family "${f.name}" in That Last Page ✏️ then tests and games find you by name:`, location.origin + "/f/#" + f.code, "copiedFam", f.code); }
-    if (b.dataset.leave) { try { await api("POST", "/f/" + b.dataset.leave + "/leave", { addr: myAddress() }); } catch {} dropFamily(b.dataset.leave); renderFamilies(); }
+    if (b.dataset.invite) {
+      const f = families().find((x) => x.code === b.dataset.invite);
+      $("invitePane").innerHTML = `<p>Send them the link. They join under their name, and tests and game invites find them.</p><p class="small">Or they type the code <code>${f.code}</code>.</p><div class="share-row" id="inviteShare"></div>`;
+      shareRow($("inviteShare"), `Join our family "${f.name}" in That Last Page ✏️ then tests and games find you by name:`, location.origin + "/f/#" + f.code, f.code);
+      openPane("invite");
+    }
+    if (b.dataset.leave) {
+      const f = families().find((x) => x.code === b.dataset.leave);
+      if (!confirm(`Leave ${f ? f.name : "this family"}? Your tests and times stay; you just drop off the list.`)) return;
+      try { await api("POST", "/f/" + b.dataset.leave + "/leave", { addr: myAddress() }); } catch {}
+      dropFamily(b.dataset.leave); renderFamilies(); closePane();
+    }
   });
   $("startFam").addEventListener("click", async () => {
     const name = $("famName").value.trim().slice(0, 20); if (!name) return;
     if (!recall("lp.from")) { const n = prompt("Your name, as the family will see it:"); if (n) remember("lp.from", n.trim().slice(0, 20)); }
-    try { saveFamily(await api("POST", "/f", { name, member: me() })); $("famName").value = ""; renderFamilies(); }
-    catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = e.message; }
+    try { saveFamily(await api("POST", "/f", { name, member: me() })); $("famName").value = ""; renderFamilies(); closePane(); }
+    catch (e) { alert(e.message); }
   });
   $("joinFam").addEventListener("click", () => previewFamily($("famCode").value));
   // A link or a code shows the family first ("join Khannas? Papa, Vihaan are in it"); joining is a tap, under a name you can see.
   async function previewFamily(code) {
     code = (code || "").trim().toUpperCase(); if (!isCode(code)) return;
     let f;
-    try { f = await api("GET", "/f/" + code); } catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "family " + code + ": " + e.message; return; }
+    try { f = await api("GET", "/f/" + code); } catch (e) { closePane(); $("hubNote").hidden = false; $("hubNote").textContent = "Family " + code + ": " + e.message; return; }
     $("famCode").value = "";
-    if (f.members.some(isMe)) { saveFamily(f); renderFamilies(); $("hubNote").hidden = false; $("hubNote").textContent = `you're already in ${f.name}.`; return; }
+    if (f.members.some(isMe)) { saveFamily(f); renderFamilies(); closePane(); $("hubNote").hidden = false; $("hubNote").textContent = `You're already in ${f.name}.`; return; }
     const who = f.members.map((m) => esc(m.name)).join(", ");
-    $("famAsk").hidden = false;
-    $("famAsk").innerHTML = `<p class="note">join ${esc(f.name)}?</p>
-      <p class="pencil">${who ? `${who} ${f.members.length === 1 ? "is" : "are"} in it. They'll be able to set you tests and invite you to games.` : "nobody's in it yet."}</p>
-      <p><span class="pencil">as</span> <input id="joinAs" maxlength="20" placeholder="your name" value="${esc(recall("lp.from") || "")}" style="width:180px">
-      <button class="small" id="joinYes" style="color:var(--red);font-weight:700">join →</button> <button class="small" id="joinNo">not now</button></p>`;
-    $("joinNo").onclick = () => { $("famAsk").hidden = true; };
-    $("joinYes").onclick = () => { const n = $("joinAs").value.trim().slice(0, 20); if (!n) { $("joinAs").focus(); return; } remember("lp.from", n); $("famAsk").hidden = true; joinFamily(code); };
+    $("famAsk").innerHTML = `<p><strong>Join ${esc(f.name)}?</strong></p>
+      <p>${who ? `${who} ${f.members.length === 1 ? "is" : "are"} in it. They'll be able to set you tests and invite you to games.` : "Nobody's in it yet."}</p>
+      <form onsubmit="return false"><label>Your name, as the family will see it<input id="joinAs" maxlength="20" placeholder="your name" value="${esc(recall("lp.from") || "")}"></label>
+      <div class="dialog-actions"><button class="button primary" id="joinYes">Join</button> <button class="button" id="joinNo">Not now</button></div></form>`;
+    openPane("joinAsk");
+    $("joinNo").onclick = () => closePane();
+    $("joinYes").onclick = () => { const n = $("joinAs").value.trim().slice(0, 20); if (!n) { $("joinAs").focus(); return; } remember("lp.from", n); closePane(); joinFamily(code); };
     $("joinAs").focus();
   }
   async function joinFamily(code) {
@@ -316,26 +335,32 @@
     try {
       const f = await api("POST", "/f/" + code + "/join", me()); saveFamily(f); renderFamilies();
       const others = f.members.filter((m) => !isMe(m)).map((m) => m.name);
-      $("hubNote").hidden = false; $("hubNote").textContent = `you're in ${f.name}` + (others.length ? ` with ${others.join(", ")}. Tests and game invites find you here now ✓` : ". Invite someone, and tests and games go by name.");
+      $("hubNote").hidden = false; $("hubNote").textContent = `You're in ${f.name}` + (others.length ? ` with ${others.join(", ")}. Tests and game invites find you here now.` : ". Invite someone, and tests and games go by name.");
     }
-    catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "family " + code + ": " + e.message; }
+    catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "Family " + code + ": " + e.message; }
   }
   async function showHub() {
     show("hub");
     $("myAddr").textContent = myAddress();
     renderFamilies(); refreshFamilies().then(renderFamilies);
     $("inboxList").innerHTML = "";
+    $("inboxEmpty").hidden = false;
     try {
       const list = await api("GET", "/a/" + myAddress());
-      $("inboxList").innerHTML = list.slice(0, 6).map((e) => {
-        if (e.kind === "family") return `<p class="pencil">👋 ${esc(e.from)} joined the family</p>`;
-        if (e.kind === "room") return Date.now() - e.at < 30 * 60e3 ? `<p><a class="small" href="/play/#r-${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">🎲 ${esc(e.from)} wants to play ${esc(e.game || "")} →</a></p>` : "";
-        const what = e.stage === "set" ? `✏️ a test from ${esc(e.from)}` : e.stage === "answered" ? `📝 ${esc(e.from)}'s paper to mark` : `✓ your paper is back from ${esc(e.from)}`;
-        return `<p><button class="small" data-open="${e.code}" style="color:var(--ink);font:400 20px/30px Kalam,cursive">${what} →</button></p>`;
-      }).join("") || "";
+      const item = (inner, attrs = "") => `<li><button ${attrs}><span>${inner}</span><span class="arrow" aria-hidden="true">→</span></button></li>`;
+      $("inboxList").innerHTML = list.slice(0, 8).map((e) => {
+        if (e.kind === "family") return `<li><button disabled><span><strong>${esc(e.from)} joined the family</strong></span></button></li>`;
+        if (e.kind === "room") return Date.now() - e.at < 30 * 60e3 ? item(`<strong>${esc(e.from)} wants to play ${esc(e.game || "")}</strong><small>Live, right now</small>`, `data-href="/play/#r-${e.code}"`) : "";
+        const what = e.stage === "set" ? [`Test from ${esc(e.from)}`, "Ready to answer"] : e.stage === "answered" ? [`${esc(e.from)}'s paper`, "Handed in · Ready to mark"] : [`Your paper, from ${esc(e.from)}`, "Marked"];
+        return item(`<strong>${what[0]}</strong><small>${what[1]}</small>`, `data-open="${e.code}"`);
+      }).join("");
+      $("inboxEmpty").hidden = $("inboxList").children.length > 0;
     } catch {}
   }
-  $("inboxList").addEventListener("click", (e) => { const b = e.target.closest("[data-open]"); if (b) location.hash = b.dataset.open; });
+  $("inboxList").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-open],[data-href]"); if (!b) return;
+    if (b.dataset.href) location.href = b.dataset.href; else location.hash = b.dataset.open;
+  });
   $("openCode").addEventListener("click", () => { const c = $("codeIn").value.trim().toUpperCase(); if (isCode(c)) location.hash = c; });
   $("codeIn").addEventListener("input", () => { $("openCode").disabled = !isCode($("codeIn").value); });
   $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("openCode").click(); });

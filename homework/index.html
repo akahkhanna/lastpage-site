@@ -6,132 +6,139 @@
 <meta name="description" content="Set a test for someone in the family; they do it and hand in their paper; you mark it. Any browser, no app needed.">
 <meta property="og:title" content="A test from the family ✏️ That Last Page">
 <meta property="og:description" content="Set it, do it, mark it: all in the family, no app needed.">
-<link rel="stylesheet" href="../test/test.css">
-<style>
-  /* Tests are written in normal case, not shouted. */
-  input, textarea { text-transform: none; font-weight: 400; }
-  input.line { width: 100%; max-width: 420px; }
-  textarea { font: 400 20px/30px "Kalam", cursive; color: var(--ink); background: transparent; border: 0;
-             border-bottom: 1.5px solid rgba(95,95,95,.5); width: 100%; max-width: 440px; resize: none; outline: none; padding: 0 4px; }
-  .note { color: var(--red); font-family: "Caveat", cursive; font-size: 22px; margin: 0; }
-  .kinds { display: flex; gap: 14px; padding-left: 26px; }
-  .kinds button, .choice, .tickx, .mins button { font: 400 20px/30px "Caveat", cursive; color: var(--pencil); background: none; border: 2px solid transparent; border-radius: 50%; padding: 2px 10px; min-height: 36px; cursor: pointer; }
-  .kinds button.on, .mins button.on { color: var(--red); border-color: var(--red); }
-  .choice { font: 400 20px/34px "Kalam", cursive; color: var(--pencil); min-height: 44px; }
-  .choice.on { color: var(--red); border-color: var(--red); font-weight: 700; }
-  .tickx { font: 700 28px/34px "Kalam", cursive; color: rgba(95,95,95,.35); width: 44px; height: 44px; padding: 0; }
-  .tickx.on { color: var(--red); border-color: var(--red); }
-  .choices { padding-left: 26px; display: flex; flex-wrap: wrap; gap: 6px; }
-  .mins { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-  .pencilans { font: 400 22px/34px "Kalam", cursive; color: var(--pencil); padding-left: 26px; white-space: pre-wrap; }
-  .x { font: 20px/32px Georgia, serif; color: var(--pencil); background: none; border: 0; cursor: pointer; min-width: 32px; }
-  .cedit { padding-left: 26px; display: block; }
-  .cedit input { width: 220px; font-size: 19px; }
-  .row.q1 { align-items: flex-start; }
-  .clock { font: 700 18px/24px "Kalam", cursive; color: var(--pencil); }
-  .clock.low { color: var(--red); }
-  #by { width: 160px; }
-  [hidden] { display: none !important; }
-  h2 { margin: 22px 0 0; font: 700 24px/40px "Kalam", cursive; color: var(--red); }
-  #nav a { color: var(--pencil); }
-  #famList p { margin: 6px 0 0; }
-  .acts { display: flex; gap: 22px; flex-wrap: wrap; align-items: baseline; margin: 6px 0 0; }
-  .acts .go { font-size: 24px; }
-  .row2 { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; margin: 6px 0 0; }
-  .row2 input { width: 150px; font-size: 20px; }
-  .row2 input.code { width: 92px; text-transform: uppercase; }
-  input::placeholder { text-transform: none; font-weight: 400; color: rgba(95,95,95,.5); }
-  button.red { color: var(--red); font-weight: 700; }
-</style><link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="../site.css">
+<link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
 <meta name="theme-color" content="#fbfaf6">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
 </head>
-<body><main>
+<body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/">Games</a>
+      <a href="/homework/" aria-current="page">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet"><div class="wrap content">
 
 <section id="hub" hidden>
-  <p class="small pencil" id="nav" style="margin-bottom:4px"><a href="/test/">today's puzzles</a> · <a href="/play/#live">play live</a> · <a href="/">all games</a></p>
-  <h1>TEST PAPERS</h1>
-  <div id="inboxList"></div>
-  <p class="note" id="hubNote" hidden></p>
-  <p class="acts"><button class="go" id="toSet">set a test →</button> <button class="go" id="toAsk">ask for one →</button></p>
-
-  <h2>MY FAMILY</h2>
-  <div id="famAsk" hidden></div>
-  <div id="famList"></div>
-  <div id="famJoin">
-    <p class="row2"><input id="famName" placeholder="family name" maxlength="20"> <button class="small red" id="startFam">start →</button>
-       <span class="pencil small">or</span> <input id="famCode" class="code" placeholder="code" maxlength="6"> <button class="small red" id="joinFam">join →</button></p>
+  <div class="page-heading paper-title">
+    <div><h1>Test papers</h1><p>Set, answer and mark each other’s tests.</p></div>
+    <button class="button primary" id="toSet"><span aria-hidden="true">+</span> Set a test</button>
   </div>
-  <p class="pencil" id="copiedFam" hidden>copied!! paste it in the chat</p>
-
-  <h2>MY ADDRESS</h2>
-  <p class="row2"><b id="myAddr" style="font:700 24px/34px Kalam,cursive;color:var(--ink)"></b> <button class="small red" id="shareAddr" aria-label="share my address">share →</button>
-     <span class="pencil small" style="margin-left:14px">got a code?</span> <input id="codeIn" class="code" placeholder="code" maxlength="6"> <button class="small red" id="openCode" disabled>open →</button></p>
-  <p class="pencil" id="copiedAddr" hidden>copied!! paste it in the chat</p>
+  <p class="note" id="hubNote" hidden></p>
+  <div class="paper-grid">
+    <section class="panel" aria-labelledby="inbox-title">
+      <div class="panel-head"><h2 id="inbox-title">Inbox</h2><button class="text-button" id="toAsk">Ask for a test <span aria-hidden="true">→</span></button></div>
+      <div class="inbox-empty" id="inboxEmpty"><span class="paper-doodle" aria-hidden="true"></span><p>No papers waiting</p></div>
+      <ul class="inbox-list" id="inboxList"></ul>
+      <div class="panel-foot"><button class="text-button" data-dialog="code">Open with a code <span aria-hidden="true">→</span></button></div>
+    </section>
+    <section class="panel" aria-labelledby="family-title">
+      <div class="panel-head"><h2 id="family-title">My family</h2></div>
+      <div id="famList"></div>
+      <div class="family-links" id="famJoin">
+        <button class="text-button" data-dialog="start">Start a family</button>
+        <button class="text-button" data-dialog="join">Join with a code</button>
+      </div>
+      <button class="settings" data-dialog="settings">Settings <span aria-hidden="true">›</span></button>
+    </section>
+  </div>
+  <footer class="page-footer papers-footer"><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="../privacy.html">Privacy</a></footer>
 </section>
 
-<section id="set" hidden>
-  <h1>SET A TEST</h1>
+<section id="set" class="form" hidden>
+  <a class="back" href="./">← Test papers</a>
+  <div class="page-heading"><h1>Set a test</h1></div>
   <p class="note" id="askedNote" hidden></p>
-  <p><input class="line" id="from" placeholder="from (your name, e.g. Dadi)" maxlength="20"></p>
-  <div class="choices" id="chips" hidden style="padding-left:0;margin:6px 0"></div>
-  <p><input class="line" id="to" placeholder="for (their name, or their test address)" maxlength="20"></p>
-  <p><input class="line" id="noteIn" placeholder="a note on top (optional)" maxlength="120"></p>
+  <p><label>From<br><input class="line" id="from" placeholder="your name, e.g. Dadi" maxlength="20"></label></p>
+  <div class="chips" id="chips" hidden></div>
+  <p><label>For<br><input class="line" id="to" placeholder="their name, or their test address" maxlength="20"></label></p>
+  <p><label>A note on top (optional)<br><input class="line" id="noteIn" placeholder="Do this before dinner!" maxlength="120"></label></p>
   <div id="qs"></div>
-  <button class="small" id="addQ">+ another question</button>
-  <p class="mins"><span class="pencil">time:</span> <span id="minsRow"></span></p>
-  <p class="remark" id="codeOut" hidden style="font-size:26px"></p>
-  <button class="go" id="sendSet" disabled>send it →</button>
-  <div id="shareSet" hidden></div>
-  <p class="small pencil" id="setHint">write your name and at least one question (choices need two options).</p>
-  <p class="pencil" id="copiedSet" hidden>copied!! paste it in the chat</p>
+  <p><button class="small" id="addQ">+ another question</button></p>
+  <p class="mins"><span class="small">Time:</span> <span id="minsRow"></span></p>
+  <p class="remark" id="codeOut" hidden></p>
+  <p><button class="button primary" id="sendSet" disabled>Send it</button></p>
+  <div class="share-row" id="shareSet" hidden></div>
+  <p class="small" id="setHint">Your name and at least one question (choices need two options).</p>
+  <p class="pencil" id="copiedSet" hidden>Copied. Paste it in the chat.</p>
 </section>
 
-<section id="ask" hidden>
-  <h1>ASK FOR A TEST</h1>
-  <p class="pencil">Send it to Dadi, Papa, anyone: they get a link that opens the test page with your name on it.</p>
-  <p><input class="line" id="askFrom" placeholder="your name" maxlength="20"></p>
-  <p><input class="line" id="askSubject" placeholder="on what? (7 and 8 times tables, spellings…)" maxlength="60"></p>
-  <button class="go" id="sendAsk">ask →</button>
-  <p class="pencil" id="copiedAsk" hidden>copied!! paste it in the chat</p>
+<section id="ask" class="form" hidden>
+  <a class="back" href="./">← Test papers</a>
+  <div class="page-heading"><h1>Ask for a test</h1></div>
+  <p class="small">They get a link that opens the test page with your name on it.</p>
+  <p><label>Your name<br><input class="line" id="askFrom" maxlength="20"></label></p>
+  <p><label>On what?<br><input class="line" id="askSubject" placeholder="7 and 8 times tables, spellings…" maxlength="60"></label></p>
+  <p><button class="button primary" id="sendAsk">Ask</button></p>
+  <p class="pencil" id="copiedAsk" hidden>Copied. Paste it in the chat.</p>
 </section>
 
-<section id="paper" hidden>
+<section id="paper" class="form" hidden>
+  <a class="back" href="./">← Test papers</a>
   <p class="note" id="mrsT" hidden></p>
-  <h1><span id="title"></span><span class="score" id="score" hidden></span></h1>
+  <div class="page-heading"><h1><span id="title"></span><span class="score" id="score" hidden></span></h1></div>
   <p class="printed" id="printed"></p>
   <p class="note" id="noteOut" hidden></p>
   <div id="paperQs"></div>
   <div id="doFoot" hidden>
-    <p><span class="pencil">your name:</span> <input id="by" maxlength="20"></p>
-    <button class="go" id="handIn" disabled>hand in your paper →</button>
+    <p><label>Your name<br><input id="by" maxlength="20"></label></p>
+    <p><button class="button primary" id="handIn" disabled>Hand in your paper</button></p>
   </div>
   <div id="sentFoot" hidden>
-    <p class="remark">paper handed in ✓</p>
-    <p class="small pencil" id="sentNote"></p>
-    <button class="go" id="sendAnswers">send your paper for marking →</button>
-    <div id="shareAns" hidden></div>
-    <p class="small pencil">the marks come back the same way.</p>
-    <p class="pencil" id="copiedAns" hidden>copied!! paste it in the chat</p>
+    <p class="remark">Paper handed in ✓</p>
+    <p class="small" id="sentNote"></p>
+    <p><button class="button primary" id="sendAnswers">Send your paper for marking</button></p>
+    <div class="share-row" id="shareAns" hidden></div>
+    <p class="small">The marks come back the same way.</p>
+    <p class="pencil" id="copiedAns" hidden>Copied. Paste it in the chat.</p>
   </div>
   <div id="markFoot" hidden>
-    <p><input class="line" id="remarkIn" placeholder="a remark (&quot;Shabash!&quot;, &quot;neater writing!&quot;)" maxlength="60"></p>
-    <p class="small pencil" id="markHint">tick or cross every answer, then send it back.</p>
-    <button class="go" id="sendMarked" hidden>send the paper back →</button>
-    <div id="shareMarked" hidden></div>
-    <p class="pencil" id="copiedMarked" hidden>copied!! paste it in the chat</p>
+    <p><label>A remark<br><input class="line" id="remarkIn" placeholder="Shabash! / neater writing!" maxlength="60"></label></p>
+    <p class="small" id="markHint">Tick or cross every answer, then send it back.</p>
+    <p><button class="button primary" id="sendMarked" hidden>Send the paper back</button></p>
+    <div class="share-row" id="shareMarked" hidden></div>
+    <p class="pencil" id="copiedMarked" hidden>Copied. Paste it in the chat.</p>
   </div>
   <div id="markedFoot" hidden>
     <p class="remark" id="remarkOut"></p>
-    <p class="note" id="signed" style="padding-left:120px"></p>
+    <p class="small" id="signed"></p>
   </div>
-  <p><button class="small" id="own">set a test yourself →</button></p>
+  <p><button class="text-button" id="own">Set a test yourself →</button></p>
 </section>
 
-<footer>
-  <p class="small pencil"><a href="https://apps.apple.com/app/id6831963769">the app, on iPhone →</a> · <a href="../privacy.html">privacy</a></p>
-</footer>
-</main>
+</div></main>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="dialog-head"><h2 id="dlgTitle"></h2><button class="close" aria-label="Close">×</button></div>
+  <div class="dialog-body">
+    <div class="pane" data-pane="code" data-title="Open with a code" hidden>
+      <form onsubmit="return false"><label>Test code<input class="code" id="codeIn" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></label>
+      <button class="button primary" id="openCode" disabled>Open test</button></form>
+    </div>
+    <div class="pane" data-pane="start" data-title="Start a family" hidden>
+      <form onsubmit="return false"><label>Family name<input id="famName" maxlength="20" placeholder="Khanna"></label>
+      <button class="button primary" id="startFam">Start</button></form>
+    </div>
+    <div class="pane" data-pane="join" data-title="Join a family" hidden>
+      <form onsubmit="return false"><label>Family code<input class="code" id="famCode" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></label>
+      <button class="button primary" id="joinFam">Next</button></form>
+    </div>
+    <div class="pane" data-pane="joinAsk" data-title="Join a family" hidden><div id="famAsk"></div></div>
+    <div class="pane" data-pane="invite" data-title="Invite someone" hidden><div id="invitePane"></div></div>
+    <div class="pane" data-pane="address" data-title="My test address" hidden>
+      <p>A test sent to this address lands in your inbox here, and in the app.</p>
+      <div class="dialog-actions"><code id="myAddr"></code> <button class="button" id="shareAddr">Share</button></div>
+      <p class="pencil" id="copiedAddr" hidden>Copied. Paste it in the chat.</p>
+    </div>
+    <div class="pane" data-pane="settings" data-title="Settings" hidden><div class="mode-grid" id="settingsList"></div></div>
+  </div>
+</dialog>
+<p class="pencil" id="copiedFam" hidden></p>
+<script src="../site.js"></script>
 <script src="homework.js"></script>
 </body></html>

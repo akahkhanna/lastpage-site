@@ -2,39 +2,118 @@
 <html lang="en"><head><meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Games you can play here – That Last Page</title>
-<meta property="og:title" content="That Last Page – games to play in your browser">
-<meta property="og:description" content="FLAMES, guess my word, Bollywood & Hollywood, and today's puzzles. No app needed.">
-<link rel="stylesheet" href="../style.css">
-<style>
-  .game { display: block; padding: .7em 0; border-bottom: 1px solid rgba(0,0,0,.08); text-decoration: none; }
-  .game b { font-size: 1.15rem; }
-  .game span { display: block; color: #666; font-size: .95rem; margin-top: .15em; }
-</style><link rel="manifest" href="/manifest.json">
+<title>Games · That Last Page</title>
+<meta name="description" content="Today's puzzles, FLAMES, noughts & crosses, book cricket, guess my word, dots & boxes, Name Place Animal Thing. In any browser, no app needed.">
+<meta property="og:title" content="That Last Page · Games">
+<meta property="og:description" content="Today's puzzles and games with a friend, in any browser. No app needed.">
+<link rel="stylesheet" href="../site.css">
+<link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
-<meta name="theme-color" content="#fbfaf6">
+<meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
 </head>
-<body><main>
-<h1>Games you can play here</h1>
-<p>No app needed: these work in any browser, on any phone.</p>
+<body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="/games/" aria-current="page">Games</a>
+      <a href="/homework/">Test papers</a>
+    </nav>
+  </div>
+</header>
+<main class="sheet">
+  <section class="wrap content" aria-labelledby="games-title">
+    <div class="page-heading"><h1 id="games-title">Games</h1></div>
 
-<h2>Today's puzzles <span class="small">(new every day, the same for everyone)</span></h2>
-<a class="game" href="../test/sudoku.html"><b>Mini sudoku →</b><span>6×6: fill every row, column and box with 1 to 6. A new one every day.</span></a>
-<a class="game" href="../test/dots.html"><b>Dot to dot →</b><span>One line through every square, passing the numbers in order.</span></a>
-<a class="game" href="../test/trail.html"><b>Word trail →</b><span>Find 4 themed words through touching letters.</span></a>
+    <section class="game-section" aria-labelledby="today">
+      <div class="section-head"><h2 id="today">Today’s puzzles</h2><p>New every day, the same for everyone</p></div>
+      <div class="game-grid">
+        <a class="game-card" href="../test/sudoku.html">
+          <span class="art sudoku" aria-hidden="true"><span class="mini-sudoku" id="sudoku-art"></span></span>
+          <span class="game-name">Mini sudoku <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../test/dots.html">
+          <span class="art dots" aria-hidden="true"><canvas id="dot-art" width="260" height="184"></canvas></span>
+          <span class="game-name">Dot to dot <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../test/trail.html">
+          <span class="art words" aria-hidden="true"><span class="letter-grid" id="word-art"></span></span>
+          <span class="game-name">Word trail <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
 
-<h2>Play with a friend</h2>
-<a class="game" href="../flames/"><b>FLAMES →</b><span>Two names: Friends, Love, Affection, Marriage, Enemy or Sister? Then send it to them.</span></a>
-<a class="game" href="../play/"><b>Noughts & crosses or book cricket →</b><span>Play a friend anywhere, a turn at a time: make your move and send them the link.</span></a>
-<a class="game" href="../board/"><b>Family board →</b><span>Today's puzzle times by name, the week's wins, streaks. Join the family and your times line up too.</span></a>
-<a class="game" href="../play/#live"><b>Play live →</b><span>Noughts & crosses or book cricket, live against someone on the iPhone app or in any browser. Join by link or by name.</span></a>
-<a class="game" href="../homework/"><b>A test from the family →</b><span>Dadi, Papa, anyone sets a test; they do it and hand in their paper; you mark it.</span></a>
-<a class="game" href="../hangman/"><b>Guess my word →</b><span>Hangman, Bollywood or Hollywood: write a word or film and send it for a friend to guess.</span></a>
+    <section class="game-section" aria-labelledby="with-friend">
+      <div class="section-head"><h2 id="with-friend">Play with a friend</h2><p>Live, or a turn at a time by link</p></div>
+      <div class="game-grid">
+        <a class="game-card" href="../flames/">
+          <span class="art flames" aria-hidden="true"><span class="flames-note"><s>FL</s><span class="heart">A</span>M<s>ES</s></span></span>
+          <span class="game-name">FLAMES <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <button class="game-card" data-dialog="crosses">
+          <span class="art crosses" aria-hidden="true"><span class="xo"><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span></span></span>
+          <span class="game-name">Noughts &amp; crosses <span class="arrow" aria-hidden="true">→</span></span>
+        </button>
+        <button class="game-card" data-dialog="cricket">
+          <span class="art cricket" aria-hidden="true"><span class="book"><i><b>42</b></i><i><b>43</b></i></span></span>
+          <span class="game-name">Book cricket <span class="arrow" aria-hidden="true">→</span></span>
+        </button>
+        <button class="game-card" data-dialog="hangman">
+          <span class="art hang" aria-hidden="true"><span class="gallows">  ┌──┐
+  │  o
+  │ /|\
+  │ / \
+ ─┴─</span></span>
+          <span class="game-name">Guess my word <span class="arrow" aria-hidden="true">→</span></span>
+        </button>
+        <a class="game-card" href="../play/#live">
+          <span class="art boxes" aria-hidden="true"><span class="boxgrid"><span class="f"></span><span></span><span></span><span></span><span class="f"></span><span></span><span></span><span></span><span></span></span></span>
+          <span class="game-name">Dots &amp; boxes <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../play/#live">
+          <span class="art npat" aria-hidden="true"><span class="npat-note">NAME   PLACE  ANIMAL THING
+Rahul  Ranchi Rat    Radio
+Riya   Russia Rabbit Ring</span></span>
+          <span class="game-name">Name Place Animal Thing <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
 
-<h2>Only in the app</h2>
-<p>Noughts &amp; crosses, dots &amp; boxes and book cricket (against the phone, or with a friend on one phone or two), plus Mrs T. walking round the class.
-<a href="https://apps.apple.com/app/id6831963769">Get That Last Page for iPhone</a>.</p>
+    <div class="lower-links">
+      <a href="../board/">Family board <span aria-hidden="true">→</span></a>
+      <a href="../homework/">Test papers <span aria-hidden="true">→</span></a>
+      <a href="https://apps.apple.com/app/id6831963769">The app, on iPhone <span aria-hidden="true">→</span></a>
+    </div>
+    <footer class="page-footer"><a href="../privacy.html">Privacy</a><a href="../">Help</a></footer>
+  </section>
+</main>
 
-<p class="small"><a href="../">That Last Page</a> · <a href="../privacy.html">Privacy</a></p>
-</main></body></html>
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="dialog-head"><h2 id="dlgTitle"></h2><button class="close" aria-label="Close">×</button></div>
+  <div class="dialog-body">
+    <div class="pane" data-pane="crosses" data-title="Noughts & crosses" hidden>
+      <p>Three in a row before your friend does.</p>
+      <div class="mode-grid">
+        <a class="mode" href="../play/#live"><span><strong>Play live</strong><small>Both play at the same time, in the app or any browser.</small></span><span class="arrow" aria-hidden="true">→</span></a>
+        <a class="mode" href="../play/"><span><strong>Take turns</strong><small>Make your move and send the link.</small></span><span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+    <div class="pane" data-pane="cricket" data-title="Book cricket" hidden>
+      <p>Open a page at random: the last digit is your runs.</p>
+      <div class="mode-grid">
+        <a class="mode" href="../play/#live"><span><strong>Play live</strong><small>Both play at the same time, in the app or any browser.</small></span><span class="arrow" aria-hidden="true">→</span></a>
+        <a class="mode" href="../play/"><span><strong>Take turns</strong><small>Bat, then send the link.</small></span><span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+    <div class="pane" data-pane="hangman" data-title="Guess my word" hidden>
+      <p>Hangman, or a Bollywood or Hollywood film.</p>
+      <div class="mode-grid">
+        <a class="mode" href="../play/#live"><span><strong>Play live</strong><small>One sets the word, the other guesses, right now.</small></span><span class="arrow" aria-hidden="true">→</span></a>
+        <a class="mode" href="../hangman/"><span><strong>Send a word</strong><small>Write a word or film and send the link to guess.</small></span><span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+</dialog>
+<script src="../site.js"></script>
+</body></html>
