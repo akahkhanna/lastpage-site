@@ -49,5 +49,17 @@
     fetch("https://lastpage-api.akkikhanna.workers.dev/a/" + addr + "/result", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ day, puzzle, seconds: secs, hints: hints || 0 }) }).catch(() => {});
   }
-  root.Dare = { show, link, clock, post };
+  // "next: dot to dot →": the daily puzzles not yet done today, in a fixed order; all done → the board.
+  const PUZZLES = [["sudoku.html", "lp.minisudoku.", "Mini sudoku"], ["dots.html", "lp.dots.", "Dot to dot"], ["trail.html", "lp.trail.", "Word trail"]];
+  function next(day) {
+    const el = document.getElementById("next");
+    if (!el) return;
+    const here = location.pathname.split("/").pop();
+    const left = PUZZLES.filter(([page, key]) => page !== here && !localStorage.getItem(key + day));
+    el.innerHTML = left.length
+      ? "Next: " + left.map(([page, , title]) => `<a href="${page}${location.hash}">${title} →</a>`).join(" · ")
+      : `All three done for today ✓ <a href="../board/">Family board →</a>`;
+  }
+  const shown = show;
+  root.Dare = { show: (day, mine) => { shown(day, mine); next(day); }, next, link, clock, post };
 })(window);

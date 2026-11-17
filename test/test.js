@@ -11,6 +11,7 @@
   const answers = test.questions.map(() => "");
   const key = "lp.test." + day;
   $("title").textContent = "Surprise test #" + test.number;
+  if (window.Dare) Dare.next(day);
   try { $("name").value = localStorage.getItem("lp.from") || ""; } catch {}
 
   test.questions.forEach((q, i) => {
