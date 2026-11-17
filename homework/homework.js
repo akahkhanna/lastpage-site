@@ -273,12 +273,10 @@
   // ---------- routing ----------
   function renderFamilies() {
     const all = families();
-    // The panel: each family's name, its people, invite and board. "That's you?" only when this
-    // browser isn't in it yet (joined from the phone under another spelling).
+    // The panel: each family's name, its people, invite and board.
     $("famList").innerHTML = all.map((f) => `
       <p class="family-label">${esc(f.name)}<span class="code-chip">code ${f.code}</span></p>
       ${f.members.map((m) => `<div class="family-person"><span class="avatar" aria-hidden="true">${esc(m.name.slice(0, 1).toUpperCase())}</span><span class="person-name">${esc(m.name)}${isMe(m) ? " <small>You</small>" : ""}</span></div>`).join("")}
-      ${f.members.some(isMe) ? "" : `<div class="family-links"><span class="small">That's you?</span> ${f.members.map((m) => `<button class="text-button" data-me="${f.code}:${esc(m.name)}">${esc(m.name)}</button>`).join(" ")}</div>`}
       <div class="family-links"><button class="text-button" data-invite="${f.code}">Invite someone</button><a class="text-button" href="/board/#${f.code}">Family board <span aria-hidden="true">→</span></a></div>`).join("");
     $("famJoin").hidden = all.length > 0;
   }
@@ -291,8 +289,7 @@
   }
   document.addEventListener("click", async (e) => {
     if (e.target.closest('[data-dialog="settings"]')) renderSettings();
-    const b = e.target.closest("[data-invite],[data-leave],[data-me]"); if (!b) return;
-    if (b.dataset.me) { const [code, name] = [b.dataset.me.slice(0, 6), b.dataset.me.slice(7)]; try { remember("lp.from", name); saveFamily(await api("POST", "/f/" + code + "/join", { name, addr: myAddress() })); renderFamilies(); } catch (err) { alert(err.message); } return; }
+    const b = e.target.closest("[data-invite],[data-leave]"); if (!b) return;
     if (b.dataset.invite) {
       const f = families().find((x) => x.code === b.dataset.invite);
       $("invitePane").innerHTML = `<p>Send them the link. They join under their name, and tests and game invites find them.</p><p class="small">Or they type the code <code>${f.code}</code>.</p><div class="share-row" id="inviteShare"></div>`;
