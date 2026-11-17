@@ -79,6 +79,7 @@ export default {
           if (!["sudoku", "dots", "trail"].includes(r.puzzle) || !(day >= 0 && day < 100000) || !(seconds > 0 && seconds < 86400)) return fail(400, "bad result");
           return await box(env, "a:" + addr).fetch("https://box/result-add", { method: "POST", body: JSON.stringify({ day, puzzle: r.puzzle, s: seconds, h: hints }) });
         }
+        if (parts.length === 3 && parts[2] === "dare" && request.method === "POST") return await dareTo(request, env, addr);
         if (parts.length === 3 && parts[2] === "token" && request.method === "POST") {
           const body = await request.text();
           if (body.length > 1024) return fail(400, "too big");
@@ -297,6 +298,28 @@ async function inboxAll(env, address, entry) {
     for (const t of j.tokens || []) if (!tokens.some((x) => x.token === t.token)) tokens.push({ ...t, addr: a });
   }
   return tokens;
+}
+
+/// "Beat my 1:12": a family member challenged to today's puzzle. Lands in every device's inbox
+/// and buzzes wherever there's a push token; the puzzle opens with their time to beat.
+const PUZZLE_NAMES = { sudoku: "mini sudoku", dots: "dot to dot", trail: "word trail" };
+async function dareTo(request, env, addr) {
+  const text = await request.text();
+  if (text.length > 512) return fail(400, "too big");
+  let b; try { b = JSON.parse(text); } catch { return fail(400, "not JSON"); }
+  const day = parseInt(b.day, 10), secs = parseInt(b.secs, 10), from = cleanName(b.from);
+  if (!PUZZLE_NAMES[b.puzzle] || !(day >= 0 && day < 100000) || !(secs > 0 && secs < 86400) || !from) return fail(400, "bad challenge");
+  const entry = { kind: "dare", code: `${b.puzzle}-${day}-${from.toUpperCase()}`, stage: "set", from, puzzle: b.puzzle, day, secs, at: Date.now() };
+  const tokens = await inboxAll(env, addr, entry);
+  const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+  const title = `${from} challenges you to today's ${PUZZLE_NAMES[b.puzzle]} ✏️`;
+  const dead = [];
+  for (const t of tokens) {
+    const status = await pushAPNs(env, t, { aps: { alert: { title, body: `beat ${clock}` }, sound: "default" }, dare: { puzzle: b.puzzle, day, secs, name: from } });
+    if (status === 410 || status === 400 || status === 404) dead.push(t.token);
+  }
+  for (const t of tokens) if (dead.includes(t.token)) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+  return json({ ok: true, devices: tokens.length });
 }
 
 /// "Vihaan is in Khannas": everyone already in the family hears a new member (or a member's

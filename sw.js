@@ -1,6 +1,6 @@
 // That Last Page, installed: the pages and fonts are kept so the daily puzzles open without
 // signal; anything live (rooms, tests, the board) always goes to the network.
-const CACHE = "lastpage-v4";
+const CACHE = "lastpage-v5";
 const META = "lastpage-meta";   // this browser's test address, for the push handler
 const KEEP = ["/", "/games/", "/test/sudoku.html", "/test/dots.html", "/test/trail.html", "/test/test.css", "/test/dare.js",
   "/test/sudoku.js", "/test/dots.js", "/test/trail.js", "/play/", "/play/play.js", "/play/room.js", "/play/live.js", "/homework/", "/homework/homework.js",
@@ -29,6 +29,10 @@ const GAMES = { noughtsCrosses: "noughts & crosses", bookCricket: "book cricket"
   bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "name place animal thing" };
 function describe(e) {
   if (e.kind === "room") return { title: `${e.from} wants to play ${GAMES[e.game] || "a game"} ✏️`, body: "tap to join them", url: `/play/#r-${e.code}` };
+  if (e.kind === "dare") { const page = { sudoku: "sudoku", dots: "dots", trail: "trail" }[e.puzzle] || "sudoku";
+    const clock = `${Math.floor(e.secs / 60)}:${String(e.secs % 60).padStart(2, "0")}`;
+    return { title: `${e.from} challenges you to today's ${{ sudoku: "mini sudoku", dots: "dot to dot", trail: "word trail" }[e.puzzle] || "puzzle"} ✏️`, body: `beat ${clock}`,
+      url: `/test/${page}.html#${e.day + 1}-${e.secs}-${encodeURIComponent(e.from)}` }; }
   if (e.kind === "family") return { title: `${e.from} joined the family ✏️`, body: "set them a test, or ask them to play", url: "/board/" };
   if (e.stage === "answered") return { title: `${e.from} has handed in their paper`, body: "tap to mark it", url: `/homework/#${e.code}` };
   if (e.stage === "marked") return { title: `Your paper is back from ${e.from}`, body: "tap to see your marks", url: `/homework/#${e.code}` };

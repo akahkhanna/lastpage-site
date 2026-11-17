@@ -347,6 +347,7 @@
       const list = await api("GET", "/a/" + myAddress());
       const item = (inner, attrs = "") => `<li><button ${attrs}><span>${inner}</span><span class="arrow" aria-hidden="true">→</span></button></li>`;
       $("inboxList").innerHTML = list.slice(0, 8).map((e) => {
+        if (e.kind === "dare") return item(`<strong>${esc(e.from)} challenges you</strong><small>today's ${({ sudoku: "mini sudoku", dots: "dot to dot", trail: "word trail" })[e.puzzle] || "puzzle"} · beat ${Math.floor(e.secs / 60)}:${String(e.secs % 60).padStart(2, "0")}</small>`, `data-href="/test/${({ sudoku: "sudoku", dots: "dots", trail: "trail" })[e.puzzle] || "sudoku"}.html#${e.day + 1}-${e.secs}-${encodeURIComponent(e.from)}"`);
         if (e.kind === "family") return `<li><button disabled><span><strong>${esc(e.from)} joined the family</strong></span></button></li>`;
         if (e.kind === "room") return Date.now() - e.at < 30 * 60e3 ? item(`<strong>${esc(e.from)} wants to play ${esc(e.game || "")}</strong><small>Live, right now</small>`, `data-href="/play/#r-${e.code}"`) : "";
         const what = e.stage === "set" ? [`Test from ${esc(e.from)}`, "Ready to answer"] : e.stage === "answered" ? [`${esc(e.from)}'s paper`, "Handed in · Ready to mark"] : [`Your paper, from ${esc(e.from)}`, "Marked"];

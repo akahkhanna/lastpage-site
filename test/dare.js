@@ -60,6 +60,37 @@
       ? "Next: " + left.map(([page, , title]) => `<a href="${page}${location.hash}">${title} →</a>`).join(" · ")
       : `All three done for today ✓ <a href="../board/">Family board →</a>`;
   }
+  // "Challenge someone": your families with everyone listed; a tap sends "beat my 1:12" to them
+  // (their phone, or their browser if notifications are on). The share button stays for anyone else.
+  const PUZ = { "sudoku.html": "sudoku", "dots.html": "dots", "trail.html": "trail" };
+  function family(day, mine) {
+    const puzzle = PUZ[location.pathname.split("/").pop()];
+    const share = document.getElementById("share");
+    if (!puzzle || !share || !mine) return;
+    let fams = [], addr = "";
+    try { fams = JSON.parse(localStorage.getItem("lp.families") || "[]"); addr = localStorage.getItem("lp.address") || ""; } catch {}
+    const isMe = (m) => m.addr === addr || (m.addrs || []).includes(addr);
+    const groups = fams.map((f) => ({ name: f.name, people: f.members.filter((m) => !isMe(m)) })).filter((g) => g.people.length);
+    let el = document.getElementById("famDare");
+    if (!groups.length) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement("div"); el.id = "famDare"; share.before(el); }
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    el.innerHTML = `<p class="status" style="margin:8px 0 4px"><b>Challenge someone</b> to beat your ${clock(mine)}</p>` + groups.map((g) =>
+      `<p class="small" style="margin:6px 0 2px"><b>${esc(g.name)}</b></p><div class="chips">${g.people.map((m) => `<button class="choice" data-dare="${esc(m.addr)}">${esc(m.name)}</button>`).join("")}</div>`).join("")
+      + `<p class="small" style="margin:10px 0 0">or send a link to anyone:</p>`;
+    el.onclick = async (e) => {
+      const b = e.target.closest("[data-dare]"); if (!b || b.disabled) return;
+      b.disabled = true; const name = b.textContent; b.textContent = name + "…";
+      let from = ""; try { from = localStorage.getItem("lp.from") || ""; } catch {}
+      if (!from) { from = (prompt("Your name, so they know who to beat:") || "").trim().slice(0, 20); if (from) try { localStorage.setItem("lp.from", from); } catch {} }
+      try {
+        const r = await fetch("https://lastpage-api.akkikhanna.workers.dev/a/" + b.dataset.dare + "/dare", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from: from || "Someone", puzzle, day, secs: mine }) });
+        if (!r.ok) throw new Error("server said " + r.status);
+        b.textContent = name + " ✓"; b.classList.add("on");
+      } catch (err) { b.disabled = false; b.textContent = name; alert("Couldn't reach " + name + ": " + err.message); }
+    };
+  }
   const shown = show;
-  root.Dare = { show: (day, mine) => { shown(day, mine); next(day); }, next, link, clock, post };
+  root.Dare = { show: (day, mine) => { shown(day, mine); next(day); family(day, mine); }, next, link, clock, post };
 })(window);
