@@ -1,0 +1,32 @@
+#!/bin/sh
+# Peek at what the server holds: families, boards, rooms, inboxes, tests. Read-only.
+#   ./peek family SX3GQ8        who's in a family (names, every device address)
+#   ./peek board  SX3GQ8 [day]  today's times and the week (day = days since 1 Nov 2026)
+#   ./peek room   RRKD9W        a live game: game, players wanted, who's connected
+#   ./peek inbox  PAPA-SVNK     what's waiting at an address (tests, invites, joins)
+#   ./peek test   ABC123        a test paper by code
+#   ./peek day                  today's day number
+# Live logs instead: `wrangler tail` (from this folder) streams every request as it happens.
+API=${API:-https://lastpage-api.akkikhanna.workers.dev}
+day() { python3 -c 'import datetime; print((datetime.date.today()-datetime.date(2026,11,1)).days)'; }
+pretty() { python3 -m json.tool; }
+case "$1" in
+  family) curl -s "$API/f/$2" | python3 -c '
+import sys, json; f = json.load(sys.stdin)
+if "error" in f: print(f); sys.exit()
+print(f["name"], "·", f["code"], "·", len(f["members"]), "member(s)")
+for m in f["members"]: print("  ", m["name"].ljust(12), " ".join(m.get("addrs") or [m["addr"]]))' ;;
+  board)  curl -s "$API/f/$2/board?day=${3:-$(day)}" | python3 -c '
+import sys, json; b = json.load(sys.stdin)
+if "error" in b: print(b); sys.exit()
+d = b["day"]; print(b["name"], "· day", d)
+for m in b["members"]:
+    today = m["days"].get(str(d), {})
+    cells = ["%s %d:%02d" % (p, r["s"] // 60, r["s"] % 60) for p, r in sorted(today.items())]
+    print("  ", m["name"].ljust(12), ", ".join(cells) or "—", "   (days with results:", ", ".join(sorted(m["days"])) or "none", ")")' ;;
+  room)   curl -s "$API/r/$2" | pretty ;;
+  inbox)  curl -s "$API/a/$2" | pretty ;;
+  test)   curl -s "$API/h/$2" | pretty ;;
+  day)    day ;;
+  *)      sed -n '2,10p' "$0" ;;
+esac
