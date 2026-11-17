@@ -106,7 +106,15 @@ export default {
         if (parts.length === 3 && request.method === "POST" && (parts[2] === "join" || parts[2] === "leave")) {
           const body = await request.text();
           if (body.length > 2048) return fail(400, "too big");
-          return await fam.fetch("https://box/family-" + parts[2], { method: "POST", body });
+          const r = await fam.fetch("https://box/family-" + parts[2], { method: "POST", body });
+          if (r.status !== 200) return r;
+          const f = await r.json();
+          // The person's devices now know about each other, so deliveries reach all of them.
+          const linked = f.linked || [];
+          for (const a of linked) await box(env, "a:" + a).fetch("https://box/alias-set", { method: "POST", body: JSON.stringify(linked.filter((x) => x !== a)) });
+          if (parts[2] === "leave") { const addr = String((JSON.parse(body) || {}).addr || "").toUpperCase(); if (ADDRESS.test(addr)) await box(env, "a:" + addr).fetch("https://box/alias-set", { method: "POST", body: "[]" }); }
+          delete f.linked;
+          return json(f);
         }
       }
       if (parts.length === 0) return json({ ok: true, what: "That Last Page: homework by code" });
@@ -186,8 +194,16 @@ async function familyBoard(env, fam, url) {
   const family = await r.json();
   const day = parseInt(url.searchParams.get("day") || "0", 10) || 0;
   const members = await Promise.all(family.members.map(async (m) => {
-    const rr = await box(env, "a:" + m.addr).fetch(`https://box/result-get?from=${day - 29}&to=${day}`);
-    return { name: m.name, addr: m.addr, days: rr.status === 200 ? await rr.json() : {} };
+    const days = {};
+    for (const a of m.addrs || [m.addr]) {
+      const rr = await box(env, "a:" + a).fetch(`https://box/result-get?from=${day - 29}&to=${day}`);
+      if (rr.status !== 200) continue;
+      for (const [d, puzzles] of Object.entries(await rr.json())) {
+        days[d] = days[d] || {};
+        for (const [p, r] of Object.entries(puzzles)) if (!days[d][p] || r.s < days[d][p].s) days[d][p] = r;
+      }
+    }
+    return { name: m.name, addr: m.addr, addrs: m.addrs || [m.addr], days };
   }));
   return json({ code: family.code, name: family.name, day, members });
 }
@@ -224,14 +240,13 @@ async function inviteToRoom(request, env, code, room) {
   const info = await r.json();
   const from = cleanName(body.from) || "Someone";
   const entry = { kind: "room", code, stage: "set", from, game: info.game, at: Date.now() };
-  const ir = await box(env, "a:" + addr).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
-  const { tokens = [] } = await ir.json();
+  const tokens = await inboxAll(env, addr, entry);
   const title = `${from} wants to play ${GAME_NAMES[info.game] || "a game"} ✏️`;
   for (const t of tokens) {
     const status = await pushAPNs(env, t, { aps: { alert: { title, body: "tap to join them" }, sound: "default" }, room: code, game: info.game });
-    if (status === 410 || status === 400) await box(env, "a:" + addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+    if (status === 410 || status === 400) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
   }
-  return json({ ok: true });
+  return json({ ok: true, devices: tokens.length });
 }
 const GAME_NAMES = { bookCricket: "book cricket", noughtsCrosses: "noughts & crosses", dotsBoxes: "dots & boxes", hangman: "hangman", bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "name place animal thing" };
 function cleanMember(m) {
@@ -259,11 +274,28 @@ async function createFamily(request, env) {
   return json(family);
 }
 
+/// The same person's other devices (a phone and a browser that joined a family under one name).
+async function devicesOf(env, address) {
+  const r = await box(env, "a:" + address).fetch("https://box/alias-get");
+  const aliases = r.status === 200 ? await r.json() : [];
+  return [address, ...aliases.filter((a) => a !== address)];
+}
+
+/// Puts an entry in the inbox of every device of this person; returns their push tokens.
+async function inboxAll(env, address, entry) {
+  const tokens = [];
+  for (const a of await devicesOf(env, address)) {
+    const r = await box(env, "a:" + a).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
+    const j = await r.json();
+    for (const t of j.tokens || []) if (!tokens.some((x) => x.token === t.token)) tokens.push({ ...t, addr: a });
+  }
+  return tokens;
+}
+
 async function deliver(env, address, hw) {
   const stage = stageOf(hw);
   const entry = { code: hw.code, stage, from: stage === "answered" ? (hw.by || "") : hw.from, at: hw.at };
-  const r = await box(env, "a:" + address).fetch("https://box/inbox-add", { method: "POST", body: JSON.stringify(entry) });
-  const { tokens = [] } = await r.json();
+  const tokens = await inboxAll(env, address, entry);
   if (!tokens.length || !env.APNS_KEY) return;
   const n = hw.qs.length;
   const text = stage === "set" ? { title: `A test from ${hw.from} ✏️`, body: `${n} question${n === 1 ? "" : "s"}${hw.mins ? ", " + hw.mins + " min" : ""}${hw.note ? ". \"" + hw.note + "\"" : ""}` }
@@ -274,7 +306,7 @@ async function deliver(env, address, hw) {
     const status = await pushAPNs(env, t, { aps: { alert: text, sound: "default" }, code: hw.code, stage });
     if (status === 410 || status === 400) dead.push(t.token);
   }
-  if (dead.length) await box(env, "a:" + address).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify(dead) });
+  for (const t of tokens) if (dead.includes(t.token)) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
 }
 
 // ---------- Apple push (APNs over HTTP/2, signed with the team's .p8 key) ----------
@@ -391,17 +423,33 @@ export class Box {
       let body; try { body = await request.json(); } catch { return fail(400, "not JSON"); }
       const addr = String(body.addr || "").toUpperCase();
       if (!ADDRESS.test(addr)) return fail(400, "bad address");
-      f.members = f.members.filter((m) => m.addr !== addr);
+      // Every member keeps all their devices (addrs); `addr` is the first one.
+      for (const m of f.members) if (!m.addrs) m.addrs = [m.addr];
+      let changed = null;
+      for (const m of f.members) if (m.addrs.includes(addr)) { m.addrs = m.addrs.filter((a) => a !== addr); changed = m; }
+      f.members = f.members.filter((m) => m.addrs.length);
+      for (const m of f.members) m.addr = m.addrs[0];
       if (op === "/family-join") {
         const name = cleanName(body.name);
         if (!name) return fail(400, "no name");
-        if (f.members.length >= MAX_MEMBERS) return fail(409, "family's full");
-        f.members.push({ name, addr, at: Date.now() });
+        // The same person on another device (a phone after a browser, or the other way round).
+        const same = f.members.find((m) => m.name.toLowerCase() === name.toLowerCase());
+        if (same) { same.addrs.push(addr); changed = same; }
+        else {
+          if (f.members.length >= MAX_MEMBERS) return fail(409, "family's full");
+          changed = { name, addr, addrs: [addr], at: Date.now() };
+          f.members.push(changed);
+        }
       }
       f.at = Date.now();
       await this.storage.put("family", f);
       await this.storage.setAlarm(Date.now() + FAMILY_DAYS * 86400e3);
-      return json(f);
+      return json({ ...f, linked: changed ? changed.addrs : [] });
+    }
+    if (op === "/alias-get") return json((await this.storage.get("aliases")) || []);
+    if (op === "/alias-set") {
+      await this.storage.put("aliases", await request.json());
+      return json({ ok: true });
     }
     return fail(404, "?");
   }
