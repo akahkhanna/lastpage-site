@@ -291,12 +291,28 @@
     try { saveFamily(await api("POST", "/f", { name, member: me() })); $("famName").value = ""; renderFamilies(); }
     catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = e.message; }
   });
-  $("joinFam").addEventListener("click", () => joinFamily($("famCode").value));
+  $("joinFam").addEventListener("click", () => previewFamily($("famCode").value));
+  // A link or a code shows the family first ("join Khannas? Papa, Vihaan are in it"); joining is a tap, under a name you can see.
+  async function previewFamily(code) {
+    code = (code || "").trim().toUpperCase(); if (!isCode(code)) return;
+    let f;
+    try { f = await api("GET", "/f/" + code); } catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "family " + code + ": " + e.message; return; }
+    $("famCode").value = "";
+    if (f.members.some(isMe)) { saveFamily(f); renderFamilies(); $("hubNote").hidden = false; $("hubNote").textContent = `you're already in ${f.name}.`; return; }
+    const who = f.members.map((m) => esc(m.name)).join(", ");
+    $("famAsk").hidden = false;
+    $("famAsk").innerHTML = `<p class="note">join ${esc(f.name)}?</p>
+      <p class="pencil">${who ? `${who} ${f.members.length === 1 ? "is" : "are"} in it. They'll be able to set you tests and invite you to games.` : "nobody's in it yet."}</p>
+      <p><span class="pencil">as</span> <input id="joinAs" maxlength="20" placeholder="your name" value="${esc(recall("lp.from") || "")}" style="width:180px">
+      <button class="small" id="joinYes" style="color:var(--red);font-weight:700">join →</button> <button class="small" id="joinNo">not now</button></p>`;
+    $("joinNo").onclick = () => { $("famAsk").hidden = true; };
+    $("joinYes").onclick = () => { const n = $("joinAs").value.trim().slice(0, 20); if (!n) { $("joinAs").focus(); return; } remember("lp.from", n); $("famAsk").hidden = true; joinFamily(code); };
+    $("joinAs").focus();
+  }
   async function joinFamily(code) {
     code = (code || "").trim().toUpperCase(); if (!isCode(code)) return;
-    if (!recall("lp.from")) { const n = prompt("Your name, as the family will see it:"); if (n) remember("lp.from", n.trim().slice(0, 20)); }
     try {
-      const f = await api("POST", "/f/" + code + "/join", me()); saveFamily(f); $("famCode").value = ""; renderFamilies();
+      const f = await api("POST", "/f/" + code + "/join", me()); saveFamily(f); renderFamilies();
       const others = f.members.filter((m) => !isMe(m)).map((m) => m.name);
       $("hubNote").hidden = false; $("hubNote").textContent = `you're in ${f.name}` + (others.length ? ` with ${others.join(", ")}. Tests and game invites find you here now ✓` : ". Invite someone, and tests and games go by name.");
     }
@@ -331,7 +347,7 @@
   const raw = location.hash.slice(1);
   $("from").value = recall("lp.from");
   if (raw.startsWith("f-") && isCode(raw.slice(2))) {
-    await showHub(); await joinFamily(raw.slice(2)); history.replaceState(null, "", location.pathname); return;
+    await showHub(); history.replaceState(null, "", location.pathname); await previewFamily(raw.slice(2)); return;
   }
   if (isCode(raw)) {
     try { openPaper(await api("GET", "/h/" + raw.toUpperCase())); }
