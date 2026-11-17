@@ -34,7 +34,7 @@
   <section class="wrap content" aria-labelledby="board-title">
     <div class="page-heading board-heading">
       <div><h1 id="board-title">Family board</h1><p id="famName" hidden></p><div class="fams" id="fams" hidden></div></div>
-      <a class="button" id="settings" href="/homework/" hidden>Family settings</a>
+      <button class="button" id="settings" data-dialog="settings" hidden>Family settings</button>
     </div>
     <p class="note" id="note" hidden></p>
     <div class="board-grid" id="scores" hidden>
@@ -74,6 +74,19 @@
     <footer class="page-footer board-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
   </section>
 </main>
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="dialog-head"><h2 id="dlgTitle"></h2><button class="close" aria-label="Close">×</button></div>
+  <div class="dialog-body">
+    <div class="pane" data-pane="settings" data-title="Family settings" hidden><div class="mode-grid" id="settingsList"></div></div>
+    <div class="pane" data-pane="invite" data-title="Invite someone" hidden><div id="invitePane"></div></div>
+    <div class="pane" data-pane="address" data-title="My test address" hidden>
+      <p>Puzzle times are kept against this address, and a test sent to it lands in your inbox.</p>
+      <div class="dialog-actions"><code id="myAddr"></code> <button class="button" id="copyAddr">Copy</button></div>
+      <p class="board-note" id="copiedAddr" hidden>Copied.</p>
+    </div>
+  </div>
+</dialog>
+<script src="/site.js"></script>
 <script src="../test/dare.js"></script>
 <script>
 (function () {
@@ -98,6 +111,7 @@
     catch (e) { $("note").textContent = "Couldn't fetch the board: " + e.message; return; }
     $("note").hidden = true;
     document.title = `${b.name} · Family board`;
+    current = { code, name: b.name };
     $("famName").hidden = false; $("famName").textContent = b.name;
     $("settings").hidden = false;
     $("scores").hidden = false;
@@ -122,6 +136,38 @@
     const byWins = b.members.slice().sort((x, y) => (wins[y.addr] || 0) - (wins[x.addr] || 0) || x.name.localeCompare(y.name));
     $("wins").innerHTML = byWins.map((m) => { const w = wins[m.addr] || 0; return `<li>${person(m)}<strong class="win-total">${w} ${w === 1 ? "win" : "wins"}</strong></li>`; }).join("");
   }
+
+  let current = null;   // the family on show
+  const remember = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  function renderSettings() {
+    const f = current, all = families();
+    const row = (attrs, title) => `<button class="mode" ${attrs}><span><strong>${title}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`;
+    const link = (href, title) => `<a class="mode" href="${href}"><span><strong>${title}</strong></span><span class="arrow" aria-hidden="true">→</span></a>`;
+    $("settingsList").innerHTML = (f ? row(`data-dialog="invite"`, `Invite someone to ${esc(f.name)}`) : "")
+      + row(`data-dialog="address"`, "My test address")
+      + link("/homework/#join", "Join a family") + link("/homework/#start", all.length ? "Start another family" : "Start a family")
+      + (f && all.some((x) => x.code === f.code) ? row(`data-leave="${f.code}"`, `Leave ${esc(f.name)}`) : "");
+  }
+  document.addEventListener("click", async (e) => {
+    if (e.target.closest('[data-dialog="settings"]')) renderSettings();
+    if (e.target.closest('[data-dialog="address"]')) $("myAddr").textContent = me || "(none yet: set or do a test first)";
+    if (e.target.closest('[data-dialog="invite"]') && current) {
+      const text = `Join our family "${current.name}" in That Last Page ✏️ then tests and games find you by name:`;
+      const url = location.origin + "/f/#" + current.code, both = text + "\n" + url + "\n(or type the code " + current.code + ")";
+      $("invitePane").innerHTML = `<p>Send them the link. They join under their name, and their puzzle times line up here.</p><p class="board-note">Or they type the code <code>${current.code}</code>.</p>
+        <div class="dialog-actions"><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(both)}">Send on WhatsApp</a> <button class="button" id="copyInvite">Copy the message</button></div><p class="board-note" id="copiedInvite" hidden>Copied.</p>`;
+      $("copyInvite").onclick = async () => { try { await navigator.clipboard.writeText(both); $("copiedInvite").hidden = false; } catch { prompt("Copy this:", both); } };
+    }
+    const leave = e.target.closest("[data-leave]");
+    if (leave) {
+      const f = families().find((x) => x.code === leave.dataset.leave);
+      if (!f || !confirm(`Leave ${f.name}? Your times stay; you just drop off the list.`)) return;
+      try { await fetch(`${API}/f/${f.code}/leave`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ addr: me }) }); } catch {}
+      remember("lp.families", JSON.stringify(families().filter((x) => x.code !== f.code)));
+      location.hash = ""; location.reload();
+    }
+  });
+  $("copyAddr").addEventListener("click", async () => { try { await navigator.clipboard.writeText(me); $("copiedAddr").hidden = false; } catch { prompt("Copy this:", me); } });
 
   const hash = location.hash.slice(1).toUpperCase();
   const fams = families();
