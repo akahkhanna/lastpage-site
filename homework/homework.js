@@ -339,6 +339,7 @@
   async function showHub() {
     show("hub");
     $("myAddr").textContent = myAddress();
+    if (window.LPPush) LPPush.render();   // the address exists now, so notifications can be offered
     renderFamilies(); refreshFamilies().then(renderFamilies);
     $("inboxList").innerHTML = "";
     $("inboxEmpty").hidden = false;

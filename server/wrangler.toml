@@ -26,4 +26,6 @@ APNS_TEAM_ID = "JLXF7642XY"
 APNS_KEY_ID = "CKU3M84S88"            # lastpageprod: App Store / TestFlight
 APNS_KEY_ID_SANDBOX = "M2PZN5H6DN"    # LastPage push: Xcode builds
 APNS_TOPIC = "com.akashkhanna.thelastpage"
+VAPID_PUBLIC = "BOtULxBZnGuQc8dm9xKTsKKvK5htXlf51TCwgdzzPDdeNiwGSjUKzKW09VdvAiHqG4tmuyqVtFS0AwCcAwNjvQw"   # Web Push; public by design
+# VAPID_PRIVATE (a JWK) is a secret: `wrangler secret put VAPID_PRIVATE < ~/Documents/lastpage-release/vapid-private.jwk.json`
 # APNS_KEY (the .p8 contents) is a secret: `wrangler secret put APNS_KEY < AuthKey_CKU3M84S88.p8`

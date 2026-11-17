@@ -83,6 +83,12 @@ export default {
           const body = await request.text();
           if (body.length > 1024) return fail(400, "too big");
           let t; try { t = JSON.parse(body); } catch { return fail(400, "not JSON"); }
+          if (t.web) {
+            // A browser's Web Push endpoint (Chrome on Android, Safari on a home-screen iPhone, …).
+            let u; try { u = new URL(String(t.web)); } catch { return fail(400, "bad endpoint"); }
+            if (u.protocol !== "https:" || String(t.web).length > 900) return fail(400, "bad endpoint");
+            return await box(env, "a:" + addr).fetch("https://box/token-add", { method: "POST", body: JSON.stringify({ token: String(t.web), env: "web" }) });
+          }
           if (!/^[0-9a-f]{32,200}$/i.test(t.token || "")) return fail(400, "bad token");
           const envName = t.env === "sandbox" ? "sandbox" : "prod";
           return await box(env, "a:" + addr).fetch("https://box/token-add", { method: "POST", body: JSON.stringify({ token: t.token.toLowerCase(), env: envName }) });
@@ -245,7 +251,7 @@ async function inviteToRoom(request, env, code, room) {
   const title = `${from} wants to play ${GAME_NAMES[info.game] || "a game"} ✏️`;
   for (const t of tokens) {
     const status = await pushAPNs(env, t, { aps: { alert: { title, body: "tap to join them" }, sound: "default" }, room: code, game: info.game });
-    if (status === 410 || status === 400) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+    if (status === 410 || status === 400 || status === 404) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
   }
   return json({ ok: true, devices: tokens.length });
 }
@@ -305,13 +311,13 @@ async function notifyJoin(env, f, typed, addr, devices) {
     if ((m.addrs || [m.addr]).includes(addr)) continue;
     for (const t of await inboxAll(env, m.addr, entry)) if (!tokens.some((x) => x.token === t.token)) tokens.push(t);
   }
-  if (!tokens.length || !env.APNS_KEY) return;
+  if (!tokens.length) return;
   const text = devices > 1 ? { title: `${name}'s phone is in ${f.name} too ✏️`, body: "tests and game invites reach it now" }
     : { title: `${name} is in ${f.name} ✏️`, body: "set them a test, or ask them to play" };
   const dead = [];
   for (const t of tokens) {
     const status = await pushAPNs(env, t, { aps: { alert: text, sound: "default" }, family: f.code });
-    if (status === 410 || status === 400) dead.push(t.token);
+    if (status === 410 || status === 400 || status === 404) dead.push(t.token);
   }
   for (const t of tokens) if (dead.includes(t.token)) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
 }
@@ -320,7 +326,7 @@ async function deliver(env, address, hw) {
   const stage = stageOf(hw);
   const entry = { code: hw.code, stage, from: stage === "answered" ? (hw.by || "") : hw.from, at: hw.at };
   const tokens = await inboxAll(env, address, entry);
-  if (!tokens.length || !env.APNS_KEY) return;
+  if (!tokens.length) return;
   const n = hw.qs.length;
   const text = stage === "set" ? { title: `A test from ${hw.from} ✏️`, body: `${n} question${n === 1 ? "" : "s"}${hw.mins ? ", " + hw.mins + " min" : ""}${hw.note ? ". \"" + hw.note + "\"" : ""}` }
     : stage === "answered" ? { title: `${hw.by || "Someone"} has handed in their paper`, body: `${n} answer${n === 1 ? "" : "s"} to mark` }
@@ -328,7 +334,7 @@ async function deliver(env, address, hw) {
   const dead = [];
   for (const t of tokens) {
     const status = await pushAPNs(env, t, { aps: { alert: text, sound: "default" }, code: hw.code, stage });
-    if (status === 410 || status === 400) dead.push(t.token);
+    if (status === 410 || status === 400 || status === 404) dead.push(t.token);
   }
   for (const t of tokens) if (dead.includes(t.token)) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
 }
@@ -337,6 +343,36 @@ async function deliver(env, address, hw) {
 // Two keys: one for the App Store / TestFlight (production), one for Xcode builds (sandbox).
 let apnsJWT = { prod: { value: null, at: 0 }, sandbox: { value: null, at: 0 } };
 const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+/// Web Push (RFC 8030 + VAPID, RFC 8292), sent without a payload so nothing needs encrypting:
+/// the browser's service worker wakes, fetches this address's inbox and shows the newest item.
+const vapidJWT = {};
+async function vapidToken(env, audience) {
+  const cached = vapidJWT[audience];
+  if (cached && Date.now() - cached.at < 6 * 3600e3) return cached.value;
+  const key = await crypto.subtle.importKey("jwk", JSON.parse(env.VAPID_PRIVATE), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const enc = new TextEncoder();
+  const header = b64url(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
+  const claims = b64url(enc.encode(JSON.stringify({ aud: audience, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: "https://thatlastpage.vercel.app" })));
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc.encode(header + "." + claims));
+  vapidJWT[audience] = { value: header + "." + claims + "." + b64url(sig), at: Date.now() };
+  return vapidJWT[audience].value;
+}
+async function pushWeb(env, t) {
+  if (!env.VAPID_PRIVATE || !env.VAPID_PUBLIC) return 0;
+  try {
+    const audience = new URL(t.token).origin;
+    const r = await fetch(t.token, {
+      method: "POST",
+      headers: { authorization: `vapid t=${await vapidToken(env, audience)}, k=${env.VAPID_PUBLIC}`, ttl: "86400", urgency: "high", "content-length": "0" },
+    });
+    if (r.status >= 300) console.log("webpush", r.status, await r.text());
+    return r.status;
+  } catch (e) {
+    console.log("webpush failed", String(e));
+    return 0;
+  }
+}
+
 async function apnsToken(env, which) {
   // Apple wants a fresh token at least hourly, and not more often than every 20 minutes.
   const cached = apnsJWT[which];
@@ -354,6 +390,8 @@ async function apnsToken(env, which) {
   return apnsJWT[which].value;
 }
 async function pushAPNs(env, t, payload) {
+  if (t.env === "web") return pushWeb(env, t);
+  if (!env.APNS_KEY) return 0;
   const host = t.env === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
   try {
     const r = await fetch(`${host}/3/device/${t.token}`, {
