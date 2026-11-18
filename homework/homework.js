@@ -271,6 +271,7 @@
   });
 
   // ---------- routing ----------
+  addEventListener("lp-families", () => renderFamilies());
   function renderFamilies() {
     const all = families();
     // The panel: each family's name, its people, invite and board.

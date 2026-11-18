@@ -170,6 +170,7 @@
   });
   $("copyAddr").addEventListener("click", async () => { try { await navigator.clipboard.writeText(me); $("copiedAddr").hidden = false; } catch { prompt("Copy this:", me); } });
 
+  addEventListener("lp-families", (e) => { if (current && e.detail.gone.includes(current.code) && location.hash.slice(1).toUpperCase() !== current.code) location.reload(); });
   const hash = location.hash.slice(1).toUpperCase();
   const fams = families();
   const codes = fams.map((f) => f.code);

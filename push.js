@@ -35,6 +35,25 @@
     return reg.pushManager.getSubscription();
   }
 
+  // The families this browser remembers, checked against the server: members are refreshed, and a
+  // family this browser has been removed from (or that's now empty) is forgotten, with a note.
+  async function checkFamilies() {
+    const addr = recall("lp.address"), saved = families();
+    if (!addr || !saved.length) return;
+    const mine = (m) => m.addr === addr || (m.addrs || []).includes(addr);
+    const kept = [], gone = [];
+    for (const f of saved) {
+      let fresh;
+      try { const r = await fetch(`${API}/f/${f.code}`); if (r.status === 404) { gone.push(f); continue; } if (!r.ok) { kept.push(f); continue; } fresh = await r.json(); }
+      catch { kept.push(f); continue; }   // offline: keep what we have
+      if ((fresh.members || []).some(mine)) kept.push({ ...f, name: fresh.name, members: fresh.members }); else gone.push(f);
+    }
+    remember("lp.families", JSON.stringify(kept));
+    if (!gone.length) return;
+    say(`You're no longer in ${gone.map((f) => `${esc(f.name)} (${f.code})`).join(", ")} on this browser. <a href="/homework/#join">Join with a code</a>`);
+    dispatchEvent(new CustomEvent("lp-families", { detail: { gone: gone.map((f) => f.code) } }));
+  }
+
   // ---------- the bell ----------
   const BELL = '<path d="M12 3a6 6 0 0 0-6 6v3.6L4.5 16h15L18 12.6V9a6 6 0 0 0-6-6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
   const SLASH = '<path d="M4 3.5 20 20.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
@@ -107,6 +126,7 @@
     };
     document.body.appendChild(tip);
     paint();
+    checkFamilies().catch(() => {});
     try { const sub = await current(); if (sub) { on = true; paint(); register(sub).catch(() => {}); } } catch {}
   }
   window.LPPush = { render() {} };   // older pages call this; the bell does it all now
