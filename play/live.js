@@ -85,7 +85,7 @@
               <button class="go" id="sendWord">send it to ${esc(their)} →</button><p class="note" id="rnote"></p>`;
             on(el, "sendWord", () => {
               const w = H.cleanWord(el.querySelector("#secret").value);
-              if (w.replace(/ /g, "").length < 2) return;
+              if (w.replace(/[^A-Z]/g, "").length < 2) return;
               const h = mode === "h" ? (el.querySelector("#hint").value.trim().slice(0, 20) || null) : null;
               secret = w; hint = h || "";
               game = H.game(w, mode);

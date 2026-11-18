@@ -17,7 +17,7 @@
       const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
       const bytes = Uint8Array.from(bin, (c, i) => c.charCodeAt(0) ^ KEY[i % KEY.length]);
       const o = JSON.parse(new TextDecoder().decode(bytes));
-      return o && typeof o.w === "string" && Hangman.cleanWord(o.w).replace(/ /g, "").length >= 2 ? o : null;
+      return o && typeof o.w === "string" && Hangman.cleanWord(o.w).replace(/[^A-Z]/g, "").length >= 2 ? o : null;
     } catch { return null; }
   }
   const linkFor = (o) => location.origin + location.pathname + "#" + encode(o);
@@ -45,15 +45,15 @@
   }
   function slotsHTML(word, given, showLetters) {
     return [...word].map((c) => c === " " ? '<span class="slot space"></span>'
-      : `<span class="slot${given.has(c) ? " given" : ""}">${given.has(c) || showLetters ? c : ""}</span>`).join("");
+      : `<span class="slot${given.has(c) || /[0-9]/.test(c) ? " given" : ""}">${given.has(c) || /[0-9]/.test(c) || showLetters ? c : ""}</span>`).join("");
   }
   function updateMake() {
     const w = Hangman.cleanWord($("secret").value);
     const M = Hangman.MODES[mode];
     const given = new Set(M.given);
     $("preview").innerHTML = w ? slotsHTML(w, given, false) : "";
-    const guessable = [...w].filter((c) => c !== " " && !given.has(c)).length;
-    $("makeLink").disabled = w.replace(/ /g, "").length < 2 || guessable < 1;
+    const guessable = [...w].filter((c) => /[A-Z]/.test(c) && !given.has(c)).length;
+    $("makeLink").disabled = w.replace(/[^A-Z]/g, "").length < 2 || guessable < 1;
   }
   document.querySelectorAll(".mode").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
   ["secret", "hint"].forEach((id) => $(id).addEventListener("input", updateMake));
