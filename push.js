@@ -10,6 +10,10 @@
   const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  // A link tapped inside WhatsApp, Instagram or Facebook opens in that app's own browser, which
+  // can't notify and keeps its own storage (so it's a separate "device" from Chrome).
+  const inAppBrowser = /; wv\)|WhatsApp|FBAN|FBAV|Instagram|Line\//.test(navigator.userAgent);
+  const families = () => { try { return JSON.parse(localStorage.getItem("lp.families") || "[]"); } catch { return []; } };
 
   async function remember(addr) {
     try { await (await caches.open("lastpage-meta")).put("/__addr", new Response(addr)); } catch {}
@@ -38,10 +42,15 @@
     const el = document.getElementById("pushLine");
     if (!el) return;
     const line = (html) => { el.hidden = false; el.innerHTML = html; };
-    if (!recall("lp.address")) { el.hidden = true; return; }   // nothing can be sent here yet
+    if (inAppBrowser && !iOS) { line(`🔔 For notifications, open this page in Chrome: tap ⋮ at the top, then "Open in Chrome".`); return; }
     if (!supported) {
       if (iOS && !installed) line(`On iPhone, get notifications by adding this site to your Home Screen (Share → Add to Home Screen) and opening it from there.`);
       else el.hidden = true;
+      return;
+    }
+    // Not in a family in this browser yet: nobody can reach it by name, so join first.
+    if (!recall("lp.address") || !families().length) {
+      line(`🔔 To get notifications here, join your family in this browser first: <a class="text-button" href="/homework/#join">Join with a code</a>`);
       return;
     }
     if (Notification.permission === "denied") { line(`Notifications are blocked for this site. Turn them on in your browser's site settings.`); return; }
