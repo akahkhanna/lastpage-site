@@ -124,10 +124,11 @@ export default {
           const f = await r.json();
           // The person's devices now know about each other, so deliveries reach all of them.
           const linked = f.linked || [];
-          for (const a of linked) await box(env, "a:" + a).fetch("https://box/alias-set", { method: "POST", body: JSON.stringify(linked.filter((x) => x !== a)) });
-          if (parts[2] === "leave") { const addr = String((JSON.parse(body) || {}).addr || "").toUpperCase(); if (ADDRESS.test(addr)) await box(env, "a:" + addr).fetch("https://box/alias-set", { method: "POST", body: "[]" }); }
-          if (parts[2] === "join") { const b = JSON.parse(body) || {}; await notifyJoin(env, f, cleanName(b.name), String(b.addr || "").toUpperCase(), linked.length); }
-          delete f.linked;
+          for (const a of linked) await box(env, "a:" + a).fetch("https://box/alias-set", { method: "POST", body: JSON.stringify({ code, addrs: linked.filter((x) => x !== a) }) });
+          if (parts[2] === "leave") { const addr = String((JSON.parse(body) || {}).addr || "").toUpperCase(); if (ADDRESS.test(addr)) await box(env, "a:" + addr).fetch("https://box/alias-set", { method: "POST", body: JSON.stringify({ code, addrs: [] }) }); }
+          // Joining again from a device that's already in (the same person, same name) tells nobody.
+          if (parts[2] === "join" && !f.rejoined) { const b = JSON.parse(body) || {}; await notifyJoin(env, f, cleanName(b.name), String(b.addr || "").toUpperCase(), linked.length); }
+          delete f.linked; delete f.rejoined;
           return json(f);
         }
       }
@@ -518,6 +519,7 @@ export class Box {
       // Every member keeps all their devices (addrs); `addr` is the first one.
       for (const m of f.members) if (!m.addrs) m.addrs = [m.addr];
       let changed = null;
+      const before = f.members.find((m) => m.addrs.includes(addr));
       for (const m of f.members) if (m.addrs.includes(addr)) { m.addrs = m.addrs.filter((a) => a !== addr); changed = m; }
       f.members = f.members.filter((m) => m.addrs.length);
       for (const m of f.members) m.addr = m.addrs[0];
@@ -536,11 +538,16 @@ export class Box {
       f.at = Date.now();
       await this.storage.put("family", f);
       await this.storage.setAlarm(Date.now() + FAMILY_DAYS * 86400e3);
-      return json({ ...f, linked: changed ? changed.addrs : [] });
+      return json({ ...f, linked: changed ? changed.addrs : [], rejoined: op === "/family-join" && !!before && before.name.toLowerCase() === cleanName(body.name).toLowerCase() });
     }
-    if (op === "/alias-get") return json((await this.storage.get("aliases")) || []);
+    // This device's other devices, per family code (a person can be in several families,
+    // under a different name in each). Older boxes kept one plain list: it stays, as "_".
+    const aliasMap = async () => { const a = (await this.storage.get("aliases")) || {}; return Array.isArray(a) ? { _: a } : a; };
+    if (op === "/alias-get") return json([...new Set(Object.values(await aliasMap()).flat())]);
     if (op === "/alias-set") {
-      await this.storage.put("aliases", await request.json());
+      const b = await request.json(), map = await aliasMap();
+      if (Array.isArray(b)) map._ = b; else if (b && typeof b.code === "string" && Array.isArray(b.addrs)) { if (b.addrs.length) map[b.code] = b.addrs; else delete map[b.code]; }
+      await this.storage.put("aliases", map);
       return json({ ok: true });
     }
     return fail(404, "?");
