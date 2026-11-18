@@ -562,7 +562,7 @@ export class Box {
 /// or a random one), so a dropped connection comes back to the same seat. Frames (JSON text):
 ///   client → room: { t: "msg", m: <NearbyMessage> }   |   { t: "since", n }   |   { t: "ping" }
 ///   room → client: { t: "welcome", code, game, players, you, host, members: [labels], seq }
-///                  { t: "members", members, host }      (someone joined or went)
+///                  { t: "members", members, host, joined }      (someone joined or went; joined: who just connected)
 ///                  { t: "msg", seq, from: label, m }    (everyone but the sender)
 ///                  { t: "log", msgs: [{ seq, from, m }] }   (replay after "since")
 ///                  { t: "gone", label }
@@ -621,7 +621,7 @@ export class Room {
       const log = (await this.storage.get("log")) || [];
       server.send(JSON.stringify({ t: "log", msgs: log.filter((e) => e.seq > since && e.from !== member.label) }));
     }
-    this.broadcast({ t: "members", members, host: this.labelOf(meta, meta.hostID) }, null);
+    this.broadcast({ t: "members", members, host: this.labelOf(meta, meta.hostID), joined: member.label }, null);
     return new Response(null, { status: 101, webSocket: client });
   }
 
