@@ -218,7 +218,7 @@
     const link = `${location.origin}/r/#${c}`;
     const fam = others();
     const text = `Play ${TITLES[gameKind]} with me on That Last Page ✏️ Tap to join (app or browser):\n${link}`;
-    w.innerHTML = `<p class="live-hint" id="pushLine" hidden></p><h2>Waiting for ${players === 2 ? "another player" : players - 1 + " more players"}</h2>
+    w.innerHTML = `<h2>Waiting for ${players === 2 ? "another player" : players - 1 + " more players"}</h2>
       <p class="live-hint">${esc(TITLES[gameKind])} · room <span class="live-code">${esc(c)}</span> · you're ${esc(name)}</p>
       ${fam.length ? `<div class="live-chips"><span class="live-hint">Invite:</span>${fam.map((m) => `<button class="text-button" type="button" data-inv="${esc(m.addr)}">${esc(m.name)}</button>`).join("")}</div>` : ""}
       <div class="live-actions"><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">Send on WhatsApp</a><button class="button" type="button" id="copyLink">Copy the link</button></div>

@@ -1,64 +1,91 @@
-// Notifications on the website: a browser turns them on once, and gets a buzz for a test, a
-// marked paper, a game invite or someone joining the family, like the iPhone app. Shows a
-// line in any element with id="pushLine". Chrome on Android, and Safari on an iPhone once the
-// site is on the home screen; elsewhere it says what to do, or stays quiet.
+// Notifications on the website: a bell in the header of every page. Crossed out = off; tap it
+// to turn them on (for tests, marks, game invites, challenges and family news, like the
+// iPhone app). If this browser can't do it, it stays crossed and says why in one line.
 (function () {
   const API = "https://lastpage-api.akkikhanna.workers.dev";
   const KEY = "BOtULxBZnGuQc8dm9xKTsKKvK5htXlf51TCwgdzzPDdeNiwGSjUKzKW09VdvAiHqG4tmuyqVtFS0AwCcAwNjvQw";
   const recall = (k) => { try { return localStorage.getItem(k) || ""; } catch { return ""; } };
+  const remember = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
   const keyBytes = () => { const s = atob(KEY.replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(s, (c) => c.charCodeAt(0)); };
   const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
   const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-  // A link tapped inside WhatsApp, Instagram or Facebook opens in that app's own browser, which
-  // can't notify and keeps its own storage (so it's a separate "device" from Chrome).
+  // Links tapped inside WhatsApp, Instagram or Facebook open in that app's own browser, which can't notify.
   const inAppBrowser = /; wv\)|WhatsApp|FBAN|FBAV|Instagram|Line\//.test(navigator.userAgent);
-  const families = () => { try { return JSON.parse(localStorage.getItem("lp.families") || "[]"); } catch { return []; } };
+  const families = () => { try { return JSON.parse(recall("lp.families") || "[]"); } catch { return []; } };
 
-  async function remember(addr) {
-    try { await (await caches.open("lastpage-meta")).put("/__addr", new Response(addr)); } catch {}
+  // This browser's address (the same one Test papers and the family use), made if there isn't one.
+  function address() {
+    let a = recall("lp.address");
+    if (a) return a;
+    const L = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+    const stem = (recall("lp.from") || "ME").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10) || "ME";
+    let tail = ""; for (let i = 0; i < 4; i++) tail += L[Math.floor(Math.random() * L.length)];
+    a = stem + "-" + tail; remember("lp.address", a); return a;
   }
   async function register(sub) {
-    const addr = recall("lp.address");
-    if (!addr) return false;
-    await remember(addr);
+    const addr = address();
+    try { await (await caches.open("lastpage-meta")).put("/__addr", new Response(addr)); } catch {}
     const r = await fetch(`${API}/a/${addr}/token`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ web: sub.endpoint }) });
-    return r.ok;
+    if (!r.ok) throw new Error("server said " + r.status);
   }
   async function current() {
-    if (!supported) return null;
+    if (!supported || Notification.permission !== "granted") return null;
     const reg = await navigator.serviceWorker.ready;
     return reg.pushManager.getSubscription();
   }
-  async function enable() {
-    const perm = await Notification.requestPermission();
-    if (perm !== "granted") return render();
-    const reg = await navigator.serviceWorker.ready;
-    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes() });
-    await register(sub);
-    render();
+
+  // ---------- the bell ----------
+  const BELL = '<path d="M12 3a6 6 0 0 0-6 6v3.6L4.5 16h15L18 12.6V9a6 6 0 0 0-6-6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+  const SLASH = '<path d="M4 3.5 20 20.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  let btn, tip, on = false;
+  function paint() {
+    if (!btn) return;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${BELL}${on ? "" : SLASH}</svg>`;
+    btn.style.color = on ? "var(--red)" : "var(--muted)";
+    btn.setAttribute("aria-pressed", String(on));
+    btn.title = on ? "Notifications are on (tap to turn off)" : "Notifications are off (tap to turn on)";
+    btn.setAttribute("aria-label", btn.title);
   }
-  async function render() {
-    const el = document.getElementById("pushLine");
-    if (!el) return;
-    const line = (html) => { el.hidden = false; el.innerHTML = html; };
-    if (inAppBrowser && !iOS) { line(`🔔 For notifications, open this page in Chrome: tap ⋮ at the top, then "Open in Chrome".`); return; }
-    if (!supported) {
-      if (iOS && !installed) line(`On iPhone, get notifications by adding this site to your Home Screen (Share → Add to Home Screen) and opening it from there.`);
-      else el.hidden = true;
-      return;
-    }
-    // Not in a family in this browser yet: nobody can reach it by name, so join first.
-    if (!recall("lp.address") || !families().length) {
-      line(`🔔 To get notifications here, join your family in this browser first: <a class="text-button" href="/homework/#join">Join with a code</a>`);
-      return;
-    }
-    if (Notification.permission === "denied") { line(`Notifications are blocked for this site. Turn them on in your browser's site settings.`); return; }
-    const sub = Notification.permission === "granted" ? await current() : null;
-    if (sub) { register(sub).catch(() => {}); line(`🔔 Notifications are on for this browser.`); return; }
-    line(`<button class="text-button" id="pushOn">🔔 Turn on notifications</button> <span class="board-note">for tests, game invites and family news</span>`);
-    document.getElementById("pushOn").onclick = () => enable().catch((e) => line(`Couldn't turn them on: ${e.message}`));
+  function say(html) {
+    if (!tip) return;
+    tip.innerHTML = html; tip.hidden = false;
+    clearTimeout(say.t); say.t = setTimeout(() => { tip.hidden = true; }, 9000);
   }
-  window.LPPush = { render };
-  if (document.readyState === "loading") addEventListener("DOMContentLoaded", render); else render();
+  async function toggle() {
+    if (on) {
+      const sub = await current(); if (sub) await sub.unsubscribe();   // the server drops it on its next send
+      on = false; paint(); say("Notifications off for this browser."); return;
+    }
+    if (inAppBrowser && !iOS) return say(`This is WhatsApp's built-in browser, which can't notify. Tap ⋮ at the top, then <b>Open in Chrome</b>, and tap the bell there.`);
+    if (!supported) return say(iOS && !installed
+      ? `On iPhone: tap Share, then <b>Add to Home Screen</b>, open the site from the new icon, and tap the bell there.`
+      : `This browser can't do notifications. Try Chrome.`);
+    if (Notification.permission === "denied") return say(`Notifications are blocked for this site. Tap the icon left of the address, then <b>Permissions › Notifications › Allow</b>, and tap the bell again.`);
+    try {
+      if (await Notification.requestPermission() !== "granted") return say("Notifications weren't allowed, so the bell stays off.");
+      const reg = await navigator.serviceWorker.ready;
+      const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes() });
+      await register(sub);
+      on = true; paint();
+      say(families().length ? "🔔 Notifications on." : `🔔 Notifications on. Join your family in this browser so they can reach you: <a href="/homework/#join">Join with a code</a>`);
+    } catch (e) { on = false; paint(); say("Couldn't turn them on: " + e.message); }
+  }
+  async function mount() {
+    const nav = document.querySelector(".site-nav");
+    if (!nav || document.getElementById("lpBell")) return;
+    btn = document.createElement("button");
+    btn.id = "lpBell"; btn.type = "button";
+    btn.style.cssText = "background:none;border:0;padding:8px;min-width:44px;min-height:44px;display:inline-grid;place-items:center;cursor:pointer;border-radius:6px";
+    btn.onclick = () => toggle().catch(() => {});
+    nav.appendChild(btn);
+    tip = document.createElement("p");
+    tip.hidden = true;
+    tip.style.cssText = "margin:0;padding:10px 16px;background:#fff8e8;border-bottom:1px solid var(--border);font-size:14px;color:var(--ink);text-align:center";
+    document.querySelector(".site-header").after(tip);
+    paint();
+    try { const sub = await current(); if (sub) { on = true; paint(); register(sub).catch(() => {}); } } catch {}
+  }
+  window.LPPush = { render() {} };   // older pages call this; the bell does it all now
+  if (document.readyState === "loading") addEventListener("DOMContentLoaded", mount); else mount();
 })();
