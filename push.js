@@ -44,19 +44,34 @@
     btn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${BELL}${on ? "" : SLASH}</svg>`;
     btn.style.color = on ? "var(--red)" : "var(--muted)";
     btn.setAttribute("aria-pressed", String(on));
-    btn.title = on ? "Notifications are on (tap to turn off)" : "Notifications are off (tap to turn on)";
+    btn.title = on ? "Notifications are on" : "Notifications are off (tap to turn on)";
     btn.setAttribute("aria-label", btn.title);
   }
+  // A highlighter note that fades by itself (a little longer when it has a link to tap).
   function say(html) {
     if (!tip) return;
-    tip.innerHTML = html; tip.hidden = false;
-    clearTimeout(say.t); say.t = setTimeout(() => { tip.hidden = true; }, 9000);
+    tip.innerHTML = html;
+    tip.style.opacity = "1"; tip.style.transform = "none"; tip.style.pointerEvents = "auto";
+    clearTimeout(say.t);
+    say.t = setTimeout(hide, html.includes("<a ") ? 7000 : 3500);
   }
+  function hide() { if (tip) { tip.style.opacity = "0"; tip.style.transform = "translateY(-6px)"; tip.style.pointerEvents = "none"; } }
+
+  // Who this browser is in the family, and which other devices of theirs get the same notifications.
+  async function whoGets() {
+    const addr = recall("lp.address");
+    const fams = families().filter((f) => (f.members || []).some((m) => m.addr === addr || (m.addrs || []).includes(addr)));
+    if (!fams.length) return `🔔 On, but only for this browser. Join your family here so they can reach you: <a href="/homework/#join">Join with a code</a>`;
+    const m = fams[0].members.find((m) => m.addr === addr || (m.addrs || []).includes(addr));
+    let linked = 0;
+    try { linked = ((await (await fetch(`${API}/a/${addr}/devices`)).json()).linked || []).length; } catch {}
+    const where = fams.map((f) => f.name).join(", ");
+    return `🔔 On. You're <b>${esc(m.name)}</b> in ${esc(where)}` + (linked ? ` · your ${linked === 1 ? "phone gets" : linked + " other devices get"} them too` : "");
+  }
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
   async function toggle() {
-    if (on) {
-      const sub = await current(); if (sub) await sub.unsubscribe();   // the server drops it on its next send
-      on = false; paint(); say("Notifications off for this browser."); return;
-    }
+    if (on) return say(await whoGets() + ` · <a href="#" data-off>turn off</a>`);
     if (inAppBrowser && !iOS) return say(`This is WhatsApp's built-in browser, which can't notify. Tap ⋮ at the top, then <b>Open in Chrome</b>, and tap the bell there.`);
     if (!supported) return say(iOS && !installed
       ? `On iPhone: tap Share, then <b>Add to Home Screen</b>, open the site from the new icon, and tap the bell there.`
@@ -68,7 +83,7 @@
       const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes() });
       await register(sub);
       on = true; paint();
-      say(families().length ? "🔔 Notifications on." : `🔔 Notifications on. Join your family in this browser so they can reach you: <a href="/homework/#join">Join with a code</a>`);
+      say(await whoGets());
     } catch (e) { on = false; paint(); say("Couldn't turn them on: " + e.message); }
   }
   async function mount() {
@@ -80,9 +95,17 @@
     btn.onclick = () => toggle().catch(() => {});
     nav.appendChild(btn);
     tip = document.createElement("p");
-    tip.hidden = true;
-    tip.style.cssText = "margin:0;padding:10px 16px;background:#fff8e8;border-bottom:1px solid var(--border);font-size:14px;color:var(--ink);text-align:center";
-    document.querySelector(".site-header").after(tip);
+    tip.setAttribute("role", "status");
+    tip.style.cssText = "position:fixed;top:76px;left:12px;right:12px;margin:0 auto;box-sizing:border-box;transform:translateY(-6px);z-index:50;max-width:460px;white-space:normal;padding:9px 14px;border-radius:4px;background:#fff3a8;box-shadow:0 2px 10px rgba(0,0,0,.12);font-size:14px;line-height:1.4;color:var(--ink);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s";
+    tip.onclick = async (e) => {
+      if (e.target.hasAttribute("data-off")) {
+        e.preventDefault();
+        const sub = await current(); if (sub) await sub.unsubscribe();   // the server drops it on its next send
+        on = false; paint(); say("🔕 Off for this browser."); return;
+      }
+      if (e.target.tagName !== "A") hide();
+    };
+    document.body.appendChild(tip);
     paint();
     try { const sub = await current(); if (sub) { on = true; paint(); register(sub).catch(() => {}); } } catch {}
   }
