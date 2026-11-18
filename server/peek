@@ -5,6 +5,7 @@
 #   ./peek room   RRKD9W        a live game: game, players wanted, who's connected
 #   ./peek inbox  PAPA-SVNK     what's waiting at an address (tests, invites, joins)
 #   ./peek test   ABC123        a test paper by code
+#   ./peek devices ME-DUHP      push targets behind an address (no token values)
 #   ./peek day                  today's day number
 # Live logs instead: `wrangler tail` (from this folder) streams every request as it happens.
 API=${API:-https://lastpage-api.akkikhanna.workers.dev}
@@ -27,6 +28,7 @@ for m in b["members"]:
   room)   curl -s "$API/r/$2" | pretty ;;
   inbox)  curl -s "$API/a/$2" | pretty ;;
   test)   curl -s "$API/h/$2" | pretty ;;
+  devices) curl -s "$API/a/$2/devices" | pretty ;;   # push targets (prod / sandbox / web) and linked devices
   day)    day ;;
   *)      sed -n '2,10p' "$0" ;;
 esac

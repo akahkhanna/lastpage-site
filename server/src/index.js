@@ -79,6 +79,12 @@ export default {
           if (!["sudoku", "dots", "trail"].includes(r.puzzle) || !(day >= 0 && day < 100000) || !(seconds > 0 && seconds < 86400)) return fail(400, "bad result");
           return await box(env, "a:" + addr).fetch("https://box/result-add", { method: "POST", body: JSON.stringify({ day, puzzle: r.puzzle, s: seconds, h: hints }) });
         }
+        if (parts.length === 3 && parts[2] === "devices" && request.method === "GET") {
+          const r = await box(env, "a:" + addr).fetch("https://box/token-list");
+          const list = r.status === 200 ? await r.json() : [];
+          const aliases = await (await box(env, "a:" + addr).fetch("https://box/alias-get")).json().catch(() => []);
+          return json({ push: list.map((t) => ({ kind: t.env, since: t.at })), linked: aliases });
+        }
         if (parts.length === 3 && parts[2] === "dare" && request.method === "POST") return await dareTo(request, env, addr);
         if (parts.length === 3 && parts[2] === "token" && request.method === "POST") {
           const body = await request.text();
@@ -469,6 +475,7 @@ export class Box {
       await this.storage.setAlarm(Date.now() + INBOX_DAYS * 86400e3);
       return json({ ok: true });
     }
+    if (op === "/token-list") return json((await this.storage.get("tokens")) || []);
     if (op === "/token-drop") {
       const dead = new Set(await request.json());
       const tokens = ((await this.storage.get("tokens")) || []).filter((x) => !dead.has(x.token));
