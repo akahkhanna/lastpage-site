@@ -46,12 +46,12 @@
       <button class="mode" data-mode="y" role="radio" aria-checked="false">Hollywood</button>
     </div>
     <label><span class="pencil" id="secretLabel">secret word (they won't see it)</span>
-      <input id="secret" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"></label>
+      <input autocorrect="off" data-form-type="other" id="secret" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"></label>
     <button id="peek" class="small">show</button>
     <label id="hintRow"><span class="pencil">hint (optional), e.g. food, animal</span>
-      <input id="hint" autocomplete="off" maxlength="20"></label>
+      <input autocorrect="off" spellcheck="false" data-form-type="other" id="hint" autocomplete="off" maxlength="20"></label>
     <label><span class="pencil">your name</span>
-      <input id="from" autocomplete="off" autocapitalize="characters" maxlength="20"></label>
+      <input autocorrect="off" spellcheck="false" data-form-type="other" id="from" autocomplete="off" autocapitalize="characters" maxlength="20"></label>
     <p class="slots" id="preview" aria-hidden="true"></p>
     <button id="makeLink" class="red" disabled>send the challenge →</button>
     <p class="pencil" id="copied" hidden>link copied!! paste it in the chat</p>

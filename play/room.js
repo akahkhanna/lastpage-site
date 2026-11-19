@@ -65,24 +65,25 @@
     them() { return members.find((x) => x !== me) || "your friend"; },
     send, note: (t) => app.note(t),
     on(message, membersChanged) { onMessage = message; onMembers = membersChanged; },
+    ended() { wantOpen = false; },
   };
   const TITLES = { noughtsCrosses: "Noughts & crosses", bookCricket: "Book cricket", dotsBoxes: "Dots & boxes", hangman: "Hangman", bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "Name place animal thing" };
   function begin(el) {
-    if (game === "noughtsCrosses") noughts(el);
-    else if (game === "bookCricket") cricket(el);
+    if (game === "noughtsCrosses") noughts(el, ctx);
+    else if (game === "bookCricket") cricket(el, ctx);
     else if (root.Live && root.Live[game]) root.Live[game](el, ctx);
     else el.innerHTML = `<p class="status">${esc(TITLES[game] || game)} isn't playable in a browser yet: open the link in the app.</p>`;
   }
 
   // ---------- noughts & crosses ----------
-  function noughts(el) {
-    const iAmTick = me === host;   // the host is ✓ and goes first in round one
+  function noughts(el, c) {
+    const iAmTick = c.me === c.host;   // the host is ✓ and goes first in round one
     const mine = iAmTick ? "t" : "x", theirs = iAmTick ? "x" : "t";
-    let b = ".........", starter = "t", k = [0, 0, 0], caught = null, their = members.find((x) => x !== me) || "your friend";
+    let b = ".........", starter = "t", k = [0, 0, 0], caught = null, their = c.them();
     const sym = (m) => (m === "t" ? "✓" : "✗");
-    const tickName = iAmTick ? app.name : their, crossName = iAmTick ? their : app.name;
+    const tickName = iAmTick ? c.name : their, crossName = iAmTick ? their : c.name;
     function render() {
-      their = members.find((x) => x !== me) || their;
+      their = c.them() === "your friend" ? their : c.them();
       const turn = P.toMove(b, starter), line = P.winLine(b), over = P.ncOver(b) || !!caught;
       let status;
       if (caught) status = caught === "me" ? `caught by Mrs T.! round to ${esc(their)}` : `${esc(their)} got caught! round's yours`;
@@ -93,19 +94,19 @@
         <p class="scoreline">${esc(tickName)} ✓ ${k[0]} · ${esc(crossName)} ✗ ${k[1]}${k[2] ? " · draws " + k[2] : ""}</p>
         <p class="note" id="rnote"></p><div id="acts"></div>`;
       const board = el.querySelector("#board");
-      [...b].forEach((c, i) => {
+      [...b].forEach((cell, i) => {
         const btn = document.createElement("button");
-        btn.textContent = c === "." ? "" : sym(c); if (c !== ".") btn.classList.add(c);
+        btn.textContent = cell === "." ? "" : sym(cell); if (cell !== ".") btn.classList.add(cell);
         if (line && line.includes(i)) btn.classList.add("win");
         btn.addEventListener("click", () => {
           if (over || turn !== mine || b[i] !== ".") return;
-          play(i); send({ mark: { _0: i } });
+          play(i); c.send({ mark: { _0: i } });
         });
         board.appendChild(btn);
       });
       const acts = el.querySelector("#acts");
       if (over) acts.innerHTML = `<button class="go" id="again">again →</button>`;
-      const again = el.querySelector("#again"); if (again) again.addEventListener("click", () => { if (!roundOver()) return; nextRound(); send({ again: {} }); });
+      const again = el.querySelector("#again"); if (again) again.addEventListener("click", () => { if (!roundOver()) return; nextRound(); c.send({ again: {} }); });
     }
     function play(i) {
       b = b.slice(0, i) + P.toMove(b, starter) + b.slice(i + 1);
@@ -117,24 +118,23 @@
     // already been restarted is ignored, as in the app (both pressing must not swap the starter twice).
     const roundOver = () => P.ncOver(b) || !!caught;
     function nextRound() { starter = starter === "t" ? "x" : "t"; b = "........."; caught = null; render(); }
-    onMessage = (m) => {
+    c.on((m) => {
       if (m.mark) { const i = m.mark._0; if (b[i] === "." && P.toMove(b, starter) === theirs && !P.ncOver(b)) play(i); }
       else if (m.again) { if (roundOver()) nextRound(); }
       else if (m.lostRound) { caught = "them"; k[iAmTick ? 0 : 1]++; render(); }
-      else if (m.status) { app.note(m.status._0 || ""); }
-      else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; wantOpen = false; }
-    };
-    onMembers = render;
+      else if (m.status) { c.note(m.status._0 || ""); }
+      else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; c.ended(); }
+    }, () => render());
     render();
   }
 
   // ---------- book cricket ----------
-  function cricket(el) {
-    const iBatFirst = me === host;
-    let p = [], q = null, lastPage = null, flipping = false, their = members.find((x) => x !== me) || "your friend";
+  function cricket(el, c) {
+    const iBatFirst = c.me === c.host;
+    let p = [], q = null, lastPage = null, flipping = false, their = c.them();
     function render() {
-      their = members.find((x) => x !== me) || their;
-      const t0 = (iBatFirst ? app.name : their) + " XI", t1 = (iBatFirst ? their : app.name) + " XI";
+      their = c.them() === "your friend" ? their : c.them();
+      const t0 = (iBatFirst ? c.name : their) + " XI", t1 = (iBatFirst ? their : c.name) + " XI";
       const first = P.innings(p), target = first.runs + 1, chase = q ? P.innings(q, target) : null;
       const myInnings = (chase === null) === iBatFirst;
       const cur = chase || first, curTeam = chase ? t1 : t0;
@@ -163,24 +163,23 @@
       html += `<p class="note" id="rnote"></p>`;
       el.innerHTML = html;
       const flipEl = el.querySelector("#flip"); if (flipEl) flipEl.addEventListener("click", flip);
-      const bat = el.querySelector("#bat"); if (bat) bat.addEventListener("click", () => { q = []; lastPage = null; send({ chase: {} }); render(); });
+      const bat = el.querySelector("#bat"); if (bat) bat.addEventListener("click", () => { q = []; lastPage = null; c.send({ chase: {} }); render(); });
     }
     async function flip() {
       if (flipping) return; flipping = true;
       const page = (Math.floor(Math.random() * 100) + 1) * 2;
-      send({ page: { _0: page } });
+      c.send({ page: { _0: page } });
       const pg = el.querySelector("#pg");
       for (let i = 0; i < 7 && pg; i++) { pg.textContent = (Math.floor(Math.random() * 100) + 1) * 2; await new Promise((r) => setTimeout(r, 60)); }
       land(page); flipping = false;
     }
     function land(page) { if (q) q.push(page); else p.push(page); lastPage = page; render(); }
-    onMessage = (m) => {
+    c.on((m) => {
       if (m.page) land(m.page._0);
       else if (m.chase) { if (P.innings(p).over && !q) { q = []; lastPage = null; render(); } }
-      else if (m.status) app.note(m.status._0 || "");
-      else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; wantOpen = false; }
-    };
-    onMembers = render;
+      else if (m.status) c.note(m.status._0 || "");
+      else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; c.ended(); }
+    }, () => render());
     render();
   }
 
@@ -222,9 +221,9 @@
       <p class="live-hint">${esc(TITLES[gameKind])} · room <span class="live-code">${esc(c)}</span> · you're ${esc(name)}</p>
       ${fam.length ? `<div class="live-chips"><span class="live-hint">Invite:</span>${fam.map((m) => `<button class="text-button" type="button" data-inv="${esc(m.addr)}">${esc(m.name)}</button>`).join("")}</div>` : ""}
       <div class="live-actions"><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">Send on WhatsApp</a><button class="button" type="button" id="copyLink">Copy the link</button></div>
-      <p class="live-hint" id="rnote">They join in the app or any browser, by link or by name.</p>${change}`;
+      <p class="live-hint" id="rnote">They join in the app or any browser, by link or by name.</p><p class="live-hint" id="pushOffer"></p>${change}`;
     w.querySelectorAll("[data-inv]").forEach((b) => b.addEventListener("click", async () => { try { await api("POST", `/r/${c}/invite`, { addr: b.dataset.inv, from: name }); b.textContent = b.textContent.replace(/ ✓ asked$/, "") + " ✓ asked"; } catch (e) { alert(e.message); } }));
-    if (root.LPPush) root.LPPush.render();
+    if (root.LPPush) root.LPPush.offer(w.querySelector("#pushOffer"));
     const copy = w.querySelector("#copyLink"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); copy.textContent = "Copied"; } catch { prompt("Copy this:", link); } });
     code = c; app.name = name;
     app.note = (t) => { const n = w.querySelector("#rnote"); if (n) n.textContent = t; };
@@ -235,5 +234,5 @@
     };
     connect();
   }
-  root.Room = { run, start, leave, TITLES, api };
+  root.Room = { run, start, leave, TITLES, api, games: { noughtsCrosses: noughts, bookCricket: cricket } };
 })(window);

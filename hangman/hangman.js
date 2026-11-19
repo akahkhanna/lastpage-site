@@ -151,6 +151,8 @@
   else {
     $("make").hidden = false;
     try { $("from").value = localStorage.getItem("lp.from") || ""; } catch {}
-    setMode("h");
+    // From a game page: hangman, Bollywood or Hollywood already picked (?m=h|b|y).
+    const m = new URLSearchParams(location.search).get("m");
+    setMode(["h", "b", "y"].includes(m) ? m : "h");
   }
 })();

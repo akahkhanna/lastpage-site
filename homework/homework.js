@@ -118,7 +118,7 @@
         </div>
         <div class="kinds">${[["t", "written"], ["n", "a number"], ["c", "choices"]].map(([k, t]) =>
           `<button data-kind="${i}:${k}" class="${q.k === k ? "on" : ""}">${t}</button>`).join("")}</div>
-        ${q.k === "c" ? (q.c || []).map((c, j) => `<label class="cedit"><input data-c="${i}:${j}" value="${esc(c)}" placeholder="choice ${j + 1}" maxlength="40"></label>`).join("")
+        ${q.k === "c" ? (q.c || []).map((c, j) => `<label class="cedit"><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" data-c="${i}:${j}" value="${esc(c)}" placeholder="choice ${j + 1}" maxlength="40"></label>`).join("")
           + ((q.c || []).length < MAX_C ? `<button class="small" data-addc="${i}" style="padding-left:26px">+ a choice</button>` : "") : ""}
       </div>`).join("");
     $("addQ").hidden = qs.length >= MAX_Q;
@@ -224,7 +224,7 @@
     $("paperQs").innerHTML = hw.qs.map((q, i) => {
       let ans;
       if (doing && q.k === "c") ans = `<div class="choices">${(q.c || []).map((c) => `<button class="choice ${answers[i] === c ? "on" : ""}" data-pick="${i}:${esc(c)}">${esc(c)}</button>`).join("")}</div>`;
-      else if (doing) ans = `<div class="ans"><input class="line" data-a="${i}" value="${esc(answers[i])}" placeholder="${q.k === "n" ? "number" : "your answer"}" ${q.k === "n" ? 'inputmode="decimal"' : ""} maxlength="120"></div>`;
+      else if (doing) ans = `<div class="ans"><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" data-a="${i}" value="${esc(answers[i])}" placeholder="${q.k === "n" ? "number" : "your answer"}" ${q.k === "n" ? 'inputmode="decimal"' : ""} maxlength="120"></div>`;
       else ans = `<div class="pencilans">${esc(answers[i] || "—")}${s === "answered" ? ` <span class="tickx ${marks[i] === true ? "on" : ""}" data-mark="${i}:1" role="button">✓</span><span class="tickx ${marks[i] === false ? "on" : ""}" data-mark="${i}:0" role="button">✗</span>` : ""}</div>`;
       const mark = s === "marked" ? `<span class="mark">${hw.m[i] ? "✓" : "✗"}</span>` : "";
       return `<div class="q"><div class="row"><b>${i + 1}.</b><span>${esc(q.q)}</span>${mark}</div>${ans}</div>`;
@@ -321,7 +321,7 @@
     const who = f.members.map((m) => esc(m.name)).join(", ");
     $("famAsk").innerHTML = `<p><strong>Join ${esc(f.name)}?</strong></p>
       <p>${who ? `${who} ${f.members.length === 1 ? "is" : "are"} in it. They'll be able to set you tests and invite you to games.` : "Nobody's in it yet."}</p>
-      <form onsubmit="return false"><label>Your name, as the family will see it<input id="joinAs" maxlength="20" placeholder="your name" value="${esc(recall("lp.from") || "")}"></label>
+      <form onsubmit="return false"><label>Your name, as the family will see it<input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="joinAs" maxlength="20" placeholder="your name" value="${esc(recall("lp.from") || "")}"></label>
       <div class="dialog-actions"><button class="button primary" id="joinYes">Join</button> <button class="button" id="joinNo">Not now</button></div></form>`;
     openPane("joinAsk");
     $("joinNo").onclick = () => closePane();

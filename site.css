@@ -212,10 +212,10 @@ code { font-family:"Courier New",monospace; font-weight:700 }
   .sheet { min-height:calc(100vh - 59px) }
   .game-grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
   .art { height:88px }
-  .game-card:last-child { grid-column:1 / -1; display:grid; grid-template-columns:36% 1fr }
-  .game-card:last-child .art { height:63px; border-right:1px solid #60492420; border-bottom:0 }
-  .game-card:last-child .art > * { scale:.67 }
-  .game-card:last-child .game-name { padding-inline:13px }
+  .game-card:last-child:nth-child(odd) { grid-column:1 / -1; display:grid; grid-template-columns:36% 1fr }
+  .game-card:last-child:nth-child(odd) .art { height:63px; border-right:1px solid #60492420; border-bottom:0 }
+  .game-card:last-child:nth-child(odd) .art > * { scale:.67 }
+  .game-card:last-child:nth-child(odd) .game-name { padding-inline:13px }
   .art > * { scale:.78 }
   .game-name { min-height:48px; padding:8px 9px }
   .section-head { gap:7px; flex-wrap:wrap }
@@ -321,3 +321,11 @@ button.small { background:none; border:0; padding:0; color:var(--red); font-weig
 .live-chips { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; margin-top: 8px }
 .live-code { font: 700 15px/1 "Courier New", monospace; letter-spacing: .08em }
 #app .live-panel + * { margin-top: 14px }
+
+/* One game's page: hangman / Bollywood / Hollywood choice */
+.pill-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px }
+.pill { min-height:44px; padding:6px 16px; color:var(--muted); background:#fffefa; border:1px solid var(--border); border-radius:999px; font-weight:700; cursor:pointer }
+.pill.on { color:#fff; background:var(--red); border-color:var(--red) }
+.lede { max-width:620px; margin:-6px 0 22px; color:var(--muted); font-size:17px; line-height:1.45 }
+.bell-label { display:none; color:inherit }
+@media (min-width: 760px) { .bell-label { display:inline } }

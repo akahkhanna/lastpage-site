@@ -66,6 +66,7 @@
 <script src="../hangman/rules.js"></script>
 <script src="room.js"></script>
 <script src="live.js"></script>
+<script src="solo.js"></script>
 <script src="/push.js"></script>
 <script>
 (function () {
@@ -90,7 +91,7 @@
     app.innerHTML = `${broken ? '<p class="status" style="color:var(--red)">That link looks broken. Ask for it again, or start a new game:</p>' : ""}
       <p><a class="button primary" href="#live">Play live, right now</a> <span class="note">against the app or another browser</span></p>
       <p class="status">Or take turns: make your move and send the link.</p>
-      <p><label>Your name<br><input class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></label></p>
+      <p><label>Your name<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></label></p>
       <button class="go" data-g="nc">Noughts & crosses →</button>
       <button class="go" data-g="bc">Book cricket →</button>`;
     app.querySelectorAll("button[data-g]").forEach((b) => b.addEventListener("click", () => {
@@ -104,7 +105,7 @@
   // First time on this page and it's your turn: your name, for the scorecard.
   function askName() {
     app.innerHTML = `<p>${esc(post.n[1 - P.whoseTurn(post)] || "Your friend")} sent you a game of ${post.g === "nc" ? "noughts & crosses" : "book cricket"}!</p>
-      <p>your name: <input class="name" id="nm" maxlength="20" placeholder="your name" autofocus></p>
+      <p>your name: <input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="name" id="nm" maxlength="20" placeholder="your name" autofocus></p>
       <button class="go" id="ok">play →</button>`;
     const go = () => {
       myName = (document.getElementById("nm").value.trim() || "FRIEND").toUpperCase().slice(0, 20);
@@ -242,7 +243,7 @@
           <p class="live-game-name" id="liveGame" hidden></p>
           <form class="live-form" id="liveForm">
             <label for="liveName">Your name</label>
-            <input id="liveName" maxlength="20" autocomplete="nickname" autocapitalize="characters" enterkeyhint="go" value="${esc(myName)}" placeholder="your name" required>
+            <input autocorrect="off" spellcheck="false" data-form-type="other" id="liveName" maxlength="20" autocomplete="off" autocapitalize="characters" enterkeyhint="go" value="${esc(myName)}" placeholder="your name" required>
             <p class="live-hint">Use the name your friend will recognise.</p>
             ${roomCode ? `<button class="button primary" type="submit">Join game <span aria-hidden="true">→</span></button>` : `
             <label>Game</label>
@@ -283,12 +284,88 @@
     document.addEventListener("click", (e) => { if (e.target.closest("#liveEdit")) { localStorage.removeItem(NAME_KEY); location.reload(); } });
   }
 
+  // ---------- one game's page: play the phone, a friend live, or turns by link ----------
+  // A tile on the games page opens here with ?g=<game>, so the game is never asked for twice.
+  const INFO = {
+    noughtsCrosses: { title: "Noughts & crosses", rule: "Three in a row before they do.", solo: true, turns: "nc", art: "crosses" },
+    bookCricket: { title: "Book cricket", rule: "Open the book anywhere: the last digit of the page is your runs. 0 is out.", solo: true, turns: "bc", art: "cricket" },
+    dotsBoxes: { title: "Dots & boxes", rule: "Join two dots. Close a box and you go again.", solo: true, art: "crosses" },
+    hangman: { title: "Hangman & films", rule: "Guess it letter by letter: a word, or a Bollywood or Hollywood film.", solo: true, word: true, art: "crosses" },
+    namePlace: { title: "Name Place Animal Thing", rule: "One letter, everyone writes at once. 2 to 8 players.", players: true, art: "crosses" },
+  };
+  function gamePage(kind) {
+    const G = INFO[kind] || INFO.noughtsCrosses;
+    document.getElementById("title").hidden = true;
+    const pageBack = document.querySelector("a.back"); if (pageBack) pageBack.hidden = true;
+    document.title = G.title + " · That Last Page";
+    let variant = G.word ? (localStorage.getItem("lp.wordGame") || "hangman") : kind;
+    const action = (act, title, small, extra = "") => `<button type="button" class="mode" data-act="${act}"><span><strong>${title}</strong><small>${small}</small>${extra}</span><span class="arrow" aria-hidden="true">→</span></button>`;
+    app.innerHTML = `<a class="live-back" href="/games/"><span aria-hidden="true">←</span> Games</a>
+      <div class="live-panel">
+        <div class="live-copy" id="liveCopy">
+          <h1>${esc(G.title)}</h1>
+          <p class="live-hint" style="font-size:15px">${esc(G.rule)}</p>
+          ${G.word ? `<div class="pill-row" role="radiogroup" aria-label="Which one">${[["hangman", "Hangman"], ["bollywood", "Bollywood"], ["hollywood", "Hollywood"]].map(([k, t]) => `<button type="button" class="pill${k === variant ? " on" : ""}" role="radio" aria-checked="${k === variant}" data-variant="${k}">${t}</button>`).join("")}</div>` : ""}
+          <form class="live-form" id="liveForm" onsubmit="return false">
+            <label for="liveName">Your name</label>
+            <input data-form-type="other" id="liveName" maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="characters" enterkeyhint="done" value="${esc(myName)}" placeholder="your name" required>
+            <div class="mode-grid live-games">
+              ${G.solo ? action("solo", "Play the phone", "Right here, on your own.") : ""}
+              ${action("live", "Play a friend, live", "Send them a link. They play in the app or any browser.",
+                G.players ? ` <small>with <select id="npl" aria-label="players">${[2, 3, 4, 5, 6, 7, 8].map((n) => `<option value="${n}">${n} players</option>`).join("")}</select></small>` : "")}
+              ${G.turns ? action("turns", "Take turns by link", "Make your move and send it. They reply whenever.") : ""}
+              ${G.word ? action("link", "Send a word by link", "Write a word or film; they guess it from the link.") : ""}
+            </div>
+          </form>
+          <section class="live-state" id="liveWaiting" hidden></section>
+        </div>
+        <div class="live-art" id="liveArt" data-game="${G.art}" aria-hidden="true">
+          <span class="live-grid"><span class="xo"><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span><span></span><span>○</span><span></span><span></span></span></span>
+          <span class="book"><i><b>42</b></i><i><b>43</b></i></span>
+        </div>
+      </div>`;
+    app.querySelectorAll("[data-variant]").forEach((b) => b.addEventListener("click", () => {
+      variant = b.dataset.variant; localStorage.setItem("lp.wordGame", variant);
+      app.querySelectorAll("[data-variant]").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", String(x === b)); });
+    }));
+    const nameIn = document.getElementById("liveName");
+    nameIn.addEventListener("input", () => nameIn.setCustomValidity(""));
+    const takeName = () => { const n = nameIn.value.trim().toUpperCase().slice(0, 20); if (!n) { nameIn.setCustomValidity("Write your name first."); nameIn.reportValidity(); return null; } myName = n; localStorage.setItem(NAME_KEY, n); return n; };
+    app.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", (e) => {
+      if (e.target.closest("select")) return;
+      const act = b.dataset.act;
+      if (act === "link") { location.href = "/hangman/?m=" + ({ hangman: "h", bollywood: "b", hollywood: "y" }[variant]); return; }
+      const n = takeName(); if (!n) return;
+      if (act === "solo") return solo(G.word ? variant : kind, n);
+      if (act === "live") return window.Room.start(app, G.word ? variant : kind, n, G.players ? parseInt(document.getElementById("npl").value, 10) : 2);
+      if (act === "turns") {
+        post = G.turns === "nc" ? { g: "nc", n: [n, ""], b: ".........", s: "t", k: [0, 0, 0] } : { g: "bc", n: [n, ""], p: [] };
+        me = 0; opened = JSON.parse(JSON.stringify(post));
+        document.querySelector("a.back").hidden = false; document.getElementById("title").hidden = false;
+        render();
+      }
+    }));
+  }
+  // "Change name" on the waiting screen.
+  document.addEventListener("click", (e) => { if (e.target.closest("#liveEdit") && new URLSearchParams(location.search).get("g")) { localStorage.removeItem(NAME_KEY); location.reload(); } });
+  function solo(kind, name) {
+    const T = window.Room.TITLES;
+    app.innerHTML = `<a class="live-back" href="${location.pathname}${location.search}"><span aria-hidden="true">←</span> ${esc(INFO[kind] ? INFO[kind].title : "Hangman & films")}</a>
+      <h1 style="font-size:clamp(32px,5vw,48px)">${esc(T[kind] || "")}</h1>
+      <p class="live-hint">${esc(name)} vs the phone · <button class="text-button" type="button" id="soloNew">new game</button></p>
+      <div id="soloGame"></div>`;
+    const go = () => window.Solo.start(document.getElementById("soloGame"), kind, name);
+    document.getElementById("soloNew").addEventListener("click", go);
+    go();
+  }
+
   // Another link opened in the same tab: start again with that game.
   addEventListener("hashchange", () => location.reload());
-  const h = location.hash.slice(1);
+  const h = location.hash.slice(1), g = new URLSearchParams(location.search).get("g");
   if (/^r-[A-HJ-NP-Z2-9]{6}$/i.test(h)) live(h.slice(2));
-  else if (h === "live") live(null);
-  else if (!post) start(location.hash.length > 1);
+  else if (g && !h) gamePage(g);
+  else if (h === "live" || !h) location.replace("/games/");   // every game has its own page now
+  else if (!post) start(true);
   else if (!post.n[P.whoseTurn(post)] && !myName) askName();
   else begin();
 })();

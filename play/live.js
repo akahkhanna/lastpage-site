@@ -80,8 +80,8 @@
         if (!game) {
           if (iSet) {
             el.innerHTML = `<p class="status">write a ${M.thing} for ${esc(their)} to guess:</p>
-              <p><input id="secret" maxlength="40" placeholder="secret ${M.thing}" value="${esc(secret)}" style="width:260px;text-transform:uppercase"></p>
-              ${mode === "h" ? `<p><input id="hint" maxlength="20" placeholder="a hint (optional)" value="${esc(hint)}" style="width:200px;text-transform:none;font-weight:400"></p>` : ""}
+              <p><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="secret" maxlength="40" placeholder="secret ${M.thing}" value="${esc(secret)}" style="width:260px;text-transform:uppercase"></p>
+              ${mode === "h" ? `<p><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="hint" maxlength="20" placeholder="a hint (optional)" value="${esc(hint)}" style="width:200px;text-transform:none;font-weight:400"></p>` : ""}
               <button class="go" id="sendWord">send it to ${esc(their)} →</button><p class="note" id="rnote"></p>`;
             on(el, "sendWord", () => {
               const w = H.cleanWord(el.querySelector("#secret").value);
@@ -200,7 +200,7 @@
       if (stage === "writing") {
         el.innerHTML = `<p class="status">${circled} <b id="clk" style="font-size:26px;margin-left:10px">${countdown !== null ? `pens down in ${countdown}…` : fmt(seconds - (Date.now() - startedAt) / 1000)}</b></p>
           <p class="note">${stoppedBy ? esc(stoppedBy) + " said STOP!!" : (their.length ? esc(their.join(", ")) + " writing too…" : "just you now")}</p>
-          ${columns.map((c) => `<p><label><span class="pencil" style="display:inline-block;width:80px">${COLS[c]}</span><input data-a="${c}" value="${esc(mine[c] || "")}" maxlength="30" style="width:200px;text-transform:uppercase;font-weight:400"></label></p>`).join("")}
+          ${columns.map((c) => `<p><label><span class="pencil" style="display:inline-block;width:80px">${COLS[c]}</span><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" data-a="${c}" value="${esc(mine[c] || "")}" maxlength="30" style="width:200px;text-transform:uppercase;font-weight:400"></label></p>`).join("")}
           <button class="go" id="stop" ${allFilled() && !stoppedBy ? "" : "disabled"}>STOP!</button><p class="note" id="rnote"></p>`;
         el.querySelectorAll("[data-a]").forEach((i) => i.addEventListener("input", () => { mine[i.dataset.a] = i.value.toUpperCase(); const s = el.querySelector("#stop"); if (s) s.disabled = !(allFilled() && !stoppedBy); }));
         on(el, "stop", () => stop(ctx.me));

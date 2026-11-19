@@ -55,10 +55,10 @@
   <a class="back" href="./">← Test papers</a>
   <div class="page-heading"><h1>Set a test</h1></div>
   <p class="note" id="askedNote" hidden></p>
-  <p><label>From<br><input class="line" id="from" placeholder="your name, e.g. Dadi" maxlength="20"></label></p>
+  <p><label>From<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="from" placeholder="your name, e.g. Dadi" maxlength="20"></label></p>
   <div class="chips" id="chips" hidden></div>
-  <p><label>For<br><input class="line" id="to" placeholder="their name, or their test address" maxlength="20"></label></p>
-  <p><label>A note on top (optional)<br><input class="line" id="noteIn" placeholder="Do this before dinner!" maxlength="120"></label></p>
+  <p><label>For<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="to" placeholder="their name, or their test address" maxlength="20"></label></p>
+  <p><label>A note on top (optional)<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="noteIn" placeholder="Do this before dinner!" maxlength="120"></label></p>
   <div id="qs"></div>
   <p><button class="small" id="addQ">+ another question</button></p>
   <p class="mins"><span class="small">Time:</span> <span id="minsRow"></span></p>
@@ -73,8 +73,8 @@
   <a class="back" href="./">← Test papers</a>
   <div class="page-heading"><h1>Ask for a test</h1></div>
   <p class="small">They get a link that opens the test page with your name on it.</p>
-  <p><label>Your name<br><input class="line" id="askFrom" maxlength="20"></label></p>
-  <p><label>On what?<br><input class="line" id="askSubject" placeholder="7 and 8 times tables, spellings…" maxlength="60"></label></p>
+  <p><label>Your name<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="askFrom" maxlength="20"></label></p>
+  <p><label>On what?<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="askSubject" placeholder="7 and 8 times tables, spellings…" maxlength="60"></label></p>
   <p><button class="button primary" id="sendAsk">Ask</button></p>
   <p class="pencil" id="copiedAsk" hidden>Copied. Paste it in the chat.</p>
 </section>
@@ -87,7 +87,7 @@
   <p class="note" id="noteOut" hidden></p>
   <div id="paperQs"></div>
   <div id="doFoot" hidden>
-    <p><label>Your name<br><input id="by" maxlength="20"></label></p>
+    <p><label>Your name<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="by" maxlength="20"></label></p>
     <p><button class="button primary" id="handIn" disabled>Hand in your paper</button></p>
   </div>
   <div id="sentFoot" hidden>
@@ -99,7 +99,7 @@
     <p class="pencil" id="copiedAns" hidden>Copied. Paste it in the chat.</p>
   </div>
   <div id="markFoot" hidden>
-    <p><label>A remark<br><input class="line" id="remarkIn" placeholder="Shabash! / neater writing!" maxlength="60"></label></p>
+    <p><label>A remark<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="remarkIn" placeholder="Shabash! / neater writing!" maxlength="60"></label></p>
     <p class="small" id="markHint">Tick or cross every answer, then send it back.</p>
     <p><button class="button primary" id="sendMarked" hidden>Send the paper back</button></p>
     <div class="share-row" id="shareMarked" hidden></div>
@@ -118,15 +118,15 @@
   <div class="dialog-head"><h2 id="dlgTitle"></h2><button class="close" aria-label="Close">×</button></div>
   <div class="dialog-body">
     <div class="pane" data-pane="code" data-title="Open with a code" hidden>
-      <form onsubmit="return false"><label>Test code<input class="code" id="codeIn" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></label>
+      <form onsubmit="return false"><label>Test code<input autocorrect="off" data-form-type="other" class="code" id="codeIn" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></label>
       <button class="button primary" id="openCode" disabled>Open test</button></form>
     </div>
     <div class="pane" data-pane="start" data-title="Start a family" hidden>
-      <form onsubmit="return false"><label>Family name<input id="famName" maxlength="20" placeholder="Khanna"></label>
+      <form onsubmit="return false"><label>Family name<input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="famName" maxlength="20" placeholder="Khanna"></label>
       <button class="button primary" id="startFam">Start</button></form>
     </div>
     <div class="pane" data-pane="join" data-title="Join a family" hidden>
-      <form onsubmit="return false"><label>Family code<input class="code" id="famCode" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></label>
+      <form onsubmit="return false"><label>Family code<input autocorrect="off" data-form-type="other" class="code" id="famCode" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123"></label>
       <button class="button primary" id="joinFam">Next</button></form>
     </div>
     <div class="pane" data-pane="joinAsk" data-title="Join a family" hidden><div id="famAsk"></div></div>

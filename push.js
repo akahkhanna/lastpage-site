@@ -60,7 +60,7 @@
   let btn, tip, on = false;
   function paint() {
     if (!btn) return;
-    btn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${BELL}${on ? "" : SLASH}</svg>`;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">${BELL}${on ? "" : SLASH}</svg><span class="bell-label">${on ? "Notifications on" : "Notifications off"}</span>`;
     btn.style.color = on ? "var(--red)" : "var(--muted)";
     btn.setAttribute("aria-pressed", String(on));
     btn.title = on ? "Notifications are on" : "Notifications are off (tap to turn on)";
@@ -74,7 +74,7 @@
     clearTimeout(say.t);
     say.t = setTimeout(hide, html.includes("<a ") ? 7000 : 3500);
   }
-  function hide() { if (tip) { tip.style.opacity = "0"; tip.style.transform = "translateY(-6px)"; tip.style.pointerEvents = "none"; } }
+  function hide() { if (tip) { tip.style.opacity = "0"; tip.style.transform = "translateY(6px)"; tip.style.pointerEvents = "none"; } }
 
   // Who this browser is in the family, and which other devices of theirs get the same notifications.
   async function whoGets() {
@@ -110,12 +110,12 @@
     if (!nav || document.getElementById("lpBell")) return;
     btn = document.createElement("button");
     btn.id = "lpBell"; btn.type = "button";
-    btn.style.cssText = "background:none;border:0;padding:8px;min-width:44px;min-height:44px;display:inline-grid;place-items:center;cursor:pointer;border-radius:6px";
+    btn.style.cssText = "background:none;border:0;padding:8px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border-radius:6px;font:inherit;font-size:14px;font-weight:700";
     btn.onclick = () => toggle().catch(() => {});
     nav.appendChild(btn);
     tip = document.createElement("p");
     tip.setAttribute("role", "status");
-    tip.style.cssText = "position:fixed;top:76px;left:12px;right:12px;margin:0 auto;box-sizing:border-box;transform:translateY(-6px);z-index:50;max-width:460px;white-space:normal;padding:9px 14px;border-radius:4px;background:#fff3a8;box-shadow:0 2px 10px rgba(0,0,0,.12);font-size:14px;line-height:1.4;color:var(--ink);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s";
+    tip.style.cssText = "position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));left:12px;right:12px;margin:0 auto;box-sizing:border-box;transform:translateY(6px);z-index:50;max-width:460px;white-space:normal;padding:9px 14px;border-radius:4px;background:#fff3a8;box-shadow:0 2px 10px rgba(0,0,0,.12);font-size:14px;line-height:1.4;color:var(--ink);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s";
     tip.onclick = async (e) => {
       if (e.target.hasAttribute("data-off")) {
         e.preventDefault();
@@ -129,6 +129,16 @@
     checkFamilies().catch(() => {});
     try { const sub = await current(); if (sub) { on = true; paint(); register(sub).catch(() => {}); } } catch {}
   }
-  window.LPPush = { render() {} };   // older pages call this; the bell does it all now
+  // On a page where the reason is plain (waiting for a friend): one line offering notifications.
+  async function offer(box) {
+    if (!box || inAppBrowser || !supported || Notification.permission === "denied") return;
+    if (await current().catch(() => null)) return;
+    box.innerHTML = `<button class="text-button" type="button">🔔 Turn on notifications, so friends can invite you next time</button>`;
+    box.querySelector("button").onclick = async () => { await toggle().catch(() => {}); if (on) box.textContent = "🔔 Notifications on."; };
+  }
+  // Safari clears a site's storage after a week without a visit; asking for it to be kept
+  // protects this browser's families and address (granted for Home Screen sites and the like).
+  if (families().length && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  window.LPPush = { render() {}, offer };
   if (document.readyState === "loading") addEventListener("DOMContentLoaded", mount); else mount();
 })();

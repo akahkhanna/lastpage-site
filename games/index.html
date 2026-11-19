@@ -3,7 +3,7 @@
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Games · That Last Page</title>
-<meta name="description" content="Today's puzzles, FLAMES, noughts & crosses, book cricket, guess my word, dots & boxes, Name Place Animal Thing. In any browser, no app needed.">
+<meta name="description" content="FLAMES, book cricket, noughts & crosses, hangman, dots & boxes and Name Place Animal Thing: the games from the back of your school notebook. Play the phone or a friend, in any browser.">
 <meta property="og:title" content="That Last Page · Games">
 <meta property="og:description" content="Today's puzzles and games with a friend, in any browser. No app needed.">
 <link rel="stylesheet" href="../site.css">
@@ -26,6 +26,43 @@
 <main class="sheet">
   <section class="wrap content" aria-labelledby="games-title">
     <div class="page-heading"><h1 id="games-title">Games</h1></div>
+    <p class="lede">The games from the back of your school notebook. Play the phone, or send a friend a link: no app needed.</p>
+
+    <section class="game-section" aria-labelledby="notebook">
+      <div class="section-head"><h2 id="notebook">From the last page</h2><p>On your own, or with a friend</p></div>
+      <div class="game-grid">
+        <a class="game-card" href="../flames/">
+          <span class="art flames" aria-hidden="true"><span class="flames-note"><s>FL</s><span class="heart">A</span>M<s>ES</s></span></span>
+          <span class="game-name">FLAMES <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../play/?g=bookCricket">
+          <span class="art cricket" aria-hidden="true"><span class="book"><i><b>42</b></i><i><b>43</b></i></span></span>
+          <span class="game-name">Book cricket <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../play/?g=noughtsCrosses">
+          <span class="art crosses" aria-hidden="true"><span class="xo"><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span></span></span>
+          <span class="game-name">Noughts &amp; crosses <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../play/?g=hangman">
+          <span class="art hang" aria-hidden="true"><span class="gallows">  ┌──┐
+  │  o
+  │ /|\
+  │ / \
+ ─┴─</span></span>
+          <span class="game-name">Hangman &amp; films <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../play/?g=dotsBoxes">
+          <span class="art boxes" aria-hidden="true"><span class="boxgrid"><span class="f"></span><span></span><span></span><span></span><span class="f"></span><span></span><span></span><span></span><span></span></span></span>
+          <span class="game-name">Dots &amp; boxes <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+        <a class="game-card" href="../play/?g=namePlace">
+          <span class="art npat" aria-hidden="true"><span class="npat-note">NAME   PLACE  ANIMAL THING
+Rahul  Ranchi Rat    Radio
+Riya   Russia Rabbit Ring</span></span>
+          <span class="game-name">Name Place Animal Thing <span class="arrow" aria-hidden="true">→</span></span>
+        </a>
+      </div>
+    </section>
 
     <section class="game-section" aria-labelledby="today">
       <div class="section-head"><h2 id="today">Today’s puzzles</h2><p>New every day, the same for everyone</p></div>
@@ -45,42 +82,6 @@
       </div>
     </section>
 
-    <section class="game-section" aria-labelledby="with-friend">
-      <div class="section-head"><h2 id="with-friend">Play with a friend</h2><p>Live, or a turn at a time by link</p></div>
-      <div class="game-grid">
-        <a class="game-card" href="../flames/">
-          <span class="art flames" aria-hidden="true"><span class="flames-note"><s>FL</s><span class="heart">A</span>M<s>ES</s></span></span>
-          <span class="game-name">FLAMES <span class="arrow" aria-hidden="true">→</span></span>
-        </a>
-        <button class="game-card" data-dialog="crosses">
-          <span class="art crosses" aria-hidden="true"><span class="xo"><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span><span></span><span>○</span><span></span><span class="x">×</span></span></span>
-          <span class="game-name">Noughts &amp; crosses <span class="arrow" aria-hidden="true">→</span></span>
-        </button>
-        <button class="game-card" data-dialog="cricket">
-          <span class="art cricket" aria-hidden="true"><span class="book"><i><b>42</b></i><i><b>43</b></i></span></span>
-          <span class="game-name">Book cricket <span class="arrow" aria-hidden="true">→</span></span>
-        </button>
-        <button class="game-card" data-dialog="hangman">
-          <span class="art hang" aria-hidden="true"><span class="gallows">  ┌──┐
-  │  o
-  │ /|\
-  │ / \
- ─┴─</span></span>
-          <span class="game-name">Guess my word <span class="arrow" aria-hidden="true">→</span></span>
-        </button>
-        <a class="game-card" href="../play/#live">
-          <span class="art boxes" aria-hidden="true"><span class="boxgrid"><span class="f"></span><span></span><span></span><span></span><span class="f"></span><span></span><span></span><span></span><span></span></span></span>
-          <span class="game-name">Dots &amp; boxes <span class="arrow" aria-hidden="true">→</span></span>
-        </a>
-        <a class="game-card" href="../play/#live">
-          <span class="art npat" aria-hidden="true"><span class="npat-note">NAME   PLACE  ANIMAL THING
-Rahul  Ranchi Rat    Radio
-Riya   Russia Rabbit Ring</span></span>
-          <span class="game-name">Name Place Animal Thing <span class="arrow" aria-hidden="true">→</span></span>
-        </a>
-      </div>
-    </section>
-
     <div class="lower-links">
       <a href="../board/">Family board <span aria-hidden="true">→</span></a>
       <a href="../homework/">Test papers <span aria-hidden="true">→</span></a>
@@ -90,32 +91,6 @@ Riya   Russia Rabbit Ring</span></span>
   </section>
 </main>
 
-<dialog id="dlg" aria-labelledby="dlgTitle">
-  <div class="dialog-head"><h2 id="dlgTitle"></h2><button class="close" aria-label="Close">×</button></div>
-  <div class="dialog-body">
-    <div class="pane" data-pane="crosses" data-title="Noughts & crosses" hidden>
-      <p>Three in a row before your friend does.</p>
-      <div class="mode-grid">
-        <a class="mode" href="../play/#live"><span><strong>Play live</strong><small>Both play at the same time, in the app or any browser.</small></span><span class="arrow" aria-hidden="true">→</span></a>
-        <a class="mode" href="../play/"><span><strong>Take turns</strong><small>Make your move and send the link.</small></span><span class="arrow" aria-hidden="true">→</span></a>
-      </div>
-    </div>
-    <div class="pane" data-pane="cricket" data-title="Book cricket" hidden>
-      <p>Open a page at random: the last digit is your runs.</p>
-      <div class="mode-grid">
-        <a class="mode" href="../play/#live"><span><strong>Play live</strong><small>Both play at the same time, in the app or any browser.</small></span><span class="arrow" aria-hidden="true">→</span></a>
-        <a class="mode" href="../play/"><span><strong>Take turns</strong><small>Bat, then send the link.</small></span><span class="arrow" aria-hidden="true">→</span></a>
-      </div>
-    </div>
-    <div class="pane" data-pane="hangman" data-title="Guess my word" hidden>
-      <p>Hangman, or a Bollywood or Hollywood film.</p>
-      <div class="mode-grid">
-        <a class="mode" href="../play/#live"><span><strong>Play live</strong><small>One sets the word, the other guesses, right now.</small></span><span class="arrow" aria-hidden="true">→</span></a>
-        <a class="mode" href="../hangman/"><span><strong>Send a word</strong><small>Write a word or film and send the link to guess.</small></span><span class="arrow" aria-hidden="true">→</span></a>
-      </div>
-    </div>
-  </div>
-</dialog>
 <script src="../site.js"></script>
 <script src="/push.js"></script>
 </body></html>

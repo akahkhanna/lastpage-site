@@ -48,27 +48,27 @@
     [count, answer, reaction].forEach((e) => e.classList.remove("on"));
     $("flames").textContent = "";
 
-    // 1. Both names, letter by letter.
-    for (const s of A) { s.classList.add("on"); await pause(0.06); }
-    await pause(0.15);
-    for (const s of B) { s.classList.add("on"); await pause(0.06); }
-    await pause(0.35);
-    // 2. Shared letters struck off in pairs.
+    // The whole working takes about 3 seconds, however long the names: the answer is the point.
+    // 1. Both names at once.
+    for (const s of [...A, ...B]) s.classList.add("on");
+    await pause(0.3);
+    // 2. Shared letters struck off in pairs (0.6 s for all of them).
+    const pairStep = Math.min(0.12, 0.6 / Math.max(r.pairs.length, 1));
     for (const [i, j] of r.pairs) {
-      A[i].classList.add("struck"); await pause(0.15);
-      B[j].classList.add("struck"); await pause(0.3);
+      A[i].classList.add("struck"); B[j].classList.add("struck"); await pause(pairStep);
     }
     // 3. The count.
     count.textContent = "= " + r.count; count.classList.add("on");
-    await pause(0.5);
+    await pause(0.25);
 
     if (r.answer) {
       // 4. F L A M E S, then 5. count round crossing one off at a time.
       const F = letters($("flames"), "FLAMES", (s) => { const n = document.createElement("span"); n.className = "n"; s.appendChild(n); });
       F.forEach((s, k) => (s.dataset.letter = Flames.LETTERS[k]));
-      for (const s of F) { s.classList.add("on"); await pause(0.08); }
-      await pause(0.35);
-      const hop = Math.min(0.11, 1.1 / Math.max(r.count, 1));
+      for (const s of F) s.classList.add("on");
+      await pause(0.2);
+      // Five crossings-out in about 1.6 s: the counting round speeds up for big counts.
+      const hop = Math.min(0.05, 0.22 / Math.max(r.count, 1));
       let alive = Flames.LETTERS.slice(), position = 0;
       const el = (letter) => F[Flames.LETTERS.indexOf(letter)];
       for (const [order, letter] of r.crossedOut.entries()) {
@@ -85,13 +85,13 @@
         s.querySelector(".n").textContent = order + 1;
         s.classList.add("struck");
         if (navigator.vibrate && !skip) navigator.vibrate(8);
-        await pause(0.4);
+        await pause(0.1);
       }
       // 6. Loop round the one that's left.
       const s = el(r.answer);
       s.insertAdjacentHTML("beforeend", '<svg class="loop" viewBox="0 0 100 100" preserveAspectRatio="none"><path pathLength="100" d="M50 4 C82 2 98 26 96 52 C94 80 72 98 46 96 C20 94 2 74 4 48 C6 22 26 6 56 6"/></svg>');
       setTimeout(() => s.querySelector(".loop").classList.add("on"), 30);
-      await pause(0.55);
+      await pause(0.3);
       answer.textContent = Flames.MEANING[r.answer] + "!!";
       reaction.textContent = Flames.REACTION[r.answer];
     } else {
