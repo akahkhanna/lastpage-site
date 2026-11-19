@@ -154,6 +154,7 @@
       });
       board.appendChild(b);
     });
+    P.strike(board, line);
     const acts = document.getElementById("acts");
     if (moved) {
       acts.innerHTML += `<button class="go" id="send">send to ${esc(them())} →</button>`;

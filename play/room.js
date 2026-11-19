@@ -104,6 +104,7 @@
         });
         board.appendChild(btn);
       });
+      P.strike(board, line);
       const acts = el.querySelector("#acts");
       if (over) acts.innerHTML = `<button class="go" id="again">again →</button>`;
       const again = el.querySelector("#again"); if (again) again.addEventListener("click", () => { if (!roundOver()) return; nextRound(); c.send({ again: {} }); });

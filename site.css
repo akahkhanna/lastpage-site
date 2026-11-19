@@ -329,3 +329,6 @@ button.small { background:none; border:0; padding:0; color:var(--red); font-weig
 .lede { max-width:620px; margin:-6px 0 22px; color:var(--muted); font-size:17px; line-height:1.45 }
 .bell-label { display:none; color:inherit }
 @media (min-width: 760px) { .bell-label { display:inline } }
+
+/* Noughts & crosses: the winning line drawn on in pen (play.js strike) */
+@keyframes lp-strike { from { stroke-dashoffset: var(--full) } to { stroke-dashoffset: 0 } }
