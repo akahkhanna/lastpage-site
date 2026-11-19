@@ -117,6 +117,18 @@
   }
 
   function begin() {
+    // Both seats taken and neither is this name: ask which one they are (a name typed
+    // differently last time), or let them start their own; never move for someone else.
+    if (post.n[0] && post.n[1] && !post.n.includes(myName)) {
+      const game = post.g === "nc" ? "noughtsCrosses" : "bookCricket";
+      app.innerHTML = `<p class="status">This game is between ${esc(post.n[0])} and ${esc(post.n[1])}. Which one are you?</p>
+        <p>${post.n.map((n, i) => `<button class="go" data-seat="${i}">${esc(n)} →</button>`).join(" ")}</p>
+        <p><a href="/play/?g=${game}">Neither: start my own game →</a></p>`;
+      app.querySelectorAll("[data-seat]").forEach((b) => b.addEventListener("click", () => {
+        myName = post.n[+b.dataset.seat]; localStorage.setItem(NAME_KEY, myName); begin();
+      }));
+      return;
+    }
     me = P.whoAmI(post, myName);
     if (!post.n[me]) post.n[me] = myName;
     opened = JSON.parse(JSON.stringify(post));

@@ -131,7 +131,9 @@
 
   // ---------- book cricket ----------
   function cricket(el, c) {
-    const iBatFirst = c.me === c.host;
+    // The one in charge bats first; "again" swaps sides for the next match (as in the app).
+    let hostBatsFirst = true;
+    let iBatFirst = (c.me === c.host) === hostBatsFirst;
     let p = [], q = null, lastPage = null, flipping = false, their = c.them();
     function render() {
       their = c.them() === "your friend" ? their : c.them();
@@ -160,12 +162,15 @@
         if (chase.runs > first.runs) { const w = 3 - chase.wickets; html += `<p class="big">${iBatFirst ? esc(t1) + " won by " + w + " wkt" + (w === 1 ? "" : "s") : "WON!! by " + w + " wkt" + (w === 1 ? "" : "s")}</p>`; }
         else if (chase.runs === first.runs) html += `<p class="big">TIE!!</p>`;
         else { const r = first.runs - chase.runs; html += `<p class="big">${iBatFirst ? "WON!! by " + r + " run" + (r === 1 ? "" : "s") : esc(t0) + " won by " + r + " run" + (r === 1 ? "" : "s")}</p>`; }
-        if (c.restart) html += `<button class="go" id="newMatch">play again →</button>`;
+        html += `<button class="go" id="newMatch">${c.restart ? "play again →" : "again →"}</button>`;
       }
       html += `<p class="note" id="rnote"></p>`;
       el.innerHTML = html;
       const flipEl = el.querySelector("#flip"); if (flipEl) flipEl.addEventListener("click", flip);
-      const again = el.querySelector("#newMatch"); if (again) again.addEventListener("click", () => c.restart());
+      const again = el.querySelector("#newMatch"); if (again) again.addEventListener("click", () => {
+        if (c.restart) return c.restart();
+        c.send({ again: {} }); rematch();
+      });
       const bat = el.querySelector("#bat"); if (bat) bat.addEventListener("click", () => { q = []; lastPage = null; c.send({ chase: {} }); render(); });
     }
     // The page counts the moment it's flipped (a friend may already be batting on it); the
@@ -181,9 +186,11 @@
     }
     function land(page) { if (q) q.push(page); else p.push(page); lastPage = page; startChase(); render(); }
     let chaseAsked = false;
+    function rematch() { hostBatsFirst = !hostBatsFirst; iBatFirst = (c.me === c.host) === hostBatsFirst; p = []; q = null; lastPage = null; chaseAsked = false; render(); }
     function startChase() { if (chaseAsked && P.innings(p).over && !q) { q = []; lastPage = null; chaseAsked = false; } }
     c.on((m) => {
-      if (m.page) land(m.page._0);
+      if (m.again) { if (q && P.innings(q, P.innings(p).runs + 1).over) rematch(); }   // once per match
+      else if (m.page) land(m.page._0);
       else if (m.chase) { chaseAsked = true; startChase(); render(); }
       else if (m.status) c.note(m.status._0 || "");
       else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; c.ended(); }

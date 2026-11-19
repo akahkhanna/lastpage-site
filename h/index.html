@@ -11,11 +11,19 @@
      links keeps choosing it, so "open in the app" uses the app's own thatlastpage:// scheme. -->
 <script>
   const code = location.hash.slice(1).toUpperCase();
+  // No code (a link cut short): straight on to the page it would have opened, on any device.
+  const bare = { r: "/games/", f: "/homework/#join", h: "/homework/" }["h"];
+  const ok = /^[A-HJ-NP-Z2-9]{6}$/.test(code);
   const web = "../homework/#" + code;
-  if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) location.replace(web);
+  if (!ok) location.replace(bare);
+  else if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) location.replace(web);
   addEventListener("DOMContentLoaded", () => {
     document.getElementById("app").href = "thatlastpage://h/" + code;
     document.getElementById("web").href = web;
+    // Still here a moment after "open in the app": it isn't installed. Say what else to do.
+    document.getElementById("app").addEventListener("click", () => setTimeout(() => {
+      if (document.visibilityState === "visible") document.getElementById("noapp").hidden = false;
+    }, 1500));
   });
 </script>
 <link rel="stylesheet" href="/site.css">
@@ -37,6 +45,7 @@ p { margin: 0 0 12px; max-width: 560px; }</style>
 <h1>A test for you</h1>
 <p class="pencil">Do it in the app, or right here.</p>
 <p><a class="go" id="app" href="#">open in the app →</a></p>
+<p class="pencil" id="noapp" hidden>No app on this phone? <a href="https://apps.apple.com/app/id6831963769">Get That Last Page</a>, or carry on in the browser:</p>
 <p><a class="go" id="web" href="#">or carry on in the browser →</a></p>
 <p class="small pencil">if our links keep opening here instead of the app: pull this page down a little and tap <b>Open</b> in the banner at the top, once. After that they open the app by themselves.</p>
 
