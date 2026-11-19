@@ -16,7 +16,9 @@
   const ok = /^[A-HJ-NP-Z2-9]{6}$/.test(code);
   const web = "../homework/#" + code;
   if (!ok) location.replace(bare);
-  else if (!/iPhone|iPad|iPod/.test(navigator.userAgent)) location.replace(web);
+  // Straight to the game in the browser, iPhones too: a stop on the way costs most joiners. (An
+  // iPhone with the app installed opens these links in the app before this page loads.)
+  else location.replace(web);
   addEventListener("DOMContentLoaded", () => {
     document.getElementById("app").href = "thatlastpage://h/" + code;
     document.getElementById("web").href = web;

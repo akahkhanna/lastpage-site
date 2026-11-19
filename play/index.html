@@ -57,6 +57,7 @@
   <a class="back" href="/games/">← Games</a>
   <h1 id="title">Your turn</h1>
   <div id="app"></div>
+  <div class="after-game" id="afterGame" hidden></div>
   <p class="pencil" id="copied" hidden>Copied. Paste it in the chat.</p>
   
 
@@ -260,7 +261,8 @@
             <label for="liveName">Your name</label>
             <input autocorrect="off" spellcheck="false" data-form-type="other" id="liveName" maxlength="20" autocomplete="off" autocapitalize="characters" enterkeyhint="go" value="${esc(myName)}" placeholder="your name" required>
             <p class="live-hint">Use the name your friend will recognise.</p>
-            ${roomCode ? `<button class="button primary" type="submit">Join game <span aria-hidden="true">→</span></button>` : `
+            ${roomCode ? `<button class="button primary" type="submit">Join game <span aria-hidden="true">→</span></button>
+            ${/iPhone|iPad|iPod/.test(navigator.userAgent) ? `<p class="live-hint">Have the iPhone app? <a href="thatlastpage://r/${esc(roomCode)}">Play in the app instead</a></p>` : ""}` : `
             <label>Game</label>
             <div class="mode-grid live-games">
               ${games.map(([k]) => `<button type="button" class="mode" data-live="${k}"><span><strong>${esc(T[k])}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`).join("")}
@@ -385,6 +387,17 @@
     document.getElementById("soloNew").addEventListener("click", go);
     go();
   }
+
+  // ---------- after a game: start your own (everyone), the app (iPhones only) ----------
+  // Shown under the board once a game is over, whichever game and however it was played: the
+  // end screen is where a guest becomes a host.
+  const iPhone = /iPhone|iPod/.test(navigator.userAgent);
+  const after = document.getElementById("afterGame");
+  after.innerHTML = `<p class="after-line">Fancy another? Start your own and send the link.</p>
+    <p><a class="button primary" href="/games/">Start your own game <span aria-hidden="true">→</span></a>
+    ${iPhone ? ` <a class="button" href="https://apps.apple.com/app/id6831963769">Get That Last Page for iPhone</a>` : ""}</p>`;
+  new MutationObserver(() => { after.hidden = !app.querySelector("#again, #newMatch, #new, #next"); })
+    .observe(app, { childList: true, subtree: true });
 
   // Another link opened in the same tab: start again with that game.
   addEventListener("hashchange", () => location.reload());

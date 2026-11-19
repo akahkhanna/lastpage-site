@@ -332,3 +332,8 @@ button.small { background:none; border:0; padding:0; color:var(--red); font-weig
 
 /* Noughts & crosses: the winning line drawn on in pen (play.js strike) */
 @keyframes lp-strike { from { stroke-dashoffset: var(--full) } to { stroke-dashoffset: 0 } }
+
+/* After a game: start your own */
+.after-game { max-width:560px; margin:22px 0 6px; padding-top:16px; border-top:1px solid var(--soft-border) }
+.after-game .after-line { margin:0 0 10px; color:var(--muted); font-size:15px }
+.after-game .button { margin:0 8px 8px 0 }
