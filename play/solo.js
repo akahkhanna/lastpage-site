@@ -131,7 +131,8 @@
         "CASABLANCA", "BATMAN", "SUPERMAN", "JUMANJI", "MARY POPPINS", "THE GODFATHER", "FORREST GUMP", "TOP GUN", "BEETLEJUICE", "HOOK", "THE WIZARD OF OZ"],
   };
   // Letters in the order a person tends to try them (vowels first when they aren't given).
-  const ORDER = { h: "EAIOTRNSLCUDPMHGBYFKWVXZJQ", b: "RNHTDLKSMGBYJPCVWFZXQ", y: "RTNSLHDGMCBPKWYFVJXZQ" };
+  // Numbers come last: few titles have one.
+  const ORDER = { h: "EAIOTRNSLCUDPMHGBYFKWVXZJQ1234567890", b: "RNHTDLKSMGBYJPCVWFZXQ1234567890", y: "RTNSLHDGMCBPKWYFVJXZQ1234567890" };
 
   function hangmanBrain(say, mode) {
     let phoneSets = true, mirror = null, used = new Set();
@@ -144,7 +145,8 @@
       const left = [...ORDER[mode]].filter((L) => !used.has(L) && !mirror.given.has(L));
       if (!left.length) return;
       // Mostly the likely letter, sometimes a hunch, so it isn't unbeatable.
-      const L = Math.random() < 0.25 ? pickOne(left) : left[0];
+      const letters = left.filter((c) => /[A-Z]/.test(c));
+      const L = Math.random() < 0.25 && letters.length ? pickOne(letters) : left[0];
       used.add(L); mirror.guess(L); say({ guess: { _0: L } });
       later(guessNext, 1000);
     }

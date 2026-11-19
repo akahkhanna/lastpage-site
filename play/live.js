@@ -74,7 +74,7 @@
     return function (el, ctx) {
       const H = root.Hangman, M = H.MODES[mode];
       let iSet = ctx.me === ctx.host, game = null, secret = "", hint = "";
-      const ROWS = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ"];
+      const ROWS = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ", "12345", "67890"];
       function render() {
         const their = ctx.them();
         if (!game) {

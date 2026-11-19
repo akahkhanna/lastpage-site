@@ -3,7 +3,8 @@
 // link plays it in their own browser. Rules match the app (rules.js).
 (function () {
   const $ = (id) => document.getElementById(id);
-  const ROWS = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ"];
+  // Numbers too, always offered so they don't give away that there is one.
+  const ROWS = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ", "1234567890"];
   const KEY = [7, 41, 13, 99, 2, 77, 23, 58];
 
   // Challenge <-> link: JSON → bytes → XOR with a short key → base64url.
@@ -45,14 +46,14 @@
   }
   function slotsHTML(word, given, showLetters) {
     return [...word].map((c) => c === " " ? '<span class="slot space"></span>'
-      : `<span class="slot${given.has(c) || /[0-9]/.test(c) ? " given" : ""}">${given.has(c) || /[0-9]/.test(c) || showLetters ? c : ""}</span>`).join("");
+      : `<span class="slot${given.has(c) ? " given" : ""}">${given.has(c) || showLetters ? c : ""}</span>`).join("");
   }
   function updateMake() {
     const w = Hangman.cleanWord($("secret").value);
     const M = Hangman.MODES[mode];
     const given = new Set(M.given);
     $("preview").innerHTML = w ? slotsHTML(w, given, false) : "";
-    const guessable = [...w].filter((c) => /[A-Z]/.test(c) && !given.has(c)).length;
+    const guessable = [...w].filter((c) => /[A-Z0-9]/.test(c) && !given.has(c)).length;
     $("makeLink").disabled = w.replace(/[^A-Z]/g, "").length < 2 || guessable < 1;
   }
   document.querySelectorAll(".mode").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
