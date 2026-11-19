@@ -21,6 +21,10 @@ new_sqlite_classes = ["Box"]
 tag = "v2"
 new_sqlite_classes = ["Room"]
 
+# Every evening at 6:30 pm in India: the streak nudge for browsers (src/index.js streakNudges).
+[triggers]
+crons = ["0 13 * * *"]
+
 [vars]
 APNS_TEAM_ID = "JLXF7642XY"
 APNS_KEY_ID = "CKU3M84S88"            # lastpageprod: App Store / TestFlight

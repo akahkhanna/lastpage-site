@@ -54,8 +54,39 @@ const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json", ...CORS } });
 const fail = (status, message) => json({ error: message }, status);
 
+/// Days since 1 November 2026 in India (the puzzles' day number, as the site and app count it).
+function indiaDay(now = Date.now()) {
+  const d = new Date(now + 5.5 * 3600e3);
+  return Math.max(0, Math.round((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - Date.UTC(2026, 10, 1)) / 86400000));
+}
+
+/// Every evening: a browser with notifications on, a streak of 2 days or more, and nothing
+/// played today hears "your 5-day streak is waiting". (The iPhone app reminds itself.) Only
+/// browsers in a family have their times on the server, so only they can be nudged.
+async function streakNudges(env) {
+  const day = indiaDay();
+  const list = await (await box(env, "registry").fetch("https://box/reg-list")).json();
+  for (const addr of list) {
+    const tokens = (await (await box(env, "a:" + addr).fetch("https://box/token-list")).json()).filter((t) => t.env === "web");
+    if (!tokens.length) { await box(env, "registry").fetch("https://box/reg-drop", { method: "POST", body: JSON.stringify({ addr }) }); continue; }
+    const results = await (await box(env, "a:" + addr).fetch(`https://box/result-get?from=${day - 60}&to=${day}`)).json();
+    if (results[day] && Object.keys(results[day]).length) continue;   // played today
+    let streak = 0;
+    while (results[day - 1 - streak] && Object.keys(results[day - 1 - streak]).length) streak++;
+    if (streak < 2) continue;
+    await box(env, "a:" + addr).fetch("https://box/inbox-add", { method: "POST",
+      body: JSON.stringify({ kind: "streak", code: "streak", stage: String(day), streak, day, at: Date.now() }) });
+    for (const t of tokens) {
+      const status = await pushWeb(env, t);
+      if (status === 410 || status === 404 || status === 400) await box(env, "a:" + addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+    }
+  }
+}
+
 export default {
-  async fetch(request, env) {
+  // 13:00 UTC = 6:30 pm in India (wrangler.toml [triggers]).
+  async scheduled(event, env, ctx) { ctx.waitUntil(streakNudges(env)); },
+  async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
     const parts = url.pathname.split("/").filter(Boolean);
@@ -77,7 +108,14 @@ export default {
           let r; try { r = JSON.parse(body); } catch { return fail(400, "not JSON"); }
           const day = parseInt(r.day, 10), seconds = parseInt(r.seconds, 10), hints = parseInt(r.hints, 10) || 0;
           if (!["sudoku", "dots", "trail"].includes(r.puzzle) || !(day >= 0 && day < 100000) || !(seconds > 0 && seconds < 86400)) return fail(400, "bad result");
-          return await box(env, "a:" + addr).fetch("https://box/result-add", { method: "POST", body: JSON.stringify({ day, puzzle: r.puzzle, s: seconds, h: hints }) });
+          const saved = await box(env, "a:" + addr).fetch("https://box/result-add", { method: "POST", body: JSON.stringify({ day, puzzle: r.puzzle, s: seconds, h: hints }) });
+          // First in a family to finish it today: the rest hear about it (after the reply).
+          const fams = (Array.isArray(r.fams) ? r.fams : []).map((c) => String(c).toUpperCase()).filter((c) => CODE.test(c)).slice(0, 5);
+          if (saved.status === 200 && fams.length) {
+            const work = firstFinish(env, addr, fams, r.puzzle, day, seconds).catch((e) => console.log("first finish", String(e)));
+            if (ctx && ctx.waitUntil) ctx.waitUntil(work); else await work;
+          }
+          return saved;
         }
         if (parts.length === 3 && parts[2] === "devices" && request.method === "GET") {
           const r = await box(env, "a:" + addr).fetch("https://box/token-list");
@@ -94,7 +132,9 @@ export default {
             // A browser's Web Push endpoint (Chrome on Android, Safari on a home-screen iPhone, …).
             let u; try { u = new URL(String(t.web)); } catch { return fail(400, "bad endpoint"); }
             if (u.protocol !== "https:" || String(t.web).length > 900) return fail(400, "bad endpoint");
-            return await box(env, "a:" + addr).fetch("https://box/token-add", { method: "POST", body: JSON.stringify({ token: String(t.web), env: "web" }) });
+            const saved = await box(env, "a:" + addr).fetch("https://box/token-add", { method: "POST", body: JSON.stringify({ token: String(t.web), env: "web" }) });
+            await box(env, "registry").fetch("https://box/reg-add", { method: "POST", body: JSON.stringify({ addr }) });   // for the evening streak nudge
+            return saved;
           }
           if (!/^[0-9a-f]{32,200}$/i.test(t.token || "")) return fail(400, "bad token");
           const envName = t.env === "sandbox" ? "sandbox" : "prod";
@@ -329,6 +369,43 @@ async function dareTo(request, env, addr) {
   return json({ ok: true, devices: tokens.length });
 }
 
+/// "AK finished today's mini sudoku first: 1:12": the first in a family to finish a puzzle
+/// today tells the others (who haven't done it yet), as a challenge with that time to beat.
+/// Once per family, puzzle and day: the family's own box decides who was first.
+async function firstFinish(env, addr, codes, puzzle, day, secs) {
+  for (const code of codes) {
+    const fam = box(env, "f:" + code);
+    const fr = await fam.fetch("https://box/family-get");
+    if (fr.status !== 200) continue;
+    const f = await fr.json();
+    const me = f.members.find((m) => (m.addrs || [m.addr]).includes(addr));
+    if (!me) continue;   // not theirs to announce
+    const mark = await (await fam.fetch("https://box/first-mark", { method: "POST", body: JSON.stringify({ key: `${day}:${puzzle}`, day }) })).json();
+    if (!mark.first) continue;
+    const entry = { kind: "dare", first: true, code: `${puzzle}-${day}-${me.name.toUpperCase()}`, stage: "set", from: me.name, puzzle, day, secs, at: Date.now() };
+    const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+    const tokens = [];
+    for (const m of f.members) {
+      if (m === me) continue;
+      // Already done it today? Nothing to tell them.
+      let done = false;
+      for (const a of m.addrs || [m.addr]) {
+        const rr = await box(env, "a:" + a).fetch(`https://box/result-get?from=${day}&to=${day}`);
+        if (rr.status === 200 && ((await rr.json())[day] || {})[puzzle]) { done = true; break; }
+      }
+      if (done) continue;
+      for (const t of await inboxAll(env, m.addr, entry)) if (!tokens.some((x) => x.token === t.token)) tokens.push(t);
+    }
+    const dead = [];
+    for (const t of tokens) {
+      const status = await pushAPNs(env, t, { aps: { alert: { title: `${me.name} finished today's ${PUZZLE_NAMES[puzzle]} first ⏱`, body: `${clock}. Can you beat it?` }, sound: "default" },
+                                             dare: { puzzle, day, secs, name: me.name } });
+      if (status === 410 || status === 400 || status === 404) dead.push(t);
+    }
+    for (const t of dead) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
+  }
+}
+
 /// "Vihaan is in Khannas": everyone already in the family hears a new member (or a member's
 /// new phone) arrived, so they know tests and invites now reach them.
 async function notifyJoin(env, f, typed, addr, devices) {
@@ -468,6 +545,15 @@ export class Box {
       await this.storage.setAlarm(Date.now() + INBOX_DAYS * 86400e3);
       return json({ ok: true, tokens: (await this.storage.get("tokens")) || [] });
     }
+    // The registry (one box): addresses with a browser to nudge in the evening.
+    if (op === "/reg-add" || op === "/reg-drop") {
+      const { addr } = await request.json();
+      let list = ((await this.storage.get("addrs")) || []).filter((a) => a !== addr);
+      if (op === "/reg-add") list.push(addr);
+      await this.storage.put("addrs", list.slice(-20000));
+      return json({ ok: true });
+    }
+    if (op === "/reg-list") return json((await this.storage.get("addrs")) || []);
     if (op === "/token-add") {
       const t = await request.json();
       let tokens = ((await this.storage.get("tokens")) || []).filter((x) => x.token !== t.token);
@@ -500,6 +586,16 @@ export class Box {
       const out = {};
       for (const k of Object.keys(all)) { const d = parseInt(k, 10); if (d >= from && d <= to) out[k] = all[k]; }
       return json(out);
+    }
+    // The first to finish a puzzle today (per family): true once, for whoever asks first.
+    if (op === "/first-mark") {
+      const { key, day } = await request.json();
+      const firsts = (await this.storage.get("firsts")) || {};
+      for (const k of Object.keys(firsts)) if (firsts[k] < day - 2) delete firsts[k];
+      if (key in firsts) return json({ first: false });
+      firsts[key] = day;
+      await this.storage.put("firsts", firsts);
+      return json({ first: true });
     }
     if (op === "/family-get") {
       const f = await this.storage.get("family");

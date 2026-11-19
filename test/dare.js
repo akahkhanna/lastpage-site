@@ -47,7 +47,8 @@
     try { addr = localStorage.getItem("lp.address") || ""; fams = JSON.parse(localStorage.getItem("lp.families") || "[]"); } catch {}
     if (!addr || !fams.length) return;
     fetch("https://lastpage-api.akkikhanna.workers.dev/a/" + addr + "/result", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ day, puzzle, seconds: secs, hints: hints || 0 }) }).catch(() => {});
+      // The families too, so the first of them to finish today can tell the others.
+      body: JSON.stringify({ day, puzzle, seconds: secs, hints: hints || 0, fams: fams.map((f) => f.code).slice(0, 5) }) }).catch(() => {});
   }
   // "next: dot to dot →": the daily puzzles not yet done today, in a fixed order; all done → the board.
   const PUZZLES = [["sudoku.html", "lp.minisudoku.", "Mini sudoku"], ["dots.html", "lp.dots.", "Dot to dot"], ["trail.html", "lp.trail.", "Word trail"]];
