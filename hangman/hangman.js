@@ -91,7 +91,7 @@
     const g = Hangman.game(o.w, o.m);
     const M = g.mode;
     $("make").hidden = true; $("play").hidden = false;
-    $("playTitle").textContent = M.banner ? M.title : "hangman";
+    $("playTitle").textContent = M.banner ? M.title : "Hangman";
     const from = o.f ? o.f.toUpperCase() : "Someone";
     $("from-line").textContent = `${from} challenges you: guess the ${M.thing}!`;
     if (o.c) { $("hintLine").hidden = false; $("hintLine").textContent = `hint: ${o.c}`; }
@@ -125,7 +125,7 @@
       $("end").hidden = false;
       // Reply in the chat without giving the word away to anyone who hasn't played yet.
       $("sendBack").onclick = () => share(won
-        ? `Guessed ${from === "Someone" ? "your" : from + "'s"} ${M.thing} with ${wrong} wrong guess${wrong === 1 ? "" : "es"} ✅ Your turn:`
+        ? `Guessed ${from === "Someone" ? "your" : from + "'s"} ${M.thing} with ${wrong} wrong guess${wrong === 1 ? "" : "es"} ✅ Anyone else want a go?`
         : `${from === "Someone" ? "Your" : from + "'s"} ${M.thing} beat me 😩 Can you get it?`, location.href, "copied2");
     }
     function press(letter) {
@@ -138,20 +138,22 @@
       render();
     }
     $("keys").addEventListener("click", (e) => { const k = e.target.closest(".key"); if (k) press(k.dataset.k); });
-    document.addEventListener("keydown", (e) => { if (/^[a-z]$/i.test(e.key) && !e.metaKey && !e.ctrlKey) press(e.key.toUpperCase()); });
+    document.addEventListener("keydown", (e) => { if (/^[a-z0-9]$/i.test(e.key) && !e.metaKey && !e.ctrlKey) press(e.key.toUpperCase()); });
     render();
   }
 
   $("own").addEventListener("click", () => {
     history.replaceState(null, "", location.pathname);
-    $("play").hidden = true; $("make").hidden = false; setMode("h"); $("secret").focus();
+    $("play").hidden = true; $("make").hidden = false;
+    try { $("from").value = localStorage.getItem("lp.from") || localStorage.getItem("lp.name") || ""; } catch {}
+    setMode((o && o.m) || "h"); $("secret").focus();   // the same kind of game they just played
   });
 
   const o = decode(location.hash.slice(1));
   if (o) play(o);
   else {
     $("make").hidden = false;
-    try { $("from").value = localStorage.getItem("lp.from") || ""; } catch {}
+    try { $("from").value = localStorage.getItem("lp.from") || localStorage.getItem("lp.name") || ""; } catch {}
     // From a game page: hangman, Bollywood or Hollywood already picked (?m=h|b|y).
     const m = new URLSearchParams(location.search).get("m");
     setMode(["h", "b", "y"].includes(m) ? m : "h");

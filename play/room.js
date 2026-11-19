@@ -67,7 +67,7 @@
     on(message, membersChanged) { onMessage = message; onMembers = membersChanged; },
     ended() { wantOpen = false; },
   };
-  const TITLES = { noughtsCrosses: "Noughts & crosses", bookCricket: "Book cricket", dotsBoxes: "Dots & boxes", hangman: "Hangman", bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "Name place animal thing" };
+  const TITLES = { noughtsCrosses: "Noughts & crosses", bookCricket: "Book cricket", dotsBoxes: "Dots & boxes", hangman: "Hangman", bollywood: "Bollywood", hollywood: "Hollywood", namePlace: "Name Place Animal Thing" };
   function begin(el) {
     if (game === "noughtsCrosses") noughts(el, ctx);
     else if (game === "bookCricket") cricket(el, ctx);
@@ -151,7 +151,7 @@
           html += `<div><span class="page" id="flip" role="button"><small>Page No.</small><b id="pg">${lastPage ?? "?"}</b></span><span class="call">${call}</span><p class="note">tap the book to flip ↻</p></div>`;
         } else html += `<p class="note">${esc(curTeam)} flipping on their side… ${lastPage != null ? "page " + lastPage : ""}</p>`;
       }
-      html += card(cur);
+      html += `<p class="note"><b>${esc(curTeam)}</b></p>` + card(cur);
       if (first.over && !chase) {
         html += `<p class="big" style="font-size:22px">innings over!! target ${target}</p>`;
         html += iBatFirst ? `<p class="note">${esc(t1)} to bat, on their side…</p>` : `<button class="go" id="bat">our turn to bat →</button>`;
@@ -160,24 +160,31 @@
         if (chase.runs > first.runs) { const w = 3 - chase.wickets; html += `<p class="big">${iBatFirst ? esc(t1) + " won by " + w + " wkt" + (w === 1 ? "" : "s") : "WON!! by " + w + " wkt" + (w === 1 ? "" : "s")}</p>`; }
         else if (chase.runs === first.runs) html += `<p class="big">TIE!!</p>`;
         else { const r = first.runs - chase.runs; html += `<p class="big">${iBatFirst ? "WON!! by " + r + " run" + (r === 1 ? "" : "s") : esc(t0) + " won by " + r + " run" + (r === 1 ? "" : "s")}</p>`; }
+        if (c.restart) html += `<button class="go" id="newMatch">play again →</button>`;
       }
       html += `<p class="note" id="rnote"></p>`;
       el.innerHTML = html;
       const flipEl = el.querySelector("#flip"); if (flipEl) flipEl.addEventListener("click", flip);
+      const again = el.querySelector("#newMatch"); if (again) again.addEventListener("click", () => c.restart());
       const bat = el.querySelector("#bat"); if (bat) bat.addEventListener("click", () => { q = []; lastPage = null; c.send({ chase: {} }); render(); });
     }
+    // The page counts the moment it's flipped (a friend may already be batting on it); the
+    // flicker of page numbers is only for show.
     async function flip() {
       if (flipping) return; flipping = true;
       const page = (Math.floor(Math.random() * 100) + 1) * 2;
       c.send({ page: { _0: page } });
+      if (q) q.push(page); else p.push(page);
       const pg = el.querySelector("#pg");
       for (let i = 0; i < 7 && pg; i++) { pg.textContent = (Math.floor(Math.random() * 100) + 1) * 2; await new Promise((r) => setTimeout(r, 60)); }
-      land(page); flipping = false;
+      lastPage = page; flipping = false; render();
     }
-    function land(page) { if (q) q.push(page); else p.push(page); lastPage = page; render(); }
+    function land(page) { if (q) q.push(page); else p.push(page); lastPage = page; startChase(); render(); }
+    let chaseAsked = false;
+    function startChase() { if (chaseAsked && P.innings(p).over && !q) { q = []; lastPage = null; chaseAsked = false; } }
     c.on((m) => {
       if (m.page) land(m.page._0);
-      else if (m.chase) { if (P.innings(p).over && !q) { q = []; lastPage = null; render(); } }
+      else if (m.chase) { chaseAsked = true; startChase(); render(); }
       else if (m.status) c.note(m.status._0 || "");
       else if (m.bye) { el.innerHTML = `<p class="big">${esc(their)} ${m.bye.caught ? "got caught by Mrs T.!! 😂" : "left the game"}</p>` + el.innerHTML; c.ended(); }
     }, () => render());
@@ -197,7 +204,7 @@
   function run(el, roomCode, name) {
     code = roomCode.toUpperCase(); app.name = name;
     const w = lobby(el);
-    app.note = (t) => { const n = w.querySelector("#rnote"); if (n) n.textContent = t; };
+    app.note = (t) => { const n = document.getElementById("rnote"); if (n) n.textContent = t; };
     w.innerHTML = `<h2>Joining…</h2><p class="live-hint">Room <span class="live-code">${esc(code)}</span> · joining as ${esc(name)}</p><p class="live-hint" id="rnote"></p>${change}`;
     onReady = () => begin(el);
     onMembers = () => {
@@ -227,7 +234,7 @@
     if (root.LPPush) root.LPPush.offer(w.querySelector("#pushOffer"));
     const copy = w.querySelector("#copyLink"); if (copy) copy.addEventListener("click", async () => { try { await navigator.clipboard.writeText(link); copy.textContent = "Copied"; } catch { prompt("Copy this:", link); } });
     code = c; app.name = name;
-    app.note = (t) => { const n = w.querySelector("#rnote"); if (n) n.textContent = t; };
+    app.note = (t) => { const n = document.getElementById("rnote"); if (n) n.textContent = t; };
     onReady = () => begin(el);
     onMembers = () => {
       if (started) return;

@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>That Last Page – Privacy Policy</title><link rel="manifest" href="/manifest.json">
+<title>Privacy · That Last Page</title><link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icons/icon-180.png">
 <meta name="theme-color" content="#fbf8f0">
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))</script>
@@ -14,7 +14,7 @@
   <div class="wrap header-row">
     <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
     <nav class="site-nav" aria-label="Pages">
-      <a href="/games/" aria-current="page">Games</a>
+      <a href="/games/">Games</a>
       <a href="/homework/">Test papers</a>
       <a href="/board/">Family board</a>
     </nav>
@@ -22,38 +22,38 @@
 </header>
 <main class="sheet"><div class="wrap content game-page">
 <h1>Privacy Policy</h1>
-<p class="small">That Last Page · Effective 16 November 2026</p>
+<p class="small">That Last Page · Effective 19 November 2026</p>
 
-<p>That Last Page has no accounts, no advertising, no analytics and no tracking, and contains no third-party code that does any of these. Almost everything stays on your iPhone. The one exception is <b>homework</b> (below), which goes through a small server of ours so that it can reach the other person without a link; it is never linked to who you are.</p>
+<p>That Last Page has no accounts, no advertising, no analytics and no tracking, and contains no third-party code that does any of these. Your notebook stays on your iPhone. The exceptions are the things you do with family and friends (test papers, live games, the family board, puzzle challenges and notifications), which go through a small server of ours so they can reach the other person. None of it is linked to who you are.</p>
 
 <h2>What stays on your iPhone</h2>
-<p>Your notes and drawings, the name, class and school you write on the cover, friends' names you type into games, and your game results and teacher score are saved only on your device. They are never sent to us or anyone else. Deleting the app deletes them.</p>
+<p>Your notes and drawings, the name, class and school you write on the cover, friends' names you type into games, your game results and teacher score, and copies of your old test papers are saved only on your device. Deleting the app deletes them.</p>
 
 <h2>Sharing</h2>
-<p>If you choose "send it" or "send it home", the app opens the standard iOS share sheet with a picture of the result. You decide where it goes. The app never sends messages itself and never reads your contacts.</p>
+<p>If you choose "send it" or "send it home", the app opens the standard iOS share sheet (or WhatsApp) with the result or a link. You decide where it goes. The app never sends messages itself and never reads your contacts.</p>
 
-<h2>Playing a friend on their own phone</h2>
-<p>From version 1.1, games with a friend on their own phone go through Apple's Game Center: Apple's servers connect the two phones and carry your moves (your name as it appears in the game, your moves, and in hangman the word you set). We never see them, and nothing is sent to us. Game Center is covered by Apple's privacy policy. Scores for the leaderboards and achievements are likewise held by Apple's Game Center under your Apple account. Inviting someone by sharing a link puts only the game's name and a random code in the link.</p>
-<p>In version 1.0, "two phones" instead connected the two phones directly over the local Wi-Fi network (which is why that version asks for Local Network access); nothing went through any server.</p>
+<h2>Playing a friend on their own phone or in a browser</h2>
+<p>Live games with a friend go through a "room" on our server (below): the players' names as typed and that game's moves. If you instead invite a Game Center friend, Apple's Game Center connects the phones and carries the moves; we don't see them, and Game Center is covered by Apple's privacy policy. Leaderboard scores and achievements are held by Game Center under your Apple account.</p>
+<p>In version 1.0, "two phones" connected the two phones directly over the local Wi-Fi network (which is why that version asks for Local Network access); nothing went through any server.</p>
 
-<h2>Tests from the family, live games and the family board</h2>
-<p>These three go through a small server we run (on Cloudflare), so that they can reach the other person without a link. Each notebook makes up its own <b>address</b> (such as VIHAAN-7K2M), not tied to an account, a phone number, an email or an Apple ID; we have no way to connect it to a person.</p>
+<h2>What goes through our server</h2>
+<p>We run a small server on Cloudflare. Each notebook, and each browser, makes up its own <b>address</b> (such as VIHAAN-7K2M), not tied to an account, a phone number, an email or an Apple ID; we have no way to connect it to a person. If you join the same family under the same name on your iPhone and in a browser, the server notes that those addresses are one person, so a test or game reaches both.</p>
 <ul>
-<li><b>Tests</b>: the setter's and child's names as typed, the questions, the answers, the ticks and the remark. Deleted 30 days after the last change.</li>
-<li><b>Live games</b> (a friend on their own phone or in a browser): the players' names as typed and the moves of that game, kept in a "room" for a day after the last move so a phone that drops out can rejoin.</li>
-<li><b>The family board</b>: your daily puzzle times, against your address, for 90 days; a family (a name, its members' names and addresses) for 180 days after the last change.</li>
-<li><b>Notifications</b>: if you allow them, your phone's push token against your address, so a test or a game invite can knock.</li>
+<li><b>Test papers</b>: the setter's and child's names as typed, the questions, the answers, the ticks and the remark. Deleted 30 days after the last change.</li>
+<li><b>Live games</b>: the players' names as typed and the moves of that game, kept in a "room" for a day after the last move so a player who drops out can rejoin.</li>
+<li><b>Families</b>: the family's name, its members' names as typed and their addresses. Deleted 180 days after the last change, or straight away for you when you leave.</li>
+<li><b>Your address's box</b>: your daily puzzle times (for the family board), what's been sent to you (tests, game invites, puzzle challenges with the challenger's name and time) and, if you allow notifications, your iPhone's push token or your browser's push subscription (an address at your browser maker's push service). Deleted 60 days after it was last used.</li>
 </ul>
 <p>Anyone with a test's or room's six-letter code, or a family's link, can see what's in it, so share them only with the people concerned. Tests can also be sent as a long link carrying everything inside it, in which case nothing is stored anywhere. Like any web host, Cloudflare may keep standard technical logs of connections (such as IP addresses); we don't receive or use them.</p>
 
 <h2>Motion sensor</h2>
 <p>The "stand on the bench" punishment uses the iPhone's motion sensor to check the phone is held still. This is processed on the device only while that screen is open and is not stored.</p>
 
-<h2>The game pages on this website</h2>
-<p>The FLAMES and "guess my word" pages on this website (for sharing a result or a challenge with someone who doesn't have the app) work entirely in your browser. The names, words and hints are kept in the part of the link after the "#", which browsers never send to the server, so we never see them. The challenge page remembers the name you type as the sender in your own browser, for next time; it never leaves your device. The pages use no cookies, analytics or trackers. They are hosted by Vercel, which, like any web host, may keep standard technical logs of visits (such as IP addresses); we don't receive or use them.</p>
+<h2>This website</h2>
+<p>The games on this website run in your browser. Playing the phone, FLAMES and today's puzzles stay in your browser entirely (except your puzzle times, if you're in a family, for its board); names, words and results in a shared link sit after the "#", which browsers never send to a server. Live games, test papers, the family board, challenges and notifications use our server as described above. Your browser keeps its address, the names you play and send under, your families and your puzzle results in its own storage on your device; clearing the site's data removes them. If you tap the bell, your browser asks your permission and then registers its push subscription with us, so a game or test can notify you; tap it again to turn that off. The pages use no cookies, analytics or trackers. They are hosted by Vercel, which, like any web host, may keep standard technical logs of visits (such as IP addresses); we don't receive or use them.</p>
 
 <h2>Children</h2>
-<p>The app has no accounts and asks for nothing about anyone. What a child's use sends anywhere is what they choose to do with the family: a test paper they hand in, moves in a game with a family member, puzzle times for the family board, each under a made-up address and their first name as typed, through our server as described above; none of it is linked to the child's identity, and all of it is deleted on the schedules above.</p>
+<p>The app and website have no accounts and ask for nothing about anyone. What a child's use sends anywhere is what they choose to do with family and friends: a test paper they hand in, moves in a live game, puzzle times for the family board, each under a made-up address and their first name as typed, through our server as described above. None of it is linked to the child's identity, and all of it is deleted on the schedules above.</p>
 
 <h2>Changes</h2>
 <p>If this policy changes, the new version will be posted on this page with a new date.</p>
@@ -63,6 +63,6 @@
 
 
 
-<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
 </div></main><script src="/push.js"></script>
 </body></html>

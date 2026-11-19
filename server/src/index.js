@@ -670,7 +670,8 @@ export class Room {
   async left(ws) {
     const a = ws.deserializeAttachment();
     try { ws.close(); } catch {}
-    if (!a || this.state.getWebSockets(a.id).length > 0) return;
+    // The socket that's closing can still be in the list: only another open one keeps them "here".
+    if (!a || this.state.getWebSockets(a.id).some((w) => w !== ws && w.readyState === 1)) return;
     const meta = await this.meta();
     if (!meta) return;
     this.broadcast({ t: "gone", label: a.label, members: meta.members.map((m) => m.label) }, a.id);

@@ -1,6 +1,6 @@
 // That Last Page, installed: the pages and fonts are kept so the daily puzzles open without
 // signal; anything live (rooms, tests, the board) always goes to the network.
-const CACHE = "lastpage-v12";
+const CACHE = "lastpage-v13";
 const META = "lastpage-meta";   // this browser's test address, for the push handler
 const KEEP = ["/", "/games/", "/test/sudoku.html", "/test/dots.html", "/test/trail.html", "/test/test.css", "/test/dare.js",
   "/test/sudoku.js", "/test/dots.js", "/test/trail.js", "/play/", "/play/play.js", "/play/room.js", "/play/live.js", "/play/solo.js", "/homework/", "/homework/homework.js",
@@ -19,7 +19,7 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(fetch(e.request).then((r) => {
     if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
     return r;
-  }).catch(() => caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || caches.match("/games/"))));
+  }).catch(() => caches.match(e.request, { ignoreSearch: true }).then((hit) => hit || (e.request.mode === "navigate" ? caches.match("/games/") : Response.error()))));
 });
 
 // ---------- notifications ----------

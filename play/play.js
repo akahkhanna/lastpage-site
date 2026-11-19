@@ -56,7 +56,7 @@
   // You're whoever's turn it is; opening your own sent link again just shows it, waiting.
   function whoAmI(p, myName) {
     const turn = whoseTurn(p);
-    if (p.n[turn] && p.n[turn] !== myName && p.n[1 - turn] === myName) return 1 - turn;
+    if (p.n[1 - turn] === myName && p.n[turn] !== myName) return 1 - turn;
     return turn;
   }
   // The winning three struck through in red pen, the way you'd do it on paper (drawn on, not just shaded).

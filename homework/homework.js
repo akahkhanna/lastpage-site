@@ -392,6 +392,7 @@
     openPaper(o);
   } else {
     await showHub();
+    if (raw) { $("hubNote").hidden = false; $("hubNote").textContent = "That link looks broken. Ask them to send it again, or open it with its code."; history.replaceState(null, "", location.pathname); }
   }
   })();
 })();

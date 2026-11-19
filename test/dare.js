@@ -57,7 +57,7 @@
     const here = location.pathname.split("/").pop();
     const left = PUZZLES.filter(([page, key]) => page !== here && !localStorage.getItem(key + day));
     el.innerHTML = left.length
-      ? "Next: " + left.map(([page, , title]) => `<a href="${page}${location.hash}">${title} →</a>`).join(" · ")
+      ? "Next: " + left.map(([page, , title]) => `<a href="${page}${(location.hash.match(/^#\d+/) || [""])[0]}">${title} →</a>`).join(" · ")
       : `All three done for today ✓ <a href="../board/">Family board →</a>`;
   }
   // "Challenge someone": your families with everyone listed; a tap sends "beat my 1:12" to them

@@ -142,11 +142,14 @@
     }
     function guessNext() {
       if (!mirror || mirror.over()) return;
-      const left = [...ORDER[mode]].filter((L) => !used.has(L) && !mirror.given.has(L));
+      let left = [...ORDER[mode]].filter((L) => !used.has(L) && !mirror.given.has(L));
       if (!left.length) return;
+      // A one-character word still blank ("_ IDIOTS", "RACE _") is most likely a number.
+      const words = mirror.revealed().map((c) => c ?? "_").join("").split(" ");
+      if (words.some((w) => w === "_")) left = [..."2314567890"].filter((L) => left.includes(L)).concat(left.filter((L) => !/[0-9]/.test(L)));
       // Mostly the likely letter, sometimes a hunch, so it isn't unbeatable.
       const letters = left.filter((c) => /[A-Z]/.test(c));
-      const L = Math.random() < 0.25 && letters.length ? pickOne(letters) : left[0];
+      const L = /[0-9]/.test(left[0]) || !letters.length || Math.random() >= 0.25 ? left[0] : pickOne(letters);
       used.add(L); mirror.guess(L); say({ guess: { _0: L } });
       later(guessNext, 1000);
     }
@@ -161,18 +164,20 @@
 
   // ---------- the pretend room ----------
   // You are always the one in charge except in hangman, where the phone sets the first word.
-  function start(el, kind, name) {
+  let current = 0;
+  function start(el, kind, name, restart) {
     let onMessage = null;
-    const say = (m) => onMessage && onMessage(m, BOT);
+    const game = ++current;   // a new game silences the old one, whose phone may still be mid-move
+    const say = (m) => game === current && onMessage && onMessage(m, BOT);
     const hangMode = kind === "bollywood" ? "b" : kind === "hollywood" ? "y" : kind === "hangman" ? "h" : null;
     const brain = kind === "noughtsCrosses" ? noughtsBrain(say) : kind === "bookCricket" ? cricketBrain(say)
       : kind === "dotsBoxes" ? dotsBrain(say) : hangMode ? hangmanBrain(say, hangMode) : null;
     if (!brain) { el.innerHTML = `<p class="status">This one needs friends: invite them instead.</p>`; return; }
     const ctx = {
       me: name, host: hangMode ? BOT : name, members: [name, BOT], name,
-      them: () => BOT, note: () => {}, ended() {},
+      them: () => BOT, note: () => {}, ended() {}, restart,
       on(message) { onMessage = message; },
-      send(m) { setTimeout(() => brain.hear(m), 0); },
+      send(m) { setTimeout(() => game === current && brain.hear(m), 0); },
     };
     const games = Object.assign({}, root.Room.games, root.Live);
     games[kind](el, ctx);

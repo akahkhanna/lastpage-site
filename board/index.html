@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Family board – That Last Page</title>
+<title>Family board · That Last Page</title>
 <meta property="og:title" content="Family board ✏️ That Last Page">
 <meta property="og:description" content="Today's puzzle times, by name. Join the family and your times line up too.">
 
@@ -17,7 +17,8 @@
   .fams button { min-height:36px; padding:4px 12px; border:1px solid var(--border); border-radius:999px; background:#fbf7ed; font:inherit; font-size:14px; cursor:pointer }
   .fams button.on { color:var(--red); border-color:var(--red); font-weight:700 }
   .board-symbol.sudoku { background:#eadab4; color:#4b4433 } .board-symbol.dots { background:#dce5ee; color:#35486d } .board-symbol.words { background:#e4ead8; color:#424f39 }
-  a.board-shortcut, a.button { text-decoration:none; color:inherit }
+  a.board-shortcut, a.button:not(.primary) { text-decoration:none; color:inherit }
+  a.button.primary { text-decoration:none }
 </style>
 <body>
 <header class="site-header">
@@ -71,7 +72,7 @@
         <a class="board-shortcut" href="../test/trail.html"><span class="board-symbol words" aria-hidden="true">Aa</span>Word trail <span class="arrow" aria-hidden="true">→</span></a>
       </div>
     </section>
-    <footer class="page-footer board-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+    <footer class="page-footer board-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
   </section>
 </main>
 <dialog id="dlg" aria-labelledby="dlgTitle">

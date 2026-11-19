@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Your turn – That Last Page</title>
+<title>Your turn · That Last Page</title>
 <meta name="description" content="A game from the back of the notebook, played a turn at a time by sending links. No app needed.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="That Last Page">
@@ -60,7 +60,7 @@
   <p class="pencil" id="copied" hidden>Copied. Paste it in the chat.</p>
   
 
-<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a></footer>
+<footer class="page-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
 </div></main>
 <script src="play.js"></script>
 <script src="../hangman/rules.js"></script>
@@ -88,8 +88,9 @@
   // No game in the link: start one (or the link was damaged).
   function start(broken) {
     document.getElementById("title").textContent = "Play a friend";
+    document.title = "Play a friend · That Last Page";
     app.innerHTML = `${broken ? '<p class="status" style="color:var(--red)">That link looks broken. Ask for it again, or start a new game:</p>' : ""}
-      <p><a class="button primary" href="#live">Play live, right now</a> <span class="note">against the app or another browser</span></p>
+      <p><a class="button primary" href="/games/">Pick a game <span aria-hidden="true">→</span></a> <span class="note">play the phone, or a friend live</span></p>
       <p class="status">Or take turns: make your move and send the link.</p>
       <p><label>Your name<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="name" id="nm" value="${esc(myName)}" maxlength="20" placeholder="your name"></label></p>
       <button class="go" data-g="nc">Noughts & crosses →</button>
@@ -233,6 +234,7 @@
 
   // ---------- live rooms (against the app, or another browser) ----------
   function live(roomCode) {
+    document.title = (roomCode ? "Join a live game" : "Start a live game") + " · That Last Page";
     document.getElementById("title").hidden = true;
     const pageBack = document.querySelector("a.back"); if (pageBack) pageBack.hidden = true;   // the panel has its own
     const T = window.Room.TITLES;
@@ -272,7 +274,14 @@
         const here = (info.members || []).filter((m) => m.here).map((m) => m.label);
         g.textContent = (T[info.game] || "A live game") + (here.length ? ` · ${here.join(", ")} ${here.length === 1 ? "is" : "are"} waiting` : "");
         art(info.game);
-      }).catch(() => {});
+      }).catch((e) => {
+        // No such room (it's over, or the code's mistyped): say so instead of joining for ever.
+        if (!/no such room|not a code/i.test(e.message)) return;
+        document.getElementById("liveForm").hidden = true;
+        const h1 = document.querySelector("#liveCopy h1"); if (h1) h1.hidden = true;
+        const w = document.getElementById("liveWaiting"); w.hidden = false;
+        w.innerHTML = `<h2>That game has ended</h2><p class="live-hint">Or the link is wrong. Ask them for a new one, or start your own.</p><p><a class="button primary" href="/games/">Pick a game <span aria-hidden="true">→</span></a></p>`;
+      });
       document.getElementById("liveForm").addEventListener("submit", (e) => { e.preventDefault(); const n = takeName(); if (n) window.Room.run(app, roomCode, n); });
     } else {
       document.getElementById("liveForm").addEventListener("submit", (e) => e.preventDefault());
@@ -295,7 +304,8 @@
     namePlace: { title: "Name Place Animal Thing", rule: "One letter, everyone writes at once. 2 to 8 players.", players: true, art: "crosses" },
   };
   function gamePage(kind) {
-    const G = INFO[kind] || INFO.noughtsCrosses;
+    const G = INFO[kind];
+    if (!G) { location.replace("/games/"); return; }
     document.getElementById("title").hidden = true;
     const pageBack = document.querySelector("a.back"); if (pageBack) pageBack.hidden = true;
     document.title = G.title + " · That Last Page";
@@ -335,14 +345,18 @@
     app.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", (e) => {
       if (e.target.closest("select")) return;
       const act = b.dataset.act;
-      if (act === "link") { location.href = "/hangman/?m=" + ({ hangman: "h", bollywood: "b", hollywood: "y" }[variant]); return; }
+      if (act === "link") {
+        const typed = nameIn.value.trim(); if (typed) { localStorage.setItem("lp.from", typed); localStorage.setItem(NAME_KEY, typed.toUpperCase()); }
+        location.href = "/hangman/?m=" + ({ hangman: "h", bollywood: "b", hollywood: "y" }[variant]); return;
+      }
       const n = takeName(); if (!n) return;
       if (act === "solo") return solo(G.word ? variant : kind, n);
       if (act === "live") return window.Room.start(app, G.word ? variant : kind, n, G.players ? parseInt(document.getElementById("npl").value, 10) : 2);
       if (act === "turns") {
         post = G.turns === "nc" ? { g: "nc", n: [n, ""], b: ".........", s: "t", k: [0, 0, 0] } : { g: "bc", n: [n, ""], p: [] };
         me = 0; opened = JSON.parse(JSON.stringify(post));
-        document.querySelector("a.back").hidden = false; document.getElementById("title").hidden = false;
+        const back = document.querySelector("a.back"); back.hidden = false; back.href = location.pathname + location.search; back.textContent = "← " + G.title;
+        document.getElementById("title").hidden = false;
         render();
       }
     }));
@@ -355,7 +369,7 @@
       <h1 style="font-size:clamp(32px,5vw,48px)">${esc(T[kind] || "")}</h1>
       <p class="live-hint">${esc(name)} vs the phone · <button class="text-button" type="button" id="soloNew">new game</button></p>
       <div id="soloGame"></div>`;
-    const go = () => window.Solo.start(document.getElementById("soloGame"), kind, name);
+    const go = () => window.Solo.start(document.getElementById("soloGame"), kind, name, go);
     document.getElementById("soloNew").addEventListener("click", go);
     go();
   }

@@ -97,6 +97,7 @@
     } else {
       answer.textContent = "same letters!! try again";
     }
+    $("send").hidden = !r.answer;
     answer.classList.add("on"); reaction.classList.add("on");
     $("skip").hidden = true;
     $("after").hidden = false;
@@ -109,7 +110,7 @@
   $("send").addEventListener("click", async () => {
     const { a, b } = $("send").dataset;
     const url = linkFor(a, b);
-    const text = `I did FLAMES with ${clean(b).toUpperCase()}… open it 😏`;
+    const text = `FLAMES: ${clean(a).toUpperCase()} + ${clean(b).toUpperCase()}… open it 😏`;
     if (navigator.share) {
       try { await navigator.share({ title: "FLAMES", text, url }); return; } catch (e) { if (e.name === "AbortError") return; }
     }
@@ -141,7 +142,7 @@
 
   const names = decode(location.hash.slice(1));
   if (names) {
-    $("intro").textContent = "someone did FLAMES with your name…";
+    $("intro").textContent = `${clean(names[0]).toUpperCase()} did FLAMES with your name…`;
     setTimeout(() => work(clean(names[0]), clean(names[1])), 600);
   } else {
     showForm("");
