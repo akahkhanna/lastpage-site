@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<script>/* Old addresses: the GitHub copy goes straight to thatlastpage.app; the old vercel.app address
+   brings this browser's saved bits (address, name, families, puzzle results) along, once. */
+(function(){var h=location.hostname,to=location.pathname+location.search+location.hash;
+if(h==="akahkhanna.github.io"){location.replace("https://thatlastpage.app"+to.replace(/^\/lastpage-site/,""));return}
+if(h==="thatlastpage.vercel.app"){var d={};try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf("lp.")===0)d[k]=localStorage.getItem(k)}}catch(e){}
+location.replace("https://thatlastpage.app/move.html#"+encodeURIComponent(JSON.stringify({d:d,to:to})));
+document.write('<plaintext style="display:none">')/* the rest of the old page never runs */}})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Word trail · That Last Page</title>
 <meta name="description" content="Today's word trail: find 4 hidden words through touching letters, using every letter once.">

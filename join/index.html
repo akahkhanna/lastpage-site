@@ -4,7 +4,13 @@
   // A room code in the link: play in the browser straight away (the app opens such links itself).
   if (/^#[A-HJ-NP-Z2-9]{6}$/i.test(location.hash)) location.replace("../play/#r-" + location.hash.slice(1).toUpperCase());
 </script>
-<script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
+<script>/* Old addresses: the GitHub copy goes straight to thatlastpage.app; the old vercel.app address
+   brings this browser's saved bits (address, name, families, puzzle results) along, once. */
+(function(){var h=location.hostname,to=location.pathname+location.search+location.hash;
+if(h==="akahkhanna.github.io"){location.replace("https://thatlastpage.app"+to.replace(/^\/lastpage-site/,""));return}
+if(h==="thatlastpage.vercel.app"){var d={};try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf("lp.")===0)d[k]=localStorage.getItem(k)}}catch(e){}
+location.replace("https://thatlastpage.app/move.html#"+encodeURIComponent(JSON.stringify({d:d,to:to})));
+document.write('<plaintext style="display:none">')/* the rest of the old page never runs */}})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Join a game · That Last Page</title>
 <meta property="og:title" content="Come and play on That Last Page ✏️">

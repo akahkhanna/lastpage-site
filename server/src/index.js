@@ -471,7 +471,7 @@ async function vapidToken(env, audience) {
   const key = await crypto.subtle.importKey("jwk", JSON.parse(env.VAPID_PRIVATE), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
   const enc = new TextEncoder();
   const header = b64url(enc.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
-  const claims = b64url(enc.encode(JSON.stringify({ aud: audience, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: "https://thatlastpage.vercel.app" })));
+  const claims = b64url(enc.encode(JSON.stringify({ aud: audience, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: "mailto:hello@thatlastpage.app" })));
   const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, enc.encode(header + "." + claims));
   vapidJWT[audience] = { value: header + "." + claims + "." + b64url(sig), at: Date.now() };
   return vapidJWT[audience].value;

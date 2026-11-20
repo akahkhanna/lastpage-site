@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>That Last Page</title><meta name="robots" content="noindex">
+<script>
+/* From the old address (thatlastpage.vercel.app): this browser's saved bits arrive in the "#", are
+   kept here (anything already saved on this address wins), and you carry on to the page you
+   were opening. */
+(function () {
+  var to = "/games/";
+  try {
+    var o = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+    if (o && o.d) for (var k in o.d) if (k.indexOf("lp.") === 0 && localStorage.getItem(k) == null) localStorage.setItem(k, o.d[k]);
+    if (o && typeof o.to === "string" && o.to.charAt(0) === "/" && o.to.charAt(1) !== "/") to = o.to;
+  } catch (e) {}
+  location.replace(to);
+})();
+</script></head><body></body></html>
