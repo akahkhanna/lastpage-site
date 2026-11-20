@@ -370,9 +370,12 @@ async function dareTo(request, env, addr) {
 }
 
 /// "AK finished today's mini sudoku first: 1:12": the first in a family to finish a puzzle
-/// today tells the others (who haven't done it yet), as a challenge with that time to beat.
-/// Once per family, puzzle and day: the family's own box decides who was first.
+/// today tells the others, as a challenge with that time to beat. Once a day: per family (the
+/// family's box decides who was first), and per person (their own box remembers), so someone in
+/// two of your families hears it once, not twice, and not again for the next puzzle.
 async function firstFinish(env, addr, codes, puzzle, day, secs) {
+  const recipients = new Map();   // first address → member, across all the families
+  let myName = null;
   for (const code of codes) {
     const fam = box(env, "f:" + code);
     const fr = await fam.fetch("https://box/family-get");
@@ -380,30 +383,39 @@ async function firstFinish(env, addr, codes, puzzle, day, secs) {
     const f = await fr.json();
     const me = f.members.find((m) => (m.addrs || [m.addr]).includes(addr));
     if (!me) continue;   // not theirs to announce
-    const mark = await (await fam.fetch("https://box/first-mark", { method: "POST", body: JSON.stringify({ key: `${day}:${puzzle}`, day }) })).json();
-    if (!mark.first) continue;
-    const entry = { kind: "dare", first: true, code: `${puzzle}-${day}-${me.name.toUpperCase()}`, stage: "set", from: me.name, puzzle, day, secs, at: Date.now() };
-    const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
-    const tokens = [];
+    const mark = await (await fam.fetch("https://box/first-mark", { method: "POST", body: JSON.stringify({ key: String(day), day }) })).json();
+    if (!mark.first) continue;   // someone in this family was first today
+    myName = myName || me.name;
     for (const m of f.members) {
-      if (m === me) continue;
-      // Already done it today? Nothing to tell them.
-      let done = false;
-      for (const a of m.addrs || [m.addr]) {
-        const rr = await box(env, "a:" + a).fetch(`https://box/result-get?from=${day}&to=${day}`);
-        if (rr.status === 200 && ((await rr.json())[day] || {})[puzzle]) { done = true; break; }
-      }
-      if (done) continue;
-      for (const t of await inboxAll(env, m.addr, entry)) if (!tokens.some((x) => x.token === t.token)) tokens.push(t);
+      const mine = m.addrs || [m.addr];
+      if (mine.includes(addr) || [...recipients.values()].some((r) => (r.addrs || [r.addr]).some((a) => mine.includes(a)))) continue;
+      recipients.set(m.addr, m);
     }
-    const dead = [];
-    for (const t of tokens) {
-      const status = await pushAPNs(env, t, { aps: { alert: { title: `${me.name} finished today's ${PUZZLE_NAMES[puzzle]} first ⏱`, body: `${clock}. Can you beat it?` }, sound: "default" },
-                                             dare: { puzzle, day, secs, name: me.name } });
-      if (status === 410 || status === 400 || status === 404) dead.push(t);
-    }
-    for (const t of dead) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
   }
+  if (!myName || !recipients.size) return;
+  const entry = { kind: "dare", first: true, code: `${puzzle}-${day}-${myName.toUpperCase()}`, stage: "set", from: myName, puzzle, day, secs, at: Date.now() };
+  const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+  const tokens = [];
+  for (const m of recipients.values()) {
+    // Already played today? Nothing to tell them.
+    let done = false;
+    for (const a of m.addrs || [m.addr]) {
+      const rr = await box(env, "a:" + a).fetch(`https://box/result-get?from=${day}&to=${day}`);
+      if (rr.status === 200 && Object.keys((await rr.json())[day] || {}).length) { done = true; break; }
+    }
+    if (done) continue;
+    // Once a day for this person, whichever family it came through.
+    const once = await (await box(env, "a:" + m.addr).fetch("https://box/once", { method: "POST", body: JSON.stringify({ key: `first-${day}`, day }) })).json();
+    if (!once.first) continue;
+    for (const t of await inboxAll(env, m.addr, entry)) if (!tokens.some((x) => x.token === t.token)) tokens.push(t);
+  }
+  const dead = [];
+  for (const t of tokens) {
+    const status = await pushAPNs(env, t, { aps: { alert: { title: `${myName} finished today's ${PUZZLE_NAMES[puzzle]} first ⏱`, body: `${clock}. Can you beat it?` }, sound: "default" },
+                                           dare: { puzzle, day, secs, name: myName } });
+    if (status === 410 || status === 400 || status === 404) dead.push(t);
+  }
+  for (const t of dead) await box(env, "a:" + t.addr).fetch("https://box/token-drop", { method: "POST", body: JSON.stringify([t.token]) });
 }
 
 /// "Vihaan is in the Raos": everyone already in the family hears a new member (or a member's
@@ -587,8 +599,8 @@ export class Box {
       for (const k of Object.keys(all)) { const d = parseInt(k, 10); if (d >= from && d <= to) out[k] = all[k]; }
       return json(out);
     }
-    // The first to finish a puzzle today (per family): true once, for whoever asks first.
-    if (op === "/first-mark") {
+    // "Once a day" for a person or a family: true the first time a key is asked for, then false.
+    if (op === "/first-mark" || op === "/once") {
       const { key, day } = await request.json();
       const firsts = (await this.storage.get("firsts")) || {};
       for (const k of Object.keys(firsts)) if (firsts[k] < day - 2) delete firsts[k];
