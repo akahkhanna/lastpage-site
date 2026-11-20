@@ -147,7 +147,9 @@
     $("settingsList").innerHTML = (f ? row(`data-dialog="invite"`, `Invite someone to ${esc(f.name)}`) : "")
       + row(`data-dialog="address"`, "My address")
       + link("/homework/#join", "Join a family") + link("/homework/#start", all.length ? "Start another family" : "Start a family")
-      + (f && all.some((x) => x.code === f.code) ? row(`data-leave="${f.code}"`, `Leave ${esc(f.name)}`) : "");
+      + (f && all.some((x) => x.code === f.code) ? row(`data-leave="${f.code}"`, `Leave ${esc(f.name)}`) : "")
+      // Someone's name or words not OK: tell us, with the family's code filled in.
+      + link(`mailto:akki_khanna@yahoo.com?subject=${encodeURIComponent("Report a problem in That Last Page")}&body=${encodeURIComponent("What happened, and who (their name as shown):\n\n\n" + (f ? "Family code: " + f.code : ""))}`, "Report a problem");
   }
   document.addEventListener("click", async (e) => {
     if (e.target.closest('[data-dialog="settings"]')) renderSettings();
