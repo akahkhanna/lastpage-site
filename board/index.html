@@ -26,7 +26,6 @@
     <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
     <nav class="site-nav" aria-label="Pages">
       <a href="/games/">Games</a>
-      <a href="/homework/">Test papers</a>
       <a href="/board/" aria-current="page">Family board</a>
     </nav>
   </div>
@@ -58,7 +57,7 @@
     </div>
     <section class="panel board-empty" id="noFamily" aria-labelledby="no-family-title" hidden>
       <h2 id="no-family-title">Your family, in one place</h2>
-      <p class="board-note">Today's puzzle times side by side, who's winning the week, and games and test papers sent to each other by name.</p>
+      <p class="board-note">Today's puzzle times side by side, who's winning the week, and games and challenges sent to each other by name.</p>
       <div class="dialog-actions">
         <a class="button primary" href="/homework/#join">Join with a code</a>
         <a class="button" href="/homework/#start">Start a family</a>
@@ -72,7 +71,7 @@
         <a class="board-shortcut" href="../test/trail.html"><span class="board-symbol words" aria-hidden="true">Aa</span>Word trail <span class="arrow" aria-hidden="true">→</span></a>
       </div>
     </section>
-    <footer class="page-footer board-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
+    <footer class="page-footer board-footer"><a href="/games/">Games</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
   </section>
 </main>
 <dialog id="dlg" aria-labelledby="dlgTitle">
@@ -80,8 +79,8 @@
   <div class="dialog-body">
     <div class="pane" data-pane="settings" data-title="Family settings" hidden><div class="mode-grid" id="settingsList"></div></div>
     <div class="pane" data-pane="invite" data-title="Invite someone" hidden><div id="invitePane"></div></div>
-    <div class="pane" data-pane="address" data-title="My test address" hidden>
-      <p>Puzzle times are kept against this address, and a test sent to it lands in your inbox.</p>
+    <div class="pane" data-pane="address" data-title="My address" hidden>
+      <p>Puzzle times are kept against this address, and games and challenges sent to it land here.</p>
       <div class="dialog-actions"><code id="myAddr"></code> <button class="button" id="copyAddr">Copy</button></div>
       <p class="board-note" id="copiedAddr" hidden>Copied.</p>
     </div>
@@ -146,15 +145,15 @@
     const row = (attrs, title) => `<button class="mode" ${attrs}><span><strong>${title}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`;
     const link = (href, title) => `<a class="mode" href="${href}"><span><strong>${title}</strong></span><span class="arrow" aria-hidden="true">→</span></a>`;
     $("settingsList").innerHTML = (f ? row(`data-dialog="invite"`, `Invite someone to ${esc(f.name)}`) : "")
-      + row(`data-dialog="address"`, "My test address")
+      + row(`data-dialog="address"`, "My address")
       + link("/homework/#join", "Join a family") + link("/homework/#start", all.length ? "Start another family" : "Start a family")
       + (f && all.some((x) => x.code === f.code) ? row(`data-leave="${f.code}"`, `Leave ${esc(f.name)}`) : "");
   }
   document.addEventListener("click", async (e) => {
     if (e.target.closest('[data-dialog="settings"]')) renderSettings();
-    if (e.target.closest('[data-dialog="address"]')) $("myAddr").textContent = me || "(none yet: set or do a test first)";
+    if (e.target.closest('[data-dialog="address"]')) $("myAddr").textContent = me || "(none yet: join a family first)";
     if (e.target.closest('[data-dialog="invite"]') && current) {
-      const text = `Join our family "${current.name}" in That Last Page ✏️ then tests and games find you by name:`;
+      const text = `Join our family "${current.name}" in That Last Page ✏️ then games and challenges find you by name:`;
       const url = location.origin + "/f/#" + current.code, both = text + "\n" + url + "\n(or type the code " + current.code + ")";
       $("invitePane").innerHTML = `<p>Send them the link. They join under their name, and their puzzle times line up here.</p><p class="board-note">Or they type the code <code>${current.code}</code>.</p>
         <div class="dialog-actions"><a class="button primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(both)}">Send on WhatsApp</a> <button class="button" id="copyInvite">Copy the message</button></div><p class="board-note" id="copiedInvite" hidden>Copied.</p>`;

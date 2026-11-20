@@ -406,7 +406,7 @@ async function firstFinish(env, addr, codes, puzzle, day, secs) {
   }
 }
 
-/// "Vihaan is in Khannas": everyone already in the family hears a new member (or a member's
+/// "Vihaan is in the Raos": everyone already in the family hears a new member (or a member's
 /// new phone) arrived, so they know tests and invites now reach them.
 async function notifyJoin(env, f, typed, addr, devices) {
   const member = f.members.find((m) => (m.addrs || [m.addr]).includes(addr));

@@ -1,4 +1,4 @@
-// "Beat my 1:12": a friend's time on today's puzzle, carried in the link ("#16-72-AKASH":
+// "Beat my 1:12": a friend's time on today's puzzle, carried in the link ("#16-72-RAHUL":
 // puzzle number, seconds, name), the same as the app's links. Nothing is sent anywhere.
 (function (root) {
   const clock = (s) => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");

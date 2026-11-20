@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <script>if(location.hostname==="akahkhanna.github.io"){location.replace("https://thatlastpage.vercel.app"+location.pathname.replace(/^\/lastpage-site/,"")+location.search+location.hash)}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Test papers · That Last Page</title>
+<title>Your family · That Last Page</title>
 <meta name="description" content="Set a test for someone in the family; they do it and hand in their paper; you mark it. Any browser, no app needed.">
 <meta property="og:title" content="A test from the family ✏️ That Last Page">
 <meta property="og:description" content="Set it, do it, mark it: all in the family, no app needed.">
@@ -18,8 +18,7 @@
     <a class="wordmark" href="/games/"><span class="brand-mark" aria-hidden="true"></span>That Last Page</a>
     <nav class="site-nav" aria-label="Pages">
       <a href="/games/">Games</a>
-      <a href="/homework/" aria-current="page">Test papers</a>
-      <a href="/board/">Family board</a>
+      <a href="/board/" aria-current="page">Family board</a>
     </nav>
   </div>
 </header>
@@ -27,16 +26,16 @@
 
 <section id="hub" hidden>
   <div class="page-heading paper-title">
-    <div><h1>Test papers</h1><p>Set, answer and mark each other’s tests.</p></div>
-    <button class="button primary" id="toSet"><span aria-hidden="true">+</span> Set a test</button>
+    <div><h1>Your family</h1><p>Who's in it, and games and challenges sent to you.</p></div>
+    <button class="button primary" id="toSet" hidden><span aria-hidden="true">+</span> Set a test</button>
   </div>
   <p class="note" id="hubNote" hidden></p>
   <div class="paper-grid">
     <section class="panel" aria-labelledby="inbox-title">
-      <div class="panel-head"><h2 id="inbox-title">Inbox</h2><button class="text-button" id="toAsk">Ask for a test <span aria-hidden="true">→</span></button></div>
-      <div class="inbox-empty" id="inboxEmpty"><span class="paper-doodle" aria-hidden="true"></span><p>No papers waiting</p></div>
+      <div class="panel-head"><h2 id="inbox-title">Inbox</h2><button class="text-button" id="toAsk" hidden>Ask for a test <span aria-hidden="true">→</span></button></div>
+      <div class="inbox-empty" id="inboxEmpty"><span class="paper-doodle" aria-hidden="true"></span><p>Nothing waiting</p></div>
       <ul class="inbox-list" id="inboxList"></ul>
-      <div class="panel-foot"><button class="text-button" data-dialog="code">Open with a code <span aria-hidden="true">→</span></button></div>
+      <div class="panel-foot" hidden><button class="text-button" data-dialog="code">Open with a code <span aria-hidden="true">→</span></button></div>
     </section>
     <section class="panel" aria-labelledby="family-title">
       <div class="panel-head"><h2 id="family-title">My family</h2></div>
@@ -48,11 +47,11 @@
       <button class="settings" data-dialog="settings">Settings <span aria-hidden="true">›</span></button>
     </section>
   </div>
-  <footer class="page-footer papers-footer"><a href="/games/">Games</a><a href="/homework/">Test papers</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
+  <footer class="page-footer papers-footer"><a href="/games/">Games</a><a href="/board/">Family board</a><a href="https://apps.apple.com/app/id6831963769">The app, on iPhone</a><a href="/privacy.html">Privacy</a><a href="/">Help</a></footer>
 </section>
 
 <section id="set" class="form" hidden>
-  <a class="back" href="./">← Test papers</a>
+  <a class="back" href="./">← Your family</a>
   <div class="page-heading"><h1>Set a test</h1></div>
   <p class="note" id="askedNote" hidden></p>
   <p><label>From<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="from" placeholder="your name, e.g. Dadi" maxlength="20"></label></p>
@@ -70,7 +69,7 @@
 </section>
 
 <section id="ask" class="form" hidden>
-  <a class="back" href="./">← Test papers</a>
+  <a class="back" href="./">← Your family</a>
   <div class="page-heading"><h1>Ask for a test</h1></div>
   <p class="small">They get a link that opens the test page with your name on it.</p>
   <p><label>Your name<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="askFrom" maxlength="20"></label></p>
@@ -80,7 +79,7 @@
 </section>
 
 <section id="paper" class="form" hidden>
-  <a class="back" href="./">← Test papers</a>
+  <a class="back" href="./">← Your family</a>
   <p class="note" id="mrsT" hidden></p>
   <div class="page-heading"><h1><span id="title"></span><span class="score" id="score" hidden></span></h1></div>
   <p class="printed" id="printed"></p>
@@ -99,7 +98,7 @@
     <p class="pencil" id="copiedAns" hidden>Copied. Paste it in the chat.</p>
   </div>
   <div id="markFoot" hidden>
-    <p><label>A remark<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="remarkIn" placeholder="Shabash! / neater writing!" maxlength="60"></label></p>
+    <p><label>A remark<br><input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" class="line" id="remarkIn" placeholder="Well done! / neater writing!" maxlength="60"></label></p>
     <p class="small" id="markHint">Tick or cross every answer, then send it back.</p>
     <p><button class="button primary" id="sendMarked" hidden>Send the paper back</button></p>
     <div class="share-row" id="shareMarked" hidden></div>
@@ -122,7 +121,7 @@
       <button class="button primary" id="openCode" disabled>Open test</button></form>
     </div>
     <div class="pane" data-pane="start" data-title="Start a family" hidden>
-      <form onsubmit="return false"><label>Family name<input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="famName" maxlength="20" placeholder="Khanna"></label>
+      <form onsubmit="return false"><label>Family name<input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="famName" maxlength="20" placeholder="Rao"></label>
       <button class="button primary" id="startFam">Start</button></form>
     </div>
     <div class="pane" data-pane="join" data-title="Join a family" hidden>
@@ -131,8 +130,8 @@
     </div>
     <div class="pane" data-pane="joinAsk" data-title="Join a family" hidden><div id="famAsk"></div></div>
     <div class="pane" data-pane="invite" data-title="Invite someone" hidden><div id="invitePane"></div></div>
-    <div class="pane" data-pane="address" data-title="My test address" hidden>
-      <p>A test sent to this address lands in your inbox here, and in the app.</p>
+    <div class="pane" data-pane="address" data-title="My address" hidden>
+      <p>Games and challenges sent to this address land here, and in the app.</p>
       <div class="dialog-actions"><code id="myAddr"></code> <button class="button" id="shareAddr">Share</button></div>
       <p class="pencil" id="copiedAddr" hidden>Copied. Paste it in the chat.</p>
     </div>

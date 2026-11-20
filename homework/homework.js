@@ -285,7 +285,7 @@
   function renderSettings() {
     const all = families();
     const row = (key, title, extra = "") => `<button class="mode" data-dialog="${key}" ${extra}><span><strong>${title}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`;
-    $("settingsList").innerHTML = row("address", "My test address") + row("join", "Join a family") + row("start", all.length ? "Start another family" : "Start a family")
+    $("settingsList").innerHTML = row("address", "My address") + row("join", "Join a family") + row("start", all.length ? "Start another family" : "Start a family")
       + all.map((f) => `<button class="mode" data-leave="${f.code}"><span><strong>Leave ${esc(f.name)}</strong></span><span class="arrow" aria-hidden="true">→</span></button>`).join("");
   }
   document.addEventListener("click", async (e) => {
@@ -293,8 +293,8 @@
     const b = e.target.closest("[data-invite],[data-leave]"); if (!b) return;
     if (b.dataset.invite) {
       const f = families().find((x) => x.code === b.dataset.invite);
-      $("invitePane").innerHTML = `<p>Send them the link. They join under their name, and tests and game invites find them.</p><p class="small">Or they type the code <code>${f.code}</code>.</p><div class="share-row" id="inviteShare"></div>`;
-      shareRow($("inviteShare"), `Join our family "${f.name}" in That Last Page ✏️ then tests and games find you by name:`, location.origin + "/f/#" + f.code, f.code);
+      $("invitePane").innerHTML = `<p>Send them the link. They join under their name, and game invites and challenges find them.</p><p class="small">Or they type the code <code>${f.code}</code>.</p><div class="share-row" id="inviteShare"></div>`;
+      shareRow($("inviteShare"), `Join our family "${f.name}" in That Last Page ✏️ then games and challenges find you by name:`, location.origin + "/f/#" + f.code, f.code);
       openPane("invite");
     }
     if (b.dataset.leave) {
@@ -311,7 +311,7 @@
     catch (e) { alert(e.message); }
   });
   $("joinFam").addEventListener("click", () => previewFamily($("famCode").value));
-  // A link or a code shows the family first ("join Khannas? Papa, Vihaan are in it"); joining is a tap, under a name you can see.
+  // A link or a code shows the family first ("join the Raos? Papa, Vihaan are in it"); joining is a tap, under a name you can see.
   async function previewFamily(code) {
     code = (code || "").trim().toUpperCase(); if (!isCode(code)) return;
     let f;
@@ -320,7 +320,7 @@
     if (f.members.some(isMe)) { saveFamily(f); renderFamilies(); closePane(); $("hubNote").hidden = false; $("hubNote").textContent = `You're already in ${f.name}.`; return; }
     const who = f.members.map((m) => esc(m.name)).join(", ");
     $("famAsk").innerHTML = `<p><strong>Join ${esc(f.name)}?</strong></p>
-      <p>${who ? `${who} ${f.members.length === 1 ? "is" : "are"} in it. They'll be able to set you tests and invite you to games.` : "Nobody's in it yet."}</p>
+      <p>${who ? `${who} ${f.members.length === 1 ? "is" : "are"} in it. They'll be able to invite you to games and challenge your puzzle times.` : "Nobody's in it yet."}</p>
       <form onsubmit="return false"><label>Your name, as the family will see it<input autocomplete="off" autocorrect="off" spellcheck="false" data-form-type="other" id="joinAs" maxlength="20" placeholder="your name" value="${esc(recall("lp.from") || "")}"></label>
       <div class="dialog-actions"><button class="button primary" id="joinYes">Join</button> <button class="button" id="joinNo">Not now</button></div></form>`;
     openPane("joinAsk");
@@ -333,7 +333,7 @@
     try {
       const f = await api("POST", "/f/" + code + "/join", me()); saveFamily(f); renderFamilies();
       const others = f.members.filter((m) => !isMe(m)).map((m) => m.name);
-      $("hubNote").hidden = false; $("hubNote").textContent = `You're in ${f.name}` + (others.length ? ` with ${others.join(", ")}. Tests and game invites find you here now.` : ". Invite someone, and tests and games go by name.");
+      $("hubNote").hidden = false; $("hubNote").textContent = `You're in ${f.name}` + (others.length ? ` with ${others.join(", ")}. Game invites and challenges find you here now.` : ". Invite someone, and games go by name.");
     }
     catch (e) { $("hubNote").hidden = false; $("hubNote").textContent = "Family " + code + ": " + e.message; }
   }
@@ -365,7 +365,7 @@
   $("openCode").addEventListener("click", () => { const c = $("codeIn").value.trim().toUpperCase(); if (isCode(c)) location.hash = c; });
   $("codeIn").addEventListener("input", () => { $("openCode").disabled = !isCode($("codeIn").value); });
   $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("openCode").click(); });
-  $("shareAddr").addEventListener("click", () => share(`My test address in That Last Page is ${myAddress()} ✏️ Set me a test at`, location.origin + "/homework/", "copiedAddr"));
+  $("shareAddr").addEventListener("click", () => share(`My address in That Last Page is ${myAddress()} ✏️ Set me a test at`, location.origin + "/homework/", "copiedAddr"));
   $("toSet").addEventListener("click", () => { askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); $("from").focus(); });
   $("toAsk").addEventListener("click", () => { show("ask"); $("askFrom").value = recall("lp.from"); });
   $("own").addEventListener("click", () => { history.replaceState(null, "", location.pathname); askedBy = null; $("askedNote").hidden = true; show("set"); renderSet(); });
