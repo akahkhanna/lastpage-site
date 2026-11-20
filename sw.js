@@ -1,8 +1,8 @@
 // That Last Page, installed: the pages and fonts are kept so the daily puzzles open without
 // signal; anything live (rooms, tests, the board) always goes to the network.
-const CACHE = "lastpage-v20";
+const CACHE = "lastpage-v21";
 const META = "lastpage-meta";   // this browser's test address, for the push handler
-const KEEP = ["/", "/games/", "/test/sudoku.html", "/test/dots.html", "/test/trail.html", "/test/test.css", "/test/dare.js",
+const KEEP = ["/", "/games/", "/help/", "/test/sudoku.html", "/test/dots.html", "/test/trail.html", "/test/test.css", "/test/dare.js",
   "/test/sudoku.js", "/test/dots.js", "/test/trail.js", "/play/", "/play/play.js", "/play/room.js", "/play/live.js", "/play/solo.js", "/homework/", "/homework/homework.js",
   "/board/", "/hangman/", "/hangman/hangman.js", "/hangman/hangman.css", "/hangman/rules.js", "/style.css", "/site.css", "/site.js", "/push.js", "/manifest.json",
   "/flames/fonts/Kalam-Regular.ttf", "/flames/fonts/Kalam-Bold.ttf", "/flames/fonts/Caveat-Variable.ttf"];
